@@ -10,7 +10,7 @@ The seed is fixed: running this again must reproduce the committed files byte fo
 import json
 import random
 from fractions import Fraction
-from math import gcd
+from math import gcd, isqrt
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / "Tests" / "MantissaCoreTests" / "Resources"
@@ -58,10 +58,13 @@ pairs += [(a, b) for a in special for b in special]
 integer_cases = []
 for a, b in pairs:
     case = {"a": str(a), "b": str(b), "sum": str(a + b), "difference": str(a - b), "product": str(a * b),
-            "gcd": str(gcd(a, b)), "compare": (a > b) - (a < b)}
+            "gcd": str(gcd(a, b)), "compare": (a > b) - (a < b), "digits": len(str(abs(a)))}
+    if a >= 0:
+        case["isqrt"] = str(isqrt(a))
     if b != 0:
         q, r = truncated_divmod(a, b)
         case["quotient"], case["remainder"] = str(q), str(r)
+        case["floorQuotient"] = str(a // b)
     integer_cases.append(case)
 
 power_cases = []
@@ -89,9 +92,9 @@ decimal_cases = [
 invalid_decimals = ["", ".", "-", "e5", "1e", "1e+", "1.2.3", "1,5", "abc", "1e10001", "--1", "1 2", "0x10", "٣"]
 
 (OUT / "integer-vectors.json").write_text(json.dumps(
-    {"integers": integer_cases, "powers": power_cases}, indent=1) + "\n")
+    {"integers": integer_cases, "powers": power_cases}, separators=(",", ":")) + "\n")
 (OUT / "rational-vectors.json").write_text(json.dumps(
     {"fractions": fraction_cases,
      "decimals": [{"text": t, "value": v} for t, v in decimal_cases],
-     "invalidDecimals": invalid_decimals}, indent=1) + "\n")
+     "invalidDecimals": invalid_decimals}, separators=(",", ":")) + "\n")
 print(f"integers: {len(integer_cases)}, powers: {len(power_cases)}, fractions: {len(fraction_cases)}")

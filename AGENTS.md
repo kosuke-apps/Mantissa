@@ -35,8 +35,18 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   - `Sources/MantissaCore/BigInt.swift`: arbitrary-precision integer (sign and magnitude, 32-bit limbs, Knuth D
     division). Own implementation so there is no dependency.
   - `Sources/MantissaCore/Rational.swift`: exact fraction in lowest terms; parses decimal literals exactly.
+  - `Sources/MantissaCore/BigInt+Math.swift`: decimal digit count, integer square root, floor division.
+  - `Sources/MantissaCore/BigDecimal.swift`: arbitrary-precision decimal (`significand × 10^exponent`): exact
+    `+ - ×`, rounded division, square root, integer power, parsing and printing.
+  - `Sources/MantissaCore/FixedPoint.swift` (internal): `BigInt` fixed-point helpers and the series for π, ln 2,
+    ln 10, atan, atanh, sin, cos and exp.
+  - `Sources/MantissaCore/BigDecimal+Functions.swift`: `pi`, `e`, `exp`, `ln`, `log`, `power`, trigonometric,
+    inverse trigonometric and hyperbolic functions, all taking a `precision` in significant digits.
+  - `Sources/MantissaCore/MathError.swift`: `divisionByZero`, `domain`, `overflow`; thrown (typed throws), never trapped.
   - `Tests/MantissaCoreTests/`: Swift Testing suites. `Resources/*.json` are reference vectors produced by
-    `tools/gen_number_vectors.py` from Python's exact `int` and `Fraction` (fixed seed; rerunning reproduces them).
+    `tools/gen_number_vectors.py` (Python's exact `int` and `Fraction`) and `tools/gen_decimal_vectors.py` (Python's
+    `decimal` at 300 digits; sin, cos, atan written independently of the Swift algorithms). Fixed seeds; rerunning
+    reproduces them byte for byte.
   - `docs/design.md`: the engine's layers and the decisions behind them. Read it before changing the engine.
 - Constraints: the engine stays free of UI and Foundation types where practical so it runs anywhere; value types
   only; everything `Sendable`. Doubles are for plotting only, never for results shown as exact.
@@ -45,7 +55,8 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
 
 Order is chosen so that the app is usable early and the heavy symbolic work comes last.
 
-1. Numbers: `BigInt`, `Rational` (done); arbitrary-precision decimals with π, e, exp, ln, sin, cos, atan, sqrt.
+1. Numbers (done): `BigInt`, `Rational`, `BigDecimal` with π, e, exp, ln, log, power, sqrt, trigonometric, inverse
+   trigonometric and hyperbolic functions, verified against Python to the last digit.
 2. Expressions: parser, expression tree, exact simplification, evaluation with angle modes.
 3. App: maths keyboard and editor, result card (exact and decimal), history. Needs screenshots of the original app
    for the layout; ask the author.
@@ -60,7 +71,8 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
   `xcrun swift-format lint --strict -r Sources Tests Package.swift` (config in `.swift-format`).
 - If a command fails because `xcode-select` points at the Command Line Tools, prefix it with
   `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
-- Regenerate the number test vectors: `python3 tools/gen_number_vectors.py` (needs only Python 3).
+- Regenerate the test vectors: `python3 tools/gen_number_vectors.py` and `python3 tools/gen_decimal_vectors.py`
+  (need only Python 3; the files in `Tests/MantissaCoreTests/Resources` must not change when you rerun them).
 - App build and simulator commands: to be added with the app.
 
 ## Definition of done

@@ -10,8 +10,11 @@ private struct IntegerCase: Decodable {
   let product: String
   let gcd: String
   let compare: Int
+  let digits: Int
+  let isqrt: String?
   let quotient: String?
   let remainder: String?
+  let floorQuotient: String?
 }
 
 private struct PowerCase: Decodable {
@@ -43,6 +46,13 @@ struct BigIntTests {
         let result = a.quotientAndRemainder(dividingBy: b)
         #expect(result.quotient.description == quotient, "\(item.a) / \(item.b)")
         #expect(result.remainder.description == remainder, "\(item.a) % \(item.b)")
+      }
+      if let floorQuotient = item.floorQuotient {
+        #expect(a.floorDivided(by: b).description == floorQuotient, "floor(\(item.a) / \(item.b))")
+      }
+      #expect(a.decimalDigitCount == item.digits, "digits of \(item.a)")
+      if let root = item.isqrt {
+        #expect(a.integerSquareRoot().description == root, "isqrt(\(item.a))")
       }
     }
   }
