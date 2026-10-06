@@ -1,0 +1,17 @@
+# Label managed by `labels`. This file is the source of truth for this folder.
+# status: active | paused | done | archived | unset
+# shelf: where this folder belongs, relative to the workspace root (the parent of this folder)
+schema = 1
+id = "K-0049"
+name = "mantissa"
+summary = "Offline scientific and graphing calculator for iPhone with exact results, equation solving and history"
+shelf = "Projects/Software/iOS"
+kind = "git"
+status = "active"
+next = "Add arbitrary-precision decimals (pi, e, exp, ln, sin, cos, atan, sqrt), then the parser and expression tree"
+github = ""
+tags = []
+related = []
+notes = ""
+created = "2026-10-06"
+updated = "2026-10-06"
