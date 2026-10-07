@@ -6,4 +6,6 @@ public enum MathError: Error, Equatable, Sendable {
   case domain
   /// An argument or result beyond what the engine represents, such as `exp(1e12)`.
   case overflow
+  /// A value was asked of an expression that still contains an unknown (a symbol with no value given).
+  case notNumeric
 }

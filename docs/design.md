@@ -14,13 +14,15 @@ Each layer depends only on the ones before it in this list.
    digits and round half away from zero once at the end. Used to evaluate anything that is not rational: `π`, `e`,
    `sqrt`, `exp`, `ln`, `log`, `power`, `sin`, `cos`, `tan`, `atan`, `asin`, `acos` and the six hyperbolic functions.
    The display rounds further to the digits the user asked for (default 12 significant). See "Numerics" below.
-3. **Expressions** (planned). A tree of rationals, symbols (`x`, `y`, …), constants (`π`, `e`, `i`), sums, products,
-   powers and function calls, kept in a canonical form: flattened, like terms collected, rational coefficients
-   gathered, radicals reduced (`√12 → 2√3`), exact trigonometric values at the usual angles (`sin(π/6) → 1/2`).
-   Exact results come from here; the decimal layer only supplies the approximation shown next to them.
-4. **Parser** (planned). Text to expression, with implicit multiplication (`2x`, `3π`, `2(x+1)`), functions,
-   factorial, percent, `nPr`, `nCr`, and `=`, `<`, `≤`, … for equations and inequalities. The maths editor in the app
-   produces the same structure, so history stores one canonical text form.
+3. **Expressions** (`Expr`, `NumberTheory`; done, see "Expressions" below). A tree of rationals, symbols (`x`, `y`, …),
+   the constants `π` and `e`, sums, products, powers and function calls, kept in a canonical form: flattened, like
+   terms collected, rational coefficients gathered, radicals reduced (`√12 → 2√3`), exact trigonometric values at
+   multiples of 15° (`sin(π/6) → 1/2`). Exact results come from here; the decimal layer only supplies the
+   approximation shown next to them.
+4. **Parser** (`Lexer`, `Parser`, `Syntax`, `Builder`, `Calculator`; done). Text to syntax tree to `Expr`, with
+   implicit multiplication (`2x`, `3π`, `2(x+1)`), functions with or without parentheses, factorial, percent, degrees,
+   and `=`, `<`, `≤`, … for equations and inequalities (parsed, not yet solved). The maths editor in the app will
+   produce the same structure, so history stores one text form, `Expr.description`, which the parser reads back.
 5. **Solver** (planned). Linear, quadratic and higher polynomial equations (rational roots, factoring, Cardano and
    Ferrari only when the result stays readable), systems of linear equations, one-variable inequalities by sign
    analysis, then derivatives, integrals, limits and sums. Where an answer cannot be found reliably the engine says so;
@@ -77,3 +79,48 @@ How the functions reach their accuracy, so that a change does not quietly lose i
 - **Verification** is against Python's `decimal` at 300 digits (`tools/gen_decimal_vectors.py`), 472 function values
   compared at 15, 50 and 100 digits. The test demands the *same last digit*, not a tolerance, which holds because the
   guard digits make a misrounding need the true value to sit within about 10^-15 of a rounding boundary.
+
+## Expressions
+
+- **Canonical form is the equality test.** Every combination goes through `makeSum`, `makeProduct`, `makePower` and
+  `Expr.apply`, so equal expressions are `==`. The rules are listed on `Expr`: like terms collected, equal bases merged,
+  a number multiplies through a sum, radicals split into an integer part and prime radicals `p^f` with 0 < f < 1
+  (so `1/√2` is `(1/2)·2^(1/2)`, and `√2 + √8` is `3√2` because both are multiples of the same atom).
+- **Canonical forms are sufficient, not necessary, for equality.** Two equal expressions can still have different
+  forms: `(x+1)^2` and `x^2 + 2x + 1` are not merged, because unwanted expansion is as bad as missing expansion.
+  `expand`, `factor` and `simplify` will be explicit operations in the solver layer. What is expanded automatically:
+  products and whole-number powers of sums of plain numbers and radicals (`(1+√2)(1−√2)` is `−1`), because they are
+  numbers and the user expects a number back. Sums with unknowns are left as written.
+- **Denominators are rationalised** for a two-term sum of square roots and rationals: `1/(1+√2)` is `√2 − 1`. Longer
+  sums (`1/(1+√2+√3)`) are left as they are.
+- **The numeric content of a sum is taken out of powers**: `(2x+2)^2` is `4(x+1)^2` and `1/(2x+2)` is
+  `(1/2)(x+1)^-1`. Without that, `1/(2(x+1))` and `1/(2x+2)` would be different expressions, and an expression would
+  not read back as itself.
+- **Roots of negative numbers**: an odd root is real (`(−8)^(1/3)` is `−2`); an even root stays as written
+  (`√(-4)`) and has no decimal value (`MathError.domain`). The imaginary unit comes with the equation solver, which
+  needs it for quadratics; `i` is an ordinary variable until then.
+- **Safe powers only**: `(x²)^(1/2)` is not `x` (it is `|x|`), so powers of powers are combined only for whole
+  exponents or positive bases. `x/x` is 1, as in every computer algebra system, and `0^0` is an error.
+- **Size limits**: exact integer results above about 21 000 digits (70 000 bits) are kept as written (`2^100000`) and
+  only approximated; factorials and counts beyond that are `MathError.overflow`. Factoring is by trial division
+  (completely below 10^12, up to 50 000 for larger numbers); a number with a larger prime factor is split as far as
+  possible and the rest is treated as one opaque factor.
+- **Angles**: functions work in radians. The `Builder` converts when the calculator is in degree mode (the default,
+  like a handheld calculator): `sin(30)` becomes `sin(30π/180)`, which the exact table turns into `1/2`. An argument
+  that *writes* π (`sin(π/6)`) is already radians. Exact values exist at multiples of 15°; other angles stay as
+  `sin(π/180)` with a decimal value beside them.
+- **Approximation** evaluates the exact tree with 15 guard digits. Where an error is magnified it adds digits: the
+  trigonometric and hyperbolic functions and powers get extra digits for large arguments (`cos(2·10^37)`), and a sum
+  far below its largest term is treated as zero (`sin²1° + cos²1° − 1`).
+
+### How it was checked
+
+`NaiveEvaluator` (test target) computes the value of a parsed expression directly with `BigDecimal`: no radical
+rules, no collected terms, no exact trigonometric tables, and 120 digits. A seeded generator builds random syntax trees
+(numbers, π, e, the operators, roots, trigonometric, logarithmic and hyperbolic functions; both angle units) and the
+test requires, for each one the naive evaluator can compute: the canonical form's value agrees to 30 digits; rebuilding
+the canonical form from its parts changes nothing; and printing it and reading it back gives the same expression.
+`MANTISSA_SEED` and `MANTISSA_SAMPLES` widen the search (`MANTISSA_TRACE=1` prints each case, so the last line names
+a crashing input). It found: two infinite recursions (splitting `e^(π−1/8)` and squaring a sum each re-merged what
+was just split), `cos` of a 38-digit angle wrong from the 16th digit, and three ways in which one expression had two
+forms. It also showed that the evaluator itself needed 120 digits to be a fair judge.

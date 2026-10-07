@@ -155,6 +155,19 @@ public struct BigDecimal: Sendable, Hashable {
 
   public static func - (lhs: BigDecimal, rhs: BigDecimal) -> BigDecimal { lhs + (-rhs) }
 
+  /// `self + other` rounded to `precision` significant digits, without lining the operands up when one is so much
+  /// smaller than the other that it cannot reach the digits kept (the exact `+` would build a huge integer). In the
+  /// one case where the larger operand sits exactly on a rounding boundary the result can differ in the last digit.
+  public func adding(_ other: BigDecimal, precision: Int) -> BigDecimal {
+    precondition(precision >= 1, "Precision must be at least 1")
+    guard let order = decimalOrder, let otherOrder = other.decimalOrder else {
+      return (isZero ? other : self).rounded(toSignificantDigits: precision)
+    }
+    if order - otherOrder > precision + 3 { return rounded(toSignificantDigits: precision) }
+    if otherOrder - order > precision + 3 { return other.rounded(toSignificantDigits: precision) }
+    return (self + other).rounded(toSignificantDigits: precision)
+  }
+
   public static func * (lhs: BigDecimal, rhs: BigDecimal) -> BigDecimal {
     BigDecimal(lhs.significand * rhs.significand, exponent: lhs.exponent + rhs.exponent)
   }

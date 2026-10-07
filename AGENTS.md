@@ -42,7 +42,16 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     ln 10, atan, atanh, sin, cos and exp.
   - `Sources/MantissaCore/BigDecimal+Functions.swift`: `pi`, `e`, `exp`, `ln`, `log`, `power`, trigonometric,
     inverse trigonometric and hyperbolic functions, all taking a `precision` in significant digits.
-  - `Sources/MantissaCore/MathError.swift`: `divisionByZero`, `domain`, `overflow`; thrown (typed throws), never trapped.
+  - `Sources/MantissaCore/MathError.swift`: `divisionByZero`, `domain`, `overflow`, `notNumeric`; thrown (typed throws),
+    never trapped.
+  - `Sources/MantissaCore/NumberTheory.swift`: factoring by trial division, factorial, nCr, nPr, exact logarithms.
+  - `Sources/MantissaCore/Expr.swift`: the exact expression type and its canonical order. `Expr+Build.swift`: the smart
+    constructors (sum, product, power, radicals, expansion of numeric sums, rationalising). `Expr+Functions.swift`:
+    function application with exact values and symmetries. `Expr+Approximation.swift`: the decimal value.
+    `Expr+Description.swift`: the linear text form that the parser reads back.
+  - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
+    `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit. `Calculator.swift`: `evaluate(_:)` returns the
+    exact value and its decimal approximation, or a `CalculatorError`.
   - `Tests/MantissaCoreTests/`: Swift Testing suites. `Resources/*.json` are reference vectors produced by
     `tools/gen_number_vectors.py` (Python's exact `int` and `Fraction`) and `tools/gen_decimal_vectors.py` (Python's
     `decimal` at 300 digits; sin, cos, atan written independently of the Swift algorithms). Fixed seeds; rerunning
@@ -57,7 +66,8 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 
 1. Numbers (done): `BigInt`, `Rational`, `BigDecimal` with π, e, exp, ln, log, power, sqrt, trigonometric, inverse
    trigonometric and hyperbolic functions, verified against Python to the last digit.
-2. Expressions: parser, expression tree, exact simplification, evaluation with angle modes.
+2. Expressions (done): parser, expression tree, exact simplification, evaluation with angle modes. Equations parse
+   but are not solved yet (`CalculatorError.unsupported`).
 3. App: maths keyboard and editor, result card (exact and decimal), history. Needs screenshots of the original app
    for the layout; ask the author.
 4. Graphs: sampling, zoom and pan, trace, roots, intersections, extremes.
@@ -66,7 +76,9 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 
 ## Commands
 
-- Build: `swift build`; test: `swift test`.
+- Build: `swift build`; test: `swift test`. A wider random search of the expression engine:
+  `MANTISSA_SEED=3 MANTISSA_SAMPLES=2500 swift test --no-parallel --filter ExprPropertyTests` (add `MANTISSA_TRACE=1` to
+  print each case; the last one printed names a crashing input).
 - Format: `xcrun swift-format format -i -r Sources Tests Package.swift`; lint:
   `xcrun swift-format lint --strict -r Sources Tests Package.swift` (config in `.swift-format`).
 - If a command fails because `xcode-select` points at the Command Line Tools, prefix it with
