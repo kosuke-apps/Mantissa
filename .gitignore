@@ -12,6 +12,9 @@ xcuserdata/
 *.xcodeproj
 build/
 
+# The label holds private notes and conversation titles (see the workspace rules)
+.label.toml
+
 # Machine-specific build settings (signing team)
 Config/Local.xcconfig
 

@@ -43,6 +43,13 @@ xcrun swift-format lint --strict -r Sources Tests Package.swift
 swift test
 ```
 
-## License
+## Licence
 
-MIT, see `LICENSE`.
+Mantissa is released under the MIT licence: Copyright (c) 2026 Kosuke Satake (see [LICENSE](LICENSE)). It has no
+third-party code or data: see [THIRD_PARTY.md](THIRD_PARTY.md).
+
+This project accepts issues, not code contributions.
+
+## About the making of this app
+
+This app was built with the help of Claude (Anthropic) through Claude Code; design, review and testing are by Kosuke Satake. Anthropic does not endorse this app.
