@@ -24,7 +24,7 @@ struct PlotFunctionTests {
     arguments: [
       ("x²−4", 1), ("x", 1), ("y=2x+1", 1), ("y = 3", 1), ("2x+1=y", 1), ("sin(x)", 1), ("1/x", 1),
       ("y=x\ny=−x+4", 2), ("x²\nx+2", 2), ("2+2", 0), ("5", 0), ("x=3", 0), ("x²−4=0", 0), ("a+x", 0), ("y=a", 0),
-      ("", 0), ("x+", 0), ("y=x\n5", 0), ("x<3", 0), ("1/0", 0), ("√(−4)x", 1),
+      ("", 0), ("x+", 0), ("y=x\n5", 0), ("x<3", 0), ("1/0", 0), ("√(−4)x", 0), ("√(4)x", 1),
     ])
   func plottable(text: String, count: Int) {
     #expect(functions(text).count == count, "\(text.debugDescription)")

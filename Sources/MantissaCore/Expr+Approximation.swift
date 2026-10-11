@@ -12,13 +12,17 @@ extension Expr {
     return try evaluate(working: precision + 15, values: values).rounded(toSignificantDigits: precision)
   }
 
-  private func evaluate(working p: Int, values: [String: BigDecimal]) throws(MathError) -> BigDecimal {
+  func evaluate(working p: Int, values: [String: BigDecimal]) throws(MathError) -> BigDecimal {
     switch self {
     case .number(let value):
       return BigDecimal(value, precision: p)
 
     case .constant(let constant):
-      return constant == .pi ? BigDecimal.pi(precision: p) : BigDecimal.e(precision: p)
+      switch constant {
+      case .pi: return BigDecimal.pi(precision: p)
+      case .e: return BigDecimal.e(precision: p)
+      case .i: throw .domain  // not a real number
+      }
 
     case .symbol(let name):
       guard let value = values[name] else { throw .notNumeric }
@@ -59,7 +63,7 @@ extension Expr {
     }
   }
 
-  private static func evaluatePower(
+  static func evaluatePower(
     _ base: Expr, _ exponent: Expr, working p: Int, values: [String: BigDecimal]
   ) throws(MathError) -> BigDecimal {
     var b = try base.evaluate(working: p, values: values)
@@ -93,7 +97,7 @@ extension Expr {
     return try b.power(y, precision: p)
   }
 
-  private static func evaluate(
+  static func evaluate(
     _ function: MathFunction, _ x: [BigDecimal], working p: Int
   ) throws(MathError)
     -> BigDecimal

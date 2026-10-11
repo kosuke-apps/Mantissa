@@ -210,12 +210,13 @@ struct CalculatorTests {
     #expect(fails("|3") == .parse(ParseError(reason: .missingClosingBar, offset: 2)))
   }
 
-  @Test("A real-valued exact expression with no real value keeps its exact form")
+  @Test("The square root of a negative number is imaginary and has a complex value")
   func nonRealResult() throws {
     let result = try Calculator().evaluate("√(-4)")
-    #expect(result.exact.description == "√(-4)")
+    #expect(result.exact.description == "2i")
     #expect(result.approximation == nil)
-    #expect(result.approximationError == .domain)
+    #expect(result.complexApproximation == ComplexDecimal(real: BigDecimal(0), imaginary: BigDecimal(2)))
+    #expect(result.approximationError == nil)
   }
 
   @Test("Huge results are kept as written rather than expanded to millions of digits")

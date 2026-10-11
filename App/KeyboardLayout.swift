@@ -102,7 +102,7 @@ enum KeyboardLayout {
           digit("1"), digit("2"), digit("3"), symbol("−"),
         ],
         [
-          symbol("π", alternates: [alternate("e")]),
+          symbol("π", alternates: [alternate("e"), alternate("i")]),
           symbol("%", alternates: [alternate("!"), alternate("°")]),
           digit("0"), symbol(".", alternates: [alternate(",")]), symbol("=", alternates: [alternate("≠")]), symbol("+"),
         ],

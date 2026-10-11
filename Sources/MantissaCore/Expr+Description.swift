@@ -32,7 +32,7 @@ private enum Renderer {
   static func render(_ expression: Expr) -> Rendered {
     switch expression {
     case .number(let value): return render(value)
-    case .constant(let constant): return Rendered(text: constant == .pi ? "π" : "e", level: Level.atom)
+    case .constant(let constant): return Rendered(text: constant.symbol, level: Level.atom)
     case .symbol(let name): return Rendered(text: name, level: Level.atom)
     case .sum(let terms): return renderSum(terms)
     case .product(let factors): return renderFraction(of: factors)
@@ -130,8 +130,10 @@ private enum Renderer {
         others.append(factor)
       }
     }
-    for factor in others { pieces.append(render(factor).wrapped(minimum: Level.factor)) }
+    // The imaginary unit is written last, after any radical: 2√3 i.
+    for factor in others where factor != .i { pieces.append(render(factor).wrapped(minimum: Level.factor)) }
     if hasRadical { pieces.append(radical(of: Rendered(text: radicand.description, level: Level.atom))) }
+    if others.contains(.i) { pieces.append("i") }
 
     var text = pieces[0]
     for piece in pieces.dropFirst() {

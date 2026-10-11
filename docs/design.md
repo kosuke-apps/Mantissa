@@ -96,9 +96,21 @@ How the functions reach their accuracy, so that a change does not quietly lose i
 - **The numeric content of a sum is taken out of powers**: `(2x+2)^2` is `4(x+1)^2` and `1/(2x+2)` is
   `(1/2)(x+1)^-1`. Without that, `1/(2(x+1))` and `1/(2x+2)` would be different expressions, and an expression would
   not read back as itself.
-- **Roots of negative numbers**: an odd root is real (`(−8)^(1/3)` is `−2`); an even root stays as written
-  (`√(-4)`) and has no decimal value (`MathError.domain`). The imaginary unit comes with the equation solver, which
-  needs it for quadratics; `i` is an ordinary variable until then.
+- **Complex numbers.** `i` is a constant of `Expr` (`MathConstant.i`) and the letter `i` always means it. A power of `i`
+  is reduced to 1, `i`, −1 or −`i`, so `i·i` is `−1` through the same merging of equal bases as `x·x`. Sums with `i` in
+  them are multiplied out like sums of radicals, and a division by `a + bi` is made real by the conjugate, whatever `a`
+  and `b` are (`1/(1+√2+i)`). `|a + bi|` is `√(a² + b²)`.
+- **Roots of negative numbers**: an odd root is real (`(−8)^(1/3)` is `−2`); an even root is the principal value
+  `a^(p/q)·e^(iπp/q)`, exact whenever `q` divides 12 (`√(−4)` is `2i`, `(−4)^(1/4)` is `1 + i`), and stays as written
+  otherwise. `e^(ciπ)` is exact at multiples of π/12 (Euler's formula) and so are the roots of `i` itself.
+- **Complex decimals** (`ComplexDecimal`, `Expr.complexApproximation`): a real value is computed exactly as before; a
+  value that is not real comes back as a pair of decimals (principal values; `ln`, `sin`, `cos`, `sinh`, `cosh`,
+  `tan`, `tanh`, `abs`, any power). `Evaluation` carries it as `complexApproximation`; when the imaginary part comes
+  out zero the value is reported as the real number it is (`i^i`, `e^(iπ)+1`). The inverse trigonometric functions of a
+  complex argument are not supported.
+- **How it was checked**: 9 000 random expressions in `i`, square roots of negative numbers, sums, products,
+  quotients and small powers agree with a separate complex evaluator that does no simplification, and the complex
+  functions agree with Python's `cmath` to 12 digits.
 - **Safe powers only**: `(x²)^(1/2)` is not `x` (it is `|x|`), so powers of powers are combined only for whole
   exponents or positive bases. `x/x` is 1, as in every computer algebra system, and `0^0` is an error.
 - **Size limits**: exact integer results above about 21 000 digits (70 000 bits) are kept as written (`2^100000`) and

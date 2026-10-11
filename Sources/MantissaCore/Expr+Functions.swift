@@ -143,6 +143,10 @@ extension Expr {
   private static func absoluteValue(_ x: Expr) -> Expr {
     if let positive = negatedIfNegative(x) { return absoluteValue(positive) }
     if let number = x.rational { return .number(number.magnitude) }
+    // |a + bi| = √(a² + b²) for real a and b.
+    if x.containsImaginaryUnit, let (real, imaginary) = x.complexParts() {
+      return makePower(makeSum([makePower(real, .integer(2)), makePower(imaginary, .integer(2))]), .fraction(1, 2))
+    }
     if x.isKnownPositive { return x }
     // |c·y| = |c|·|y| for a number c.
     if case .product(let factors) = x, case .number(let coefficient) = factors[0] {
@@ -214,7 +218,7 @@ extension Expr {
 }
 
 /// Exact sines, cosines and tangents at multiples of π/12 (15°), and the matching inverse lookups.
-private enum ExactTrigonometry {
+enum ExactTrigonometry {
   private static let sqrt2 = Expr.makePower(.integer(2), .fraction(1, 2))
   private static let sqrt3 = Expr.makePower(.integer(3), .fraction(1, 2))
   private static let sqrt6 = Expr.makePower(.integer(6), .fraction(1, 2))
@@ -253,6 +257,11 @@ private enum ExactTrigonometry {
     let index = ((k % 12) + 12) % 12
     if index == 6 { return nil }
     return index < 6 ? tangentTable[index] : -tangentTable[12 - index]
+  }
+
+  /// cos(kπ/12) + i·sin(kπ/12), the point on the unit circle at that angle.
+  static func unitVector(ofTwelfths k: Int) -> Expr? {
+    sine(ofTwelfths: k + 6) + Expr.makeProduct([sine(ofTwelfths: k), .i])
   }
 
   /// The angle kπ/12 as an expression.

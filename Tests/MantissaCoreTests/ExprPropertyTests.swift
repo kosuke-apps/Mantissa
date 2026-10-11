@@ -72,4 +72,63 @@ struct ExprPropertyTests {
     if traceCases { FileHandle.standardError.write(Data("COMPARED \(compared) SKIPPED \(skipped)\n".utf8)) }
     #expect(failures.isEmpty, "\(failures.count) failures; first: \(failures.prefix(6))")
   }
+
+  /// The same for complex arithmetic: i, square roots of negative numbers, sums, products, quotients and small powers.
+  @Test("Simplification never changes a complex value")
+  func complexValuesArePreserved() throws {
+    var generator = ComplexSyntaxGenerator(seed: 6006 &+ seedOffset &* 104_729)
+    let evaluator = NaiveComplexEvaluator()
+    let builder = Builder(angleUnit: .radians)
+    var compared = 0
+    var skipped = 0
+    var failures: [String] = []
+
+    for _ in 0..<sampleCount {
+      let syntax = generator.make(depth: 3)
+      if traceCases { FileHandle.standardError.write(Data("COMPLEX CASE \(syntax)\n".utf8)) }
+      guard let naive = try? evaluator.evaluate(syntax) else {
+        skipped += 1
+        continue
+      }
+      let built: Expr
+      do {
+        built = try builder.build(syntax)
+      } catch {
+        failures.append("builder threw \(error) where the naive value is \(naive): \(syntax)")
+        continue
+      }
+      do {
+        let value = try built.complexApproximation(precision: 40)
+        let scale = max(
+          BigDecimal(1), value.real.magnitude, value.imaginary.magnitude, naive.real.magnitude,
+          naive.imaginary.magnitude)
+        let tolerance = scale * BigDecimal(BigInt(1), exponent: -30)
+        if (value.real - naive.real).magnitude > tolerance || (value.imaginary - naive.imaginary).magnitude > tolerance
+        {
+          failures.append("value \(value) but naive \(naive) for \(built)  from \(syntax)")
+        }
+      } catch {
+        failures.append("approximation threw \(error) for \(built) where the naive value is \(naive)")
+      }
+      compared += 1
+
+      if let again = try? built.rebuilt(), again != built {
+        failures.append("not stable: \(built) rebuilds as \(again)")
+      }
+
+      let text = built.description
+      do {
+        guard case .expression(let reparsed) = try Parser.parse(text) else {
+          failures.append("\(text) did not parse as an expression")
+          continue
+        }
+        let rebuilt = try builder.build(reparsed)
+        if rebuilt != built { failures.append("round trip changed \(built) into \(rebuilt) via \(text)") }
+      } catch {
+        failures.append("round trip of \(built) failed with \(error) via \(text)")
+      }
+    }
+    #expect(compared >= sampleCount * 6 / 10, "only \(compared) expressions were comparable (\(skipped) skipped)")
+    #expect(failures.isEmpty, "\(failures.count) failures; first: \(failures.prefix(6))")
+  }
 }

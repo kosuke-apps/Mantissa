@@ -60,6 +60,29 @@ final class AppModelTests: XCTestCase {
     XCTAssertTrue(model.graph === graph)
   }
 
+  func testASquareRootOfANegativeNumberIsImaginaryWithADecimal() async {
+    let model = makeModel()
+    model.press(.squareRoot)
+    for key in ["−", "7"] { model.press(.symbol(key)) }
+    model.press(.right)
+    let outcome = await answer(model)
+    guard case .answer(let answer) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(answer.exact.parserText, "√(7)i")
+    XCTAssertEqual(answer.decimal?.parserText, "2.64575131106i")
+    XCTAssertFalse(answer.hasNoRealValue)
+  }
+
+  func testAWholeImaginaryAnswerNeedsNoDecimal() async {
+    let model = makeModel()
+    model.press(.squareRoot)
+    for key in ["−", "4"] { model.press(.symbol(key)) }
+    model.press(.right)
+    let outcome = await answer(model)
+    guard case .answer(let answer) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(answer.exact.parserText, "2i")
+    XCTAssertNil(answer.decimal)
+  }
+
   func testAnUnfinishedFormulaIsIncomplete() async {
     let model = makeModel()
     model.press(.symbol("5"))

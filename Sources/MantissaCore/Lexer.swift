@@ -17,7 +17,7 @@ enum Token: Equatable, Sendable {
     switch self {
     case .number(let value): return BigDecimal(value, precision: 20).description
     case .letter(let name): return name
-    case .constant(let constant): return constant == .pi ? "π" : "e"
+    case .constant(let constant): return constant.symbol
     case .function(let function): return function.rawValue
     case .plus: return "+"
     case .minus: return "-"
@@ -201,7 +201,13 @@ enum Lexer {
         position = run.index(position, offsetBy: 2)
       } else {
         let letter = rest.first!
-        let token: Token = letter == "π" ? .constant(.pi) : (letter == "e" ? .constant(.e) : .letter(String(letter)))
+        let token: Token
+        switch letter {
+        case "π": token = .constant(.pi)
+        case "e": token = .constant(.e)
+        case "i": token = .constant(.i)
+        default: token = .letter(String(letter))
+        }
         tokens.append(PositionedToken(token: token, offset: offset))
         position = run.index(after: position)
       }

@@ -20,7 +20,8 @@ extension Calculator {
     func function(_ syntax: Syntax, requiresUnknown: Bool) -> PlotFunction? {
       guard let expression = try? builder.build(syntax) else { return nil }
       let symbols = expression.freeSymbols
-      guard symbols.isSubset(of: ["x"]), !requiresUnknown || !symbols.isEmpty else { return nil }
+      guard symbols.isSubset(of: ["x"]), !requiresUnknown || !symbols.isEmpty, !expression.containsImaginaryUnit
+      else { return nil }
       return PlotFunction(expression)
     }
 

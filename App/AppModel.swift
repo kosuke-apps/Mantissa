@@ -182,6 +182,8 @@ final class AppModel {
       var decimal: [MathNode]?
       if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
+      } else if let value = evaluation.complexApproximation, !evaluation.exact.isGaussianInteger {
+        decimal = Typesetter.nodes(for: value, significantDigits: digits)
       }
       return .answer(Answer(exact: exact, decimal: decimal, hasNoRealValue: evaluation.approximationError != nil))
     } catch {

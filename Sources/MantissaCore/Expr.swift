@@ -2,6 +2,17 @@
 public enum MathConstant: Int, Hashable, Sendable, CaseIterable {
   case pi
   case e
+  /// The imaginary unit, i² = −1. A power of it is always reduced to 1, i, −1 or −i.
+  case i
+
+  /// The character that stands for the constant.
+  public var symbol: String {
+    switch self {
+    case .pi: return "π"
+    case .e: return "e"
+    case .i: return "i"
+    }
+  }
 }
 
 /// A function the engine knows. Angles are always in radians here; the parser converts when the user works in
@@ -70,6 +81,7 @@ extension Expr {
   public static let minusOne = Expr.number(Rational(-1))
   public static let pi = Expr.constant(.pi)
   public static let e = Expr.constant(.e)
+  public static let i = Expr.constant(.i)
 
   public static func integer(_ value: Int) -> Expr { .number(Rational(value)) }
 
@@ -95,6 +107,18 @@ extension Expr {
     case .sum(let terms), .product(let terms), .function(_, let terms):
       return terms.reduce(into: Set<String>()) { $0.formUnion($1.freeSymbols) }
     case .power(let base, let exponent): return base.freeSymbols.union(exponent.freeSymbols)
+    }
+  }
+
+  /// Whether the imaginary unit occurs anywhere in the expression, which makes its value non-real (or, if it cancels
+  /// in a way the canonical form has not seen, still a complex computation).
+  public var containsImaginaryUnit: Bool {
+    switch self {
+    case .constant(let constant): return constant == .i
+    case .number, .symbol: return false
+    case .sum(let parts), .product(let parts), .function(_, let parts):
+      return parts.contains { $0.containsImaginaryUnit }
+    case .power(let base, let exponent): return base.containsImaginaryUnit || exponent.containsImaginaryUnit
     }
   }
 

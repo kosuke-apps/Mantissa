@@ -241,7 +241,7 @@ struct MathEditorTests {
     var word = MathEditor()
     word.type("sin")
     #expect(word.text == "s*i*n")
-    #expect(try evaluate(word) == "ins")  // the product of three variables, in alphabetical order
+    #expect(try evaluate(word) == "nsi")  // the product of s, n and the imaginary unit, which is written last
 
     var product = MathEditor()
     product.type("2x")

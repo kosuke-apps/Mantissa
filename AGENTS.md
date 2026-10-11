@@ -51,7 +51,8 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   - `Sources/MantissaCore/NumberTheory.swift`: factoring by trial division, factorial, nCr, nPr, exact logarithms.
   - `Sources/MantissaCore/Expr.swift`: the exact expression type and its canonical order. `Expr+Build.swift`: the smart
     constructors (sum, product, power, radicals, expansion of numeric sums, rationalising). `Expr+Functions.swift`:
-    function application with exact values and symmetries. `Expr+Approximation.swift`: the decimal value.
+    function application with exact values and symmetries. `Expr+Approximation.swift`: the decimal value;
+    `Expr+ComplexApproximation.swift` and `ComplexDecimal.swift`: the same for values with the imaginary unit.
     `Expr+Description.swift`: the linear text form that the parser reads back.
   - `Sources/MantissaCore/Editor/`: the model behind the maths keyboard, with no UI. `MathNode` (a formula as a tree of
     symbols and structures with slots), `MathEditor` (every key as a method: characters, fraction, power, root, group,

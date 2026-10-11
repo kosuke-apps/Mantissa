@@ -14,7 +14,8 @@ enum DoubleCompiler {
       return { _ in number }
 
     case .constant(let constant):
-      let number = constant == .pi ? Double.pi : M_E
+      // A graph is of a real function; the imaginary unit has no real value.
+      let number = constant == .pi ? Double.pi : (constant == .e ? M_E : Double.nan)
       return { _ in number }
 
     case .symbol(let name):

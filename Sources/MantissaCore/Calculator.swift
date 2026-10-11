@@ -13,14 +13,20 @@ public struct CalculatorSettings: Sendable, Equatable {
 public struct Evaluation: Sendable, Equatable {
   /// The exact value in canonical form.
   public var exact: Expr
-  /// The value as a decimal, or `nil` when the expression has unknowns or has no real value (see `approximationError`).
+  /// The value as a decimal, or `nil` when the expression has unknowns or its value is not a real number.
   public var approximation: BigDecimal?
-  /// Why there is no decimal value, for an exact expression that cannot be evaluated (`√(-4)`).
+  /// The value as a complex decimal, when it is not a real number (`2i`, `(1 + i)/√2`).
+  public var complexApproximation: ComplexDecimal?
+  /// Why there is no decimal value, for an exact expression that cannot be evaluated (`1/0`, `ln(0)`).
   public var approximationError: MathError?
 
-  public init(exact: Expr, approximation: BigDecimal? = nil, approximationError: MathError? = nil) {
+  public init(
+    exact: Expr, approximation: BigDecimal? = nil, complexApproximation: ComplexDecimal? = nil,
+    approximationError: MathError? = nil
+  ) {
     self.exact = exact
     self.approximation = approximation
+    self.complexApproximation = complexApproximation
     self.approximationError = approximationError
   }
 }
@@ -70,9 +76,14 @@ public struct Calculator: Sendable {
 
   private func evaluation(of exact: Expr) -> Evaluation {
     guard exact.freeSymbols.isEmpty else { return Evaluation(exact: exact) }
-    do {
+    do throws(MathError) {
       return Evaluation(exact: exact, approximation: try exact.approximation(precision: settings.precision))
     } catch {
+      // A value that is not real is still a number: try it as a complex one.
+      if error == .domain, let complex = try? exact.complexApproximation(precision: settings.precision) {
+        if complex.isReal { return Evaluation(exact: exact, approximation: complex.real) }
+        return Evaluation(exact: exact, complexApproximation: complex)
+      }
       return Evaluation(exact: exact, approximationError: error)
     }
   }

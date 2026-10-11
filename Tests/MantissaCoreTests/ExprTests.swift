@@ -58,8 +58,8 @@ struct ExprTests {
     #expect(try power(2, Expr.fraction(5, 4)) == Expr.integer(2) * (try power(2, Expr.fraction(1, 4))))
     #expect(try power(2, Expr.fraction(-1, 2)) == half * (try power(2, half)))
     #expect(try power(6, half) == (try power(2, half)) * (try power(3, half)))
-    // An even root of a negative number is not real: it stays as written.
-    #expect(try power(-4, half) == .power(.integer(-4), half))
+    // An even root of a negative number is imaginary.
+    #expect(try power(-4, half) == Expr.integer(2) * .i)
   }
 
   @Test("Powers of powers: only the safe simplifications are made")

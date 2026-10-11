@@ -83,4 +83,4 @@ Photomath's list is very long: complex numbers, matrices, vectors, geometry, seq
 coordinates, power series. The author uses the scientific calculator, the solving of equations and expressions, graphs,
 history and offline use, so that is the scope; the rest is not planned. Order of work: arithmetic and functions
 (done) → the editor and the screen → history → graphs → equations, inequalities and systems → derivatives, integrals,
-limits, sums → complex numbers (needed anyway for quadratics) → whatever the author misses.
+limits, sums → whatever the author misses. (Complex numbers came first, because quadratics need them.)

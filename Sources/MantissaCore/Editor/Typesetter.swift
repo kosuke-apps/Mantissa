@@ -38,6 +38,26 @@ public enum Typesetter {
       + [.superscript(exponentSign + exponentDigits)]
   }
 
+  /// A complex decimal: `1.5 + 2.25i`, `−0.5i`, `i`. Each part is rounded to `significantDigits` digits.
+  public static func nodes(for value: ComplexDecimal, significantDigits: Int) -> [MathNode] {
+    let real = value.real.rounded(toSignificantDigits: significantDigits)
+    let imaginary = value.imaginary.rounded(toSignificantDigits: significantDigits)
+    let unit = MathNode.symbol("i")
+    var imaginaryNodes: [MathNode] = []
+    if !imaginary.isZero {
+      imaginaryNodes =
+        imaginary.magnitude == BigDecimal(1)
+        ? [] : nodes(for: imaginary.magnitude, significantDigits: significantDigits)
+      imaginaryNodes.append(unit)
+    }
+    if real.isZero {
+      return (imaginary.isNegative ? [.symbol("−")] : []) + (imaginary.isZero ? [.symbol("0")] : imaginaryNodes)
+    }
+    let realNodes = nodes(for: real, significantDigits: significantDigits)
+    if imaginary.isZero { return realNodes }
+    return realNodes + [.symbol(imaginary.isNegative ? "−" : "+")] + imaginaryNodes
+  }
+
   // MARK: Pieces
 
   /// How tightly a piece binds; one that binds too loosely for where it is used is put in parentheses.
@@ -63,7 +83,7 @@ public enum Typesetter {
   private static func typeset(_ expression: Expr) -> Piece {
     switch expression {
     case .number(let value): return number(value)
-    case .constant(let constant): return Piece(nodes: [.symbol(constant == .pi ? "π" : "e")], level: Level.atom)
+    case .constant(let constant): return Piece(nodes: [.symbol(constant.symbol)], level: Level.atom)
     case .symbol(let name): return Piece(nodes: [.symbol(name)], level: Level.atom)
     case .sum(let terms): return sum(terms)
     case .product(let factors): return fraction(of: factors)
@@ -158,8 +178,10 @@ public enum Typesetter {
         others.append(factor)
       }
     }
-    for factor in others { pieces.append(typeset(factor).wrapped(minimum: Level.factor)) }
+    // The imaginary unit is written last, after any radical: 2√3 i.
+    for factor in others where factor != .i { pieces.append(typeset(factor).wrapped(minimum: Level.factor)) }
     if hasRadical { pieces.append([.radical(index: nil, radicand: digits(radicand))]) }
+    if others.contains(.i) { pieces.append([.symbol("i")]) }
 
     var nodes = pieces[0]
     for piece in pieces.dropFirst() {

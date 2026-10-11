@@ -176,8 +176,12 @@ extension Expr {
       if value.signum > 0, let split = splitNumericExponent(base: base, exponent: exponent) { return split }
       return .power(base, exponent)
 
-    case .constant:
-      if base == .e, case .function(.ln, let arguments) = exponent { return arguments[0] }  // e^(ln x) = x
+    case .constant(let constant):
+      if constant == .i { return imaginaryUnitPower(exponent) }
+      if constant == .e {
+        if case .function(.ln, let arguments) = exponent { return arguments[0] }  // e^(ln x) = x
+        if let turn = eulerAngle(exponent), let exact = ExactTrigonometry.unitVector(ofTwelfths: turn) { return exact }
+      }
       if let split = splitNumericExponent(base: base, exponent: exponent) { return split }
       return .power(base, exponent)
 
@@ -237,6 +241,12 @@ extension Expr {
   /// `n`; for negative `n` the reciprocal is rationalised first when that is possible. `nil` leaves the power as is.
   private static func numericSumPower(_ terms: [Expr], base: Expr, exponent: Int) -> Expr? {
     if exponent == -1 {
+      // 1/(a + bi) = (a − bi)/(a² + b²), whatever a and b are.
+      if let (real, imaginary) = base.complexParts(), !imaginary.isZero {
+        let norm = makeSum([makePower(real, .integer(2)), makePower(imaginary, .integer(2))])
+        let conjugate = makeSum([real, makeProduct([.minusOne, imaginary, .i])])
+        return makeProduct([conjugate, makePower(norm, .minusOne)])
+      }
       guard terms.count == 2, let reciprocal = rationalizedReciprocal(terms[0], terms[1]) else { return nil }
       return reciprocal
     }
@@ -319,8 +329,15 @@ extension Expr {
       return .number(base.power(n))
     }
     if base.signum < 0 {
-      // An odd root of a negative number is real: (−8)^(1/3) = −2. An even root is not real; keep it as written.
-      guard !exponent.denominator.isEven else { return unevaluated }
+      // An odd root of a negative number is the real root: (−8)^(1/3) = −2. An even root is not real, and its principal
+      // value is a^(p/q) · e^(iπp/q), which is exact for the angles the trigonometric tables cover.
+      if exponent.denominator.isEven {
+        guard let q = exponent.denominator.asInt, 12 % q == 0,
+          let k = (exponent.numerator * BigInt(12 / q) % BigInt(24)).asInt,
+          let direction = ExactTrigonometry.unitVector(ofTwelfths: k)
+        else { return unevaluated }
+        return makeProduct([numberPower(-base, exponent), direction])
+      }
       let magnitude = numberPower(-base, exponent)
       return exponent.numerator.isEven ? magnitude : makeProduct([.minusOne, magnitude])
     }
@@ -354,6 +371,68 @@ extension Expr {
     return .product([.number(coefficient)] + radicals)
   }
 
+  // MARK: The imaginary unit
+
+  /// `i` to a power: i, −1, −i, 1 in turn for whole exponents; i^(p/q) is exact when 6p/q is whole (e^(iπ/2 · p/q)).
+  private static func imaginaryUnitPower(_ exponent: Expr) -> Expr {
+    guard let n = exponent.rational else { return .power(.i, exponent) }
+    if n.isInteger {
+      var remainder = (n.numerator % BigInt(4)).asInt ?? 0
+      if remainder < 0 { remainder += 4 }
+      switch remainder {
+      case 0: return .one
+      case 1: return .i
+      case 2: return .minusOne
+      default: return makeProduct([.minusOne, .i])
+      }
+    }
+    let sixths = n * Rational(6)
+    if sixths.isInteger, let k = (sixths.numerator % BigInt(24)).asInt,
+      let direction = ExactTrigonometry.unitVector(ofTwelfths: k)
+    {
+      return direction
+    }
+    return .power(.i, exponent)
+  }
+
+  /// `k` when the expression is `k·π·i/12` for a whole number `k`, which is the angle (in twelfths of π) of e^(that).
+  private static func eulerAngle(_ exponent: Expr) -> Int? {
+    var coefficient = Rational(1)
+    var rest = exponent
+    if case .product(let factors) = exponent, case .number(let number) = factors[0] {
+      coefficient = number
+      rest = factors.count == 2 ? factors[1] : .product(Array(factors.dropFirst()))
+    }
+    guard case .product(let parts) = rest, parts == [.pi, .i] else { return nil }
+    let twelfths = coefficient * Rational(12)
+    guard twelfths.isInteger else { return nil }
+    return (twelfths.numerator % BigInt(24)).asInt
+  }
+
+  /// `(real, imaginary)` with `self = real + imaginary·i` and neither part containing `i`, when `i` occurs only as a
+  /// factor of whole terms (as in `3 + 2i` or `√2 i`); `nil` when it is inside a function or a power.
+  func complexParts() -> (real: Expr, imaginary: Expr)? {
+    var realTerms: [Expr] = []
+    var imaginaryTerms: [Expr] = []
+    let terms: [Expr]
+    if case .sum(let inner) = self { terms = inner } else { terms = [self] }
+    for term in terms {
+      if !term.containsImaginaryUnit {
+        realTerms.append(term)
+      } else if term == .i {
+        imaginaryTerms.append(.one)
+      } else if case .product(let factors) = term, let position = factors.firstIndex(of: .i) {
+        var rest = factors
+        rest.remove(at: position)
+        if rest.contains(where: \.containsImaginaryUnit) { return nil }
+        imaginaryTerms.append(Expr.makeProduct(rest))
+      } else {
+        return nil
+      }
+    }
+    return (Expr.makeSum(realTerms), Expr.makeSum(imaginaryTerms))
+  }
+
   // MARK: Properties used by the rules
 
   var isInteger: Bool { rational?.isInteger ?? false }
@@ -362,7 +441,7 @@ extension Expr {
   var isKnownPositive: Bool {
     switch self {
     case .number(let value): return value.signum > 0
-    case .constant: return true
+    case .constant(let constant): return constant != .i
     case .power(let base, _): return base.isKnownPositive
     case .product(let factors), .sum(let factors): return factors.allSatisfy { $0.isKnownPositive }
     case .symbol, .function: return false

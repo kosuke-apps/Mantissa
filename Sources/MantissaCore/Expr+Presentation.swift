@@ -14,12 +14,13 @@ enum Presentation {
 
   /// How the terms of a sum are ordered for reading. With unknowns: highest degree first, plain numbers last
   /// (`x^2 - 3x + 2`). Without: a plain number first, then the rest with positive terms before negative ones
-  /// (`2 - √3`, `√6/4 - √2/4`).
+  /// (`2 - √3`, `√6/4 - √2/4`). Terms with the imaginary unit come after the real ones (`1 + √2 + 3i`).
   static func displayOrder(_ terms: [Expr]) -> [Expr] {
     let hasUnknowns = terms.contains { !$0.freeSymbols.isEmpty }
     func group(_ term: Expr) -> Int {
       if case .number = term { return hasUnknowns ? 2 : 0 }
-      return term.freeSymbols.isEmpty ? 1 : 0
+      if term.freeSymbols.isEmpty { return term.containsImaginaryUnit ? 3 : 1 }
+      return 0
     }
     let indexed = terms.enumerated().map { (index: $0.offset, term: $0.element) }
     return indexed.sorted { a, b in
@@ -50,5 +51,13 @@ enum Presentation {
     case .sum(let terms): return terms.map(degree).max() ?? 0
     default: return 0
     }
+  }
+}
+
+extension Expr {
+  /// Whether the value is `a + bi` for whole numbers `a` and `b`, which a decimal would only repeat.
+  public var isGaussianInteger: Bool {
+    guard let (real, imaginary) = complexParts() else { return false }
+    return real.isInteger && imaginary.isInteger
   }
 }
