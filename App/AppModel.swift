@@ -44,6 +44,8 @@ final class AppModel {
   private(set) var outcome = Outcome.empty
   let history: HistoryStore
   var showsHistory = false
+  /// The graph of what is typed, when it is a function of x.
+  private(set) var graph: GraphModel?
   var settings = CalculatorSettings() {
     didSet { refresh() }
   }
@@ -113,29 +115,61 @@ final class AppModel {
     let text = editor.text
     guard !text.isEmpty else {
       outcome = .empty
+      graph = nil
       return
     }
     let calculator = Calculator(settings: settings)
     let digits = decimalDigits
     evaluation = Task {
       let result = await Task.detached(priority: .userInitiated) {
-        AppModel.outcome(for: text, calculator: calculator, digits: digits)
+        (AppModel.outcome(for: text, calculator: calculator, digits: digits), calculator.plotFunctions(text))
       }.value
       if !Task.isCancelled {
-        outcome = result
+        var answer = result.0
+        // `y = x²` is drawn, not solved, so the "not supported yet" for equations would only mislead.
+        if !result.1.isEmpty && answer == .failure(.notSupportedYet) { answer = .empty }
+        updateGraph(result.1)
+        if answer == .incomplete {
+          // Typing passes through unfinished formulas all the time. Clear the old answer at once, but say that the
+          // formula is not complete only once the typing has paused.
+          outcome = .empty
+          try? await Task.sleep(for: .milliseconds(700))
+          if !Task.isCancelled { outcome = .incomplete }
+          return
+        }
+        outcome = answer
         scheduleRecording()
       }
+    }
+  }
+
+  /// Keeps the graph (and the window the user has moved it to) while the functions are the same.
+  private func updateGraph(_ functions: [PlotFunction]) {
+    if functions.isEmpty {
+      graph = nil
+    } else if graph?.functions.map(\.expression) != functions.map(\.expression) {
+      graph = GraphModel(functions: functions)
     }
   }
 
   /// A problem goes into the history once its answer has stood for a moment without being edited, so that typing a
   /// formula key by key leaves one entry and not one per key.
   private func scheduleRecording() {
-    guard case .answer(let answer) = outcome else { return }
+    let exact: [MathNode]
+    let decimal: [MathNode]?
+    switch outcome {
+    case .answer(let answer):
+      exact = answer.exact
+      decimal = answer.decimal
+    case .empty where graph != nil:
+      (exact, decimal) = ([], nil)  // a function that is only drawn has no answer to keep
+    default:
+      return
+    }
     let lines = editor.lines
     recording = Task {
       try? await Task.sleep(for: .seconds(1.2))
-      if !Task.isCancelled { history.record(lines: lines, exact: answer.exact, decimal: answer.decimal) }
+      if !Task.isCancelled { history.record(lines: lines, exact: exact, decimal: decimal) }
     }
   }
 

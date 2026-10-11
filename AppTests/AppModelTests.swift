@@ -33,6 +33,33 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(answer.decimal?.parserText, "1.25")
   }
 
+  func testAFunctionOfXIsDrawnAndAnEquationInXIsNot() async throws {
+    let model = makeModel()
+    for key in ["x", "+", "1"] { model.press(.symbol(key)) }
+    _ = await answer(model)
+    try await Task.sleep(for: .milliseconds(300))
+    XCTAssertEqual(model.graph?.functions.count, 1)
+    XCTAssertEqual(model.graph?.viewport.xMin.isFinite, true)
+
+    model.clearAll()
+    XCTAssertNil(model.graph)
+    for key in ["x", "=", "3"] { model.press(.symbol(key)) }
+    try await Task.sleep(for: .milliseconds(300))
+    XCTAssertNil(model.graph)  // an equation to solve is not a graph
+  }
+
+  func testTheGraphKeepsItsWindowWhileTheFunctionIsTheSame() async throws {
+    let model = makeModel()
+    for key in ["x", "+", "1"] { model.press(.symbol(key)) }
+    try await Task.sleep(for: .milliseconds(300))
+    let graph = try XCTUnwrap(model.graph)
+    graph.viewport = graph.viewport.panned(dx: 5, dy: 0)
+    // A key that changes nothing about the function leaves the graph, and where the user moved it, alone.
+    model.press(.left)
+    try await Task.sleep(for: .milliseconds(300))
+    XCTAssertTrue(model.graph === graph)
+  }
+
   func testAnUnfinishedFormulaIsIncomplete() async {
     let model = makeModel()
     model.press(.symbol("5"))

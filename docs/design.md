@@ -147,3 +147,21 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
 - **Checked by reading back.** Typeset text of random expressions (40 000 across seeds) parses back to the same
   expression. That found a defect in the shared-radical rule (`√(−7)` lost its sign); it is fixed in both the text
   rendering and the typesetter.
+
+## Graphs
+
+- **`Double` is allowed here and nowhere else.** `DoubleCompiler` turns the exact expression into a closure. Undefined stays
+  undefined: `ln` of a non-positive number and any infinite power are `NaN`, so a pole is a gap, not a number that later turns
+  `1/(1/0)` into 0. Tests compare the closure with the exact evaluation on random expressions in x (24 000 expressions at
+  7 points across seeds).
+- **What is drawn**: an expression whose only unknown is x, a line `y = …` in x, or several such lines. An equation to solve
+  (`x² − 4 = 0`) is not a graph, and a line with another letter is not either.
+- **Points are found by sampling, then refined.** A sign change between samples is bisected to a root; a turn of the slope
+  (skipping flat steps, which two samples either side of a peak produce) is refined by golden-section search; the crossings of
+  two curves are the roots of their difference. A pole also changes sign and also makes the slope turn, so a point is kept only
+  if the function is steady in a tiny neighbourhood and, for a root, its value there is far smaller than at the ends of the
+  interval. An extremum on the axis (x² at 0) is also a root.
+- **The first window** is wide enough for the five points of interest nearest the origin, with room around them, and as high as
+  the curves are there (the 3rd to 97th percentile of their values); curves with nothing to mark get x from −10 to 10.
+- **Gestures**: drag pans, pinch zooms about the fingers, tapping a point shows it with its coordinates, the corner button
+  resets. The points are looked for again, for twice the window's width, when a gesture ends.

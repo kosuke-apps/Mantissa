@@ -14,6 +14,7 @@ struct CalculatorScreen: View {
           InputView()
           Divider().padding(.vertical, 10)
           ResultView(outcome: model.outcome)
+          if let graph = model.graph { GraphCard(graph: graph).padding(.top, 16) }
         }
         .padding(.horizontal, 20)
         .padding(.top, 14)

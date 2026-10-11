@@ -3,8 +3,8 @@
 A free scientific and graphing calculator for iPhone. It works entirely offline, shows exact results (fractions,
 roots, π), solves equations and keeps a history. No ads, no accounts, no network access.
 
-> **Status: early development.** The calculation engine exists (exact arithmetic, a parser, exact and decimal
-> answers); there is no app to run yet.
+> **Status: early development.** The calculator, history and graphs work in the iOS Simulator; equation solving is next.
+> Not released yet.
 
 ## Features
 
@@ -20,8 +20,11 @@ Working today (in the `MantissaCore` package):
   (`3√3`, `√6/4 - √2/4`, `-1 + √2`, `2x + 2`, `120`) and a decimal approximation to any precision. Radians, or degrees
   with the ° sign (`sin(15°)`); English or Japanese full-width input.
 
-Planned: maths keyboard with stacked fractions and roots, exact results with a decimal switch, equation and
-inequality solving, graphs, history, English and Japanese.
+- An iPhone app on top of the engine: a maths keyboard with stacked fractions and roots, a live exact and decimal
+  answer, a history of solved problems (saved on the phone), and graphs of functions of x with their roots, extrema and
+  crossings marked. English and Japanese.
+
+Planned: equation and inequality solving, derivatives and integrals, limits and sums.
 
 ## Getting started
 

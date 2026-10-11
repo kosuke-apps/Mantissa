@@ -112,11 +112,15 @@ private struct HistoryRow: View {
         ForEach(Array(entry.lines.enumerated()), id: \.offset) { _, line in
           ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line, size: 20) }
         }
-        HStack(spacing: 6) {
-          Text("=").font(.system(size: 17)).foregroundStyle(.secondary)
-          ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: entry.exact, size: 22) }
+        if entry.exact.isEmpty {
+          Label("Graph", systemImage: "chart.xyaxis.line").font(.footnote).foregroundStyle(Color.accentColor)
+        } else {
+          HStack(spacing: 6) {
+            Text("=").font(.system(size: 17)).foregroundStyle(.secondary)
+            ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: entry.exact, size: 22) }
+          }
+          .foregroundStyle(Color.accentColor)
         }
-        .foregroundStyle(Color.accentColor)
       }
       Spacer(minLength: 0)
       Button {

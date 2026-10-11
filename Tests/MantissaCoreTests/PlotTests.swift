@@ -100,23 +100,36 @@ struct PlotFunctionTests {
 
 @Suite("Plot viewport and sampling")
 struct PlotViewportTests {
-  @Test("A fitted window takes in the interesting part of a curve")
+  @Test("A fitted window takes in the interesting points nearest the origin")
   func fit() throws {
-    let parabola = PlotViewport.fit([try function("x²")])
-    #expect(parabola.xMin == -10 && parabola.xMax == 10)
-    #expect(parabola.yMin < 0 && parabola.yMax > 100)  // the whole parabola over the window, with the axis in view
+    // x² − 4: roots at ±2 and the vertex at 0 all in view, and the whole of the dip, not the far reaches of the parabola.
+    let parabola = PlotViewport.fit([try function("x²−4")])
+    #expect(parabola.xMin < -2 && parabola.xMax > 2 && parabola.width < 12)
+    #expect(parabola.yMin < -4 && parabola.yMax > 0 && parabola.yMax < 30)
+
+    // A parabola whose only point of interest is the origin still gets a usable window.
+    let simple = PlotViewport.fit([try function("x²")])
+    #expect(simple.xMin < 0 && simple.xMax > 0 && simple.yMin < 0 && simple.yMax > 8)
 
     let constant = PlotViewport.fit([try function("y=3")])
     #expect(constant.yMin < 3 && constant.yMax > 3 && constant.height >= 4)
 
+    // sin: the roots and turns nearest 0 are within about ±π, so that is about the window.
     let sine = PlotViewport.fit([try function("sin(x)")])
+    #expect(sine.xMin < -3.14 && sine.xMax > 3.14 && sine.width < 14)
     #expect(sine.yMin < -1 && sine.yMax > 1 && sine.height < 6)
 
+    // A line far from the axis near the origin is not stretched down to the axis.
     let far = PlotViewport.fit([try function("y=1000+x")])
-    #expect(far.yMin > 900 && far.yMax < 1100)  // a curve far from the axis is not stretched to include it
+    #expect(far.yMin > 900 && far.yMax < 1100)
 
+    // Nothing to mark at all (1/x): the usual window.
     let pole = PlotViewport.fit([try function("1/x")])
-    #expect(pole.height < 1e4 && pole.height >= 4)
+    #expect(pole.xMin == -10 && pole.xMax == 10 && pole.height < 1e4 && pole.height >= 4)
+
+    // Two curves: their crossing is in view too.
+    let pair = PlotViewport.fit([try function("x²"), try function("x+2")])
+    #expect(pair.xMin < -1 && pair.xMax > 2)
   }
 
   @Test("Panning and zooming keep the point under the finger")

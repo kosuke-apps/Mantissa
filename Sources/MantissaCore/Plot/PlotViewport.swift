@@ -28,11 +28,29 @@ public struct PlotViewport: Equatable, Sendable {
       yMax: y + (yMax - y) * scale)
   }
 
-  /// A view that shows the interesting part of `functions`: x from −10 to 10, and y from where most of the curves lie,
-  /// with some room, always taking in the x axis when it is not far away.
+  /// A window on the interesting part of `functions`: wide enough for the points nearest the origin that are worth marking
+  /// (roots, turning points, crossings) with some room around them, and as high as the curves are there, with the x axis in
+  /// view unless the curves are far from it. Curves with nothing to mark get x from −10 to 10.
   public static func fit(_ functions: [PlotFunction]) -> PlotViewport {
-    let xMin = -10.0
-    let xMax = 10.0
+    // Look for the points of interest well beyond the usual window and keep the ones nearest the origin.
+    let nearest = PlotAnalysis.points(of: functions, from: -30, to: 30, samples: 1200)
+      .map(\.x).sorted { abs($0) < abs($1) }.prefix(5)
+    var xMin = -10.0
+    var xMax = 10.0
+    if !nearest.isEmpty {
+      let xs = Array(nearest) + [0]
+      let low = xs.min()!
+      let high = xs.max()!
+      let pad = (high - low) * 0.3
+      xMin = low - pad
+      xMax = high + pad
+      if xMax - xMin < 6 {
+        let middle = (xMin + xMax) / 2
+        xMin = middle - 3
+        xMax = middle + 3
+      }
+    }
+
     var values: [Double] = []
     for function in functions {
       for index in 0...600 {
@@ -42,8 +60,8 @@ public struct PlotViewport: Equatable, Sendable {
     }
     guard values.count >= 2 else { return PlotViewport(xMin: xMin, xMax: xMax, yMin: -10, yMax: 10) }
     values.sort()
-    var low = values[Int(Double(values.count - 1) * 0.05)]
-    var high = values[Int(Double(values.count - 1) * 0.95)]
+    var low = values[Int(Double(values.count - 1) * 0.03)]
+    var high = values[Int(Double(values.count - 1) * 0.97)]
     if high - low < 1e-9 {
       // A constant: show it in the middle with a symmetric window.
       let level = (low + high) / 2
