@@ -6,6 +6,8 @@ import XCTest
 @MainActor
 final class AppModelTests: XCTestCase {
   /// Waits for the answer, which is computed off the main thread.
+  private func makeModel() -> AppModel { AppModel(history: HistoryStore(fileURL: nil)) }
+
   private func answer(_ model: AppModel, timeout: TimeInterval = 5) async -> AppModel.Outcome {
     let deadline = Date().addingTimeInterval(timeout)
     var last = model.outcome
@@ -18,7 +20,7 @@ final class AppModelTests: XCTestCase {
   }
 
   func testTypingAFractionGivesAnAnswer() async {
-    let model = AppModel()
+    let model = makeModel()
     model.press(.symbol("1"))
     model.press(.fraction)
     model.press(.symbol("4"))
@@ -32,7 +34,7 @@ final class AppModelTests: XCTestCase {
   }
 
   func testAnUnfinishedFormulaIsIncomplete() async {
-    let model = AppModel()
+    let model = makeModel()
     model.press(.symbol("5"))
     model.press(.symbol("+"))
     let outcome = await answer(model)
@@ -40,7 +42,7 @@ final class AppModelTests: XCTestCase {
   }
 
   func testClearingEmptiesTheAnswer() async {
-    let model = AppModel()
+    let model = makeModel()
     model.press(.symbol("2"))
     model.press(.symbol("+"))
     model.press(.symbol("2"))
@@ -51,7 +53,7 @@ final class AppModelTests: XCTestCase {
   }
 
   func testDivisionByZeroIsReported() async {
-    let model = AppModel()
+    let model = makeModel()
     for key in ["1", "÷", "0"] { model.press(.symbol(key)) }
     let outcome = await answer(model)
     XCTAssertEqual(outcome, .failure(.divisionByZero))

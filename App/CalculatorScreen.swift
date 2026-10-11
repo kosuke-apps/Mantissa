@@ -6,6 +6,7 @@ struct CalculatorScreen: View {
   @Environment(AppModel.self) private var model
 
   var body: some View {
+    @Bindable var model = model
     VStack(spacing: 0) {
       topBar
       ScrollView {
@@ -22,6 +23,7 @@ struct CalculatorScreen: View {
       KeyboardView()
     }
     .background(Color(.systemBackground))
+    .sheet(isPresented: $model.showsHistory) { HistoryView() }
   }
 
   private var topBar: some View {

@@ -30,7 +30,7 @@ struct KeyboardView: View {
   private var controlRow: some View {
     HStack(spacing: 0) {
       controlButton("abc", accessibility: "Letters") { showsLetters.toggle() }
-      controlButton(systemImage: "clock", accessibility: "History") {}
+      controlButton(systemImage: "clock", accessibility: "History") { model.showsHistory = true }
       controlButton(systemImage: "arrow.left", accessibility: "Move left") { model.press(.left) }
       controlButton(systemImage: "arrow.right", accessibility: "Move right") { model.press(.right) }
       controlButton(systemImage: "return", accessibility: "New line") { model.press(.newLine) }

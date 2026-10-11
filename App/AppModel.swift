@@ -16,7 +16,7 @@ enum KeyAction: Hashable {
 /// The state of the calculator screen: what has been typed, and what it comes to.
 @MainActor @Observable
 final class AppModel {
-  struct Answer: Equatable {
+  struct Answer: Equatable, Codable {
     /// The exact value, typeset.
     var exact: [MathNode]
     /// The value as a decimal, when that says something more than the exact form does.
@@ -42,6 +42,8 @@ final class AppModel {
 
   private(set) var editor = MathEditor()
   private(set) var outcome = Outcome.empty
+  let history: HistoryStore
+  var showsHistory = false
   var settings = CalculatorSettings() {
     didSet { refresh() }
   }
@@ -49,7 +51,22 @@ final class AppModel {
   var decimalDigits = 12
 
   private var evaluation: Task<Void, Never>?
+  private var recording: Task<Void, Never>?
   private let feedback = UIImpactFeedbackGenerator(style: .light)
+
+  init(history: HistoryStore) {
+    self.history = history
+  }
+
+  convenience init() {
+    self.init(history: HistoryStore())
+  }
+
+  /// Puts an earlier problem back into the calculator.
+  func open(_ entry: HistoryEntry) {
+    editor = MathEditor(lines: entry.lines)
+    refresh()
+  }
 
   func press(_ action: KeyAction) {
     feedback.impactOccurred()
@@ -92,6 +109,7 @@ final class AppModel {
   /// Works out the answer for the current input, off the main thread, and keeps only the latest.
   private func refresh() {
     evaluation?.cancel()
+    recording?.cancel()
     let text = editor.text
     guard !text.isEmpty else {
       outcome = .empty
@@ -103,7 +121,21 @@ final class AppModel {
       let result = await Task.detached(priority: .userInitiated) {
         AppModel.outcome(for: text, calculator: calculator, digits: digits)
       }.value
-      if !Task.isCancelled { outcome = result }
+      if !Task.isCancelled {
+        outcome = result
+        scheduleRecording()
+      }
+    }
+  }
+
+  /// A problem goes into the history once its answer has stood for a moment without being edited, so that typing a
+  /// formula key by key leaves one entry and not one per key.
+  private func scheduleRecording() {
+    guard case .answer(let answer) = outcome else { return }
+    let lines = editor.lines
+    recording = Task {
+      try? await Task.sleep(for: .seconds(1.2))
+      if !Task.isCancelled { history.record(lines: lines, exact: answer.exact, decimal: answer.decimal) }
     }
   }
 
