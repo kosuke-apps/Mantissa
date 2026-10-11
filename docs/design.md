@@ -125,3 +125,25 @@ the canonical form from its parts changes nothing; and printing it and reading i
 a crashing input). It found: two infinite recursions (splitting `e^(π−1/8)` and squaring a sum each re-merged what
 was just split), `cos` of a 38-digit angle wrong from the 16th digit, and three ways in which one expression had two
 forms. It also showed that the evaluator itself needed 120 digits to be a fair judge.
+
+## The editor and the typesetter
+
+- **One tree for input and output.** A formula is a sequence of `MathNode`s; a structure (fraction, radical, exponent,
+  parentheses, function, bars) holds slots, each a sequence. The editor edits that tree and the typesetter turns an
+  `Expr` into it, so the app draws both with the same view.
+- **Cursor = a path.** `MathCursor` is a line, a list of (node index, slot) steps, and an offset. Right and left move
+  through every slot in reading order (numerator, denominator, out the end); the tests walk right from the start and left
+  from the end of random documents and require the same positions in reverse order and no position twice.
+- **Keys follow the old app's keyboard.** The fraction key takes the operand before the cursor (a number with its decimal
+  point, a variable or constant, or a whole structure, each with any exponent, factorial, percent or degree it carries)
+  as the numerator and puts the cursor in the denominator; with nothing there it starts in an empty numerator. A closing
+  parenthesis steps out of the group, function or bars the cursor is in. Backspace removes a symbol, enters a filled
+  structure from its end, removes an empty one, and at the start of a slot steps back (removing the structure only when
+  all of it is empty).
+- **The text written for the parser is exact, not pretty.** A fraction is `((n)/(d))`, an exponent `^(e)`, a root
+  `√(r)` or `root(r,n)`; letters typed one by one are joined with `*` so that s, i, n are three variables and "a" before a
+  `sin` key is `a*sin(…)`, not `asin`. An empty slot gives empty parentheses, which the parser rejects, so an unfinished
+  formula is reported as unfinished instead of guessed.
+- **Checked by reading back.** Typeset text of random expressions (40 000 across seeds) parses back to the same
+  expression. That found a defect in the shared-radical rule (`√(−7)` lost its sign); it is fixed in both the text
+  rendering and the typesetter.

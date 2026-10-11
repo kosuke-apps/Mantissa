@@ -49,6 +49,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     constructors (sum, product, power, radicals, expansion of numeric sums, rationalising). `Expr+Functions.swift`:
     function application with exact values and symmetries. `Expr+Approximation.swift`: the decimal value.
     `Expr+Description.swift`: the linear text form that the parser reads back.
+  - `Sources/MantissaCore/Editor/`: the model behind the maths keyboard, with no UI. `MathNode` (a formula as a tree of
+    symbols and structures with slots), `MathEditor` (every key as a method: characters, fraction, power, root, group,
+    function, arrows, backspace, new line; cursor as a path), `MathNode+Text` (writes the lines as parser text),
+    `Typesetter` (an exact `Expr`, or a decimal, as `MathNode`s for display).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit. `Calculator.swift`: `evaluate(_:)` returns the
     exact value and its decimal approximation, or a `CalculatorError`.
