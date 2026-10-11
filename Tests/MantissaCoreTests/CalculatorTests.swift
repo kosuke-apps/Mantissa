@@ -145,9 +145,11 @@ struct CalculatorTests {
     #expect(root2 == BigDecimal("1.4142135623730950488016887242096980785696718753769"))
     let pi = try #require(calculator.evaluate("π").approximation)
     #expect(pi == BigDecimal.pi())
-    let value = try #require(calculator.evaluate("sin(1)").approximation)
-    // 1 degree in radians: sin(π/180).
-    #expect(value.rounded(toSignificantDigits: 20) == BigDecimal("0.017452406437283512819"))
+    // Radians are the default: sin(1) is the sine of one radian, sin(1°) of one degree.
+    let radian = try #require(calculator.evaluate("sin(1)").approximation)
+    #expect(radian.rounded(toSignificantDigits: 20) == BigDecimal("0.84147098480789650665"))
+    let degree = try #require(calculator.evaluate("sin(1°)").approximation)
+    #expect(degree.rounded(toSignificantDigits: 20) == BigDecimal("0.017452406437283512819"))
     #expect(
       try #require(calculator.evaluate("1/3").approximation).rounded(toSignificantDigits: 10)
         == BigDecimal("0.3333333333"))
@@ -164,8 +166,9 @@ struct CalculatorTests {
 
   @Test("sin²(1°) + cos²(1°) − 1 is not left as a rounding residue")
   func cancellationIsZero() throws {
-    let result = try Calculator().evaluate("sin(1)^2+cos(1)^2-1")
-    #expect(result.approximation == BigDecimal(0))
+    for text in ["sin(1°)^2+cos(1°)^2-1", "sin(1)^2+cos(1)^2-1"] {
+      #expect(try Calculator().evaluate(text).approximation == BigDecimal(0), "\(text)")
+    }
   }
 
   @Test("Errors say what went wrong")
@@ -185,7 +188,8 @@ struct CalculatorTests {
     #expect(fails("ln(-1)") == .math(.domain))
     #expect(fails("asin(2)") == .math(.domain))
     #expect(fails("acos(-1.5)") == .math(.domain))
-    #expect(fails("tan(90)") == .math(.domain))
+    #expect(fails("tan(90°)") == .math(.domain))
+    #expect(fails("tan(π/2)") == .math(.domain))
     #expect(fails("(-3)!") == .math(.domain))
     #expect(fails("2.5!") == .math(.domain))
     #expect(fails("nCr(3,5)") == .math(.domain))

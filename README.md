@@ -16,9 +16,9 @@ Working today (in the `MantissaCore` package):
   inverse trigonometric and hyperbolic functions, rounded to the last digit (checked against Python's `decimal` at 15,
   50 and 100 digits).
 
-- A calculator engine: type `√12 + √3`, `sin(15)`, `1/(1+√2)`, `(x+1)*2` or `5!` and get the exact answer
-  (`3√3`, `√6/4 - √2/4`, `-1 + √2`, `2x + 2`, `120`) and a decimal approximation to any precision. Degrees or radians,
-  English or Japanese full-width input.
+- A calculator engine: type `√12 + √3`, `sin(15°)`, `1/(1+√2)`, `(x+1)*2` or `5!` and get the exact answer
+  (`3√3`, `√6/4 - √2/4`, `-1 + √2`, `2x + 2`, `120`) and a decimal approximation to any precision. Radians, or degrees
+  with the ° sign (`sin(15°)`); English or Japanese full-width input.
 
 Planned: maths keyboard with stacked fractions and roots, exact results with a decimal switch, equation and
 inequality solving, graphs, history, English and Japanese.

@@ -105,10 +105,11 @@ How the functions reach their accuracy, so that a change does not quietly lose i
   only approximated; factorials and counts beyond that are `MathError.overflow`. Factoring is by trial division
   (completely below 10^12, up to 50 000 for larger numbers); a number with a larger prime factor is split as far as
   possible and the rest is treated as one opaque factor.
-- **Angles**: functions work in radians. The `Builder` converts when the calculator is in degree mode (the default,
-  like a handheld calculator): `sin(30)` becomes `sin(30π/180)`, which the exact table turns into `1/2`. An argument
-  that *writes* π (`sin(π/6)`) is already radians. Exact values exist at multiples of 15°; other angles stay as
-  `sin(π/180)` with a decimal value beside them.
+- **Angles**: functions work in radians, and radians are the default, as in the app this one follows (`cos(30)` is
+  radians, `cos(30°)` is degrees). `°` after a number means that many degrees in whatever unit the calculator works
+  in, so `sin(30°)` is `1/2` in both. In degree mode (a setting) the `Builder` converts: `sin(30)` becomes
+  `sin(30π/180)`, which the exact table turns into `1/2`, and an argument that *writes* π (`sin(π/6)`) is already
+  radians. Exact values exist at multiples of 15°; other angles stay as `sin(π/180)` with a decimal value beside them.
 - **Approximation** evaluates the exact tree with 15 guard digits. Where an error is magnified it adds digits: the
   trigonometric and hyperbolic functions and powers get extra digits for large arguments (`cos(2·10^37)`), and a sum
   far below its largest term is treated as zero (`sin²1° + cos²1° − 1`).
