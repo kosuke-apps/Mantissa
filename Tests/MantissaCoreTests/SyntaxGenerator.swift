@@ -4,6 +4,8 @@
 /// common (a negative square root, ln of zero) and expected; the tests skip those.
 struct SyntaxGenerator {
   var random: SplitMix64
+  /// Whether `x` may appear as a leaf, for tests that evaluate at chosen values.
+  var includesUnknown = false
 
   init(seed: UInt64) { random = SplitMix64(seed: seed) }
 
@@ -15,10 +17,10 @@ struct SyntaxGenerator {
     switch int(0...9) {
     case 0...3: return .number(Rational(int(0...12)))
     case 4: return .number(Rational(decimal: ["0.5", "2.25", "0.1", "1.5", "3.75", "0.125"][int(0...5)])!)
-    case 5: return .constant(.pi)
+    case 5: return includesUnknown ? .symbol("x") : .constant(.pi)
     case 6: return .constant(.e)
     case 7: return .number(Rational(int(1...5), int(2...7)))
-    default: return .number(Rational(int(1...30)))
+    default: return includesUnknown && int(0...1) == 0 ? .symbol("x") : .number(Rational(int(1...30)))
     }
   }
 
