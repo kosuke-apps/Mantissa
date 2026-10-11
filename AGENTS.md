@@ -94,6 +94,8 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
   (need only Python 3; the files in `Tests/MantissaCoreTests/Resources` must not change when you rerun them).
 - App: `xcodegen generate`, then
   `xcodebuild -project Mantissa.xcodeproj -scheme Mantissa -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath build/DerivedData build CODE_SIGNING_ALLOWED=NO`;
+  icon: `swift tools/make_icon.swift App/Resources/Assets.xcassets/AppIcon.appiconset` (light, dark, tinted); the
+  simulator keeps the old icon until the app is uninstalled and installed again;
   app tests: the same with `test` (use `id=<simulator UDID>` when two simulators are booted). Format and lint also
   cover `App` and `AppTests`.
 
