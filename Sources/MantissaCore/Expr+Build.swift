@@ -199,6 +199,7 @@ extension Expr {
         let rest = factors.count == 2 ? factors[1] : Expr.product(Array(factors.dropFirst()))
         return makeProduct([makePower(.number(coefficient), exponent), makePower(rest, exponent)])
       }
+      if let root = complexHalfPower(of: base, exponent) { return root }  // √(−2i)
       return .power(base, exponent)
 
     case .sum(let terms):
@@ -207,6 +208,7 @@ extension Expr {
       {
         return result
       }
+      if let root = complexHalfPower(of: base, exponent) { return root }
       // Take the numeric content out of the sum, so that (2x + 2)^-1 and (1/2)(x + 1)^-1 are one expression:
       // (c·s)^n = c^n · s^n for a positive number c.
       if exponent.rational != nil {
@@ -270,7 +272,7 @@ extension Expr {
 
   /// `a × b` with every sum multiplied out term by term. Unlike `makeProduct` it never merges equal factors into a
   /// power, which for a sum would lead straight back to `numericSumPower`.
-  private static func multipliedOut(_ a: Expr, _ b: Expr) -> Expr {
+  static func multipliedOut(_ a: Expr, _ b: Expr) -> Expr {
     func terms(_ expression: Expr) -> [Expr] {
       if case .sum(let inner) = expression { return inner }
       return [expression]
@@ -431,6 +433,50 @@ extension Expr {
       }
     }
     return (Expr.makeSum(realTerms), Expr.makeSum(imaginaryTerms))
+  }
+
+  /// The principal square root of `a + bi` for real numbers `a` and `b` written with radicals, when it is a simpler
+  /// expression than the root itself: `√(3 + 4i)` is `2 + i`, `√(2i)` is `1 + i`. The formula is
+  /// `√((|z| + a)/2) + i·sign(b)·√((|z| − a)/2)` with `|z| = √(a² + b²)`; it is used only when both inner roots come out
+  /// without a root of a sum left in them.
+  private static func complexSquareRoot(of base: Expr) -> Expr? {
+    guard base.freeSymbols.isEmpty, base.containsImaginaryUnit, let (real, imaginary) = base.complexParts(),
+      !imaginary.isZero, let sign = imaginary.numericSign
+    else { return nil }
+    let modulus = makePower(
+      makeSum([makePower(real, .integer(2)), makePower(imaginary, .integer(2))]), .fraction(1, 2))
+    let half = Expr.number(Rational(1, 2))
+    let first = makePower(makeProduct([half, makeSum([modulus, real])]), .fraction(1, 2))
+    let second = makePower(makeProduct([half, makeSum([modulus, makeProduct([.minusOne, real])])]), .fraction(1, 2))
+    guard !first.hasRootOfSum, !second.hasRootOfSum else { return nil }
+    return makeSum([first, makeProduct([.number(Rational(sign)), second, .i])])
+  }
+
+  /// `base^(p/2)` for an odd whole `p` and a complex base whose square root is simple: `(√z)^p`. Writing it this way for
+  /// every `p` keeps `z^(−1/2)` and `1/√z`, which mean the same, one expression.
+  private static func complexHalfPower(of base: Expr, _ exponent: Expr) -> Expr? {
+    guard let n = exponent.rational, n.denominator == BigInt(2), let root = complexSquareRoot(of: base) else {
+      return nil
+    }
+    return makePower(root, .number(Rational(n.numerator)))
+  }
+
+  /// Whether a real number with no unknown is positive (1), negative (−1) or zero (0), judged from its decimal value.
+  var numericSign: Int? {
+    guard freeSymbols.isEmpty, let value = try? approximation(precision: 30) else { return nil }
+    if value.isZero { return 0 }
+    return value.isNegative ? -1 : 1
+  }
+
+  /// Whether a square root (or other fractional power) of a sum occurs anywhere in the expression.
+  var hasRootOfSum: Bool {
+    switch self {
+    case .number, .constant, .symbol: return false
+    case .power(let base, let exponent):
+      if case .sum = base, exponent.rational?.isInteger != true { return true }
+      return base.hasRootOfSum || exponent.hasRootOfSum
+    case .sum(let parts), .product(let parts), .function(_, let parts): return parts.contains { $0.hasRootOfSum }
+    }
   }
 
   // MARK: Properties used by the rules

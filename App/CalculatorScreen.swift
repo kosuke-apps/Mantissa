@@ -96,6 +96,8 @@ private struct ResultView: View {
       case .tooLarge: warning("This is too large to work out.")
       case .notSupportedYet: warning("Equations and inequalities are not supported yet.")
       }
+    case .solutions(let solutions):
+      SolutionsView(solutions: solutions)
     case .answer(let answer):
       HStack(alignment: .top, spacing: 12) {
         Rectangle().fill(Color.accentColor).frame(width: 4)
@@ -120,6 +122,43 @@ private struct ResultView: View {
       Text(message).font(.system(size: 14)).foregroundStyle(.secondary)
     } icon: {
       Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.accentColor)
+    }
+  }
+}
+
+/// The answer to an equation: one line for each solution, or a sentence when there is none or every number works.
+private struct SolutionsView: View {
+  let solutions: AppModel.Solutions
+
+  var body: some View {
+    HStack(alignment: .top, spacing: 12) {
+      Rectangle().fill(Color.accentColor).frame(width: 4)
+      VStack(alignment: .leading, spacing: 14) {
+        switch solutions.kind {
+        case .values:
+          ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
+        case .none:
+          Text("No solution").font(.system(size: 28))
+        case .everything:
+          Text(solutions.lines.isEmpty ? "Every number is a solution." : "Every number is a solution, except:")
+            .font(.system(size: 20))
+          ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
+        case .truth(let value):
+          Text(value ? "True" : "False").font(.system(size: 28))
+        }
+      }
+    }
+  }
+
+  private func row(_ line: AppModel.Solutions.Line) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: 32) }
+      if let decimal = line.decimal {
+        HStack(spacing: 6) {
+          Text("≈").font(.system(size: 20)).foregroundStyle(.secondary)
+          ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22) }
+        }
+      }
     }
   }
 }

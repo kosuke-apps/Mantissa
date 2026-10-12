@@ -33,7 +33,7 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(answer.decimal?.parserText, "1.25")
   }
 
-  func testAFunctionOfXIsDrawnAndAnEquationInXIsNot() async throws {
+  func testAFunctionOfXIsDrawn() async throws {
     let model = makeModel()
     for key in ["x", "+", "1"] { model.press(.symbol(key)) }
     _ = await answer(model)
@@ -43,9 +43,59 @@ final class AppModelTests: XCTestCase {
 
     model.clearAll()
     XCTAssertNil(model.graph)
-    for key in ["x", "=", "3"] { model.press(.symbol(key)) }
+  }
+
+  func testAnEquationIsSolvedAndItsSidesAreDrawn() async throws {
+    let model = makeModel()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["−", "4", "="] { model.press(.symbol(key)) }
+    model.press(.symbol("0"))
+    let outcome = await answer(model)
+    guard case .solutions(let solutions) = outcome else { return XCTFail("expected solutions, got \(outcome)") }
+    XCTAssertEqual(solutions.kind, .values)
+    XCTAssertEqual(solutions.lines.map { $0.exact.parserText }, ["x=−2", "x=2"])
+    XCTAssertNil(solutions.lines[0].decimal)
+    XCTAssertEqual(solutions.summary.parserText, "x=−2, x=2")
     try await Task.sleep(for: .milliseconds(300))
-    XCTAssertNil(model.graph)  // an equation to solve is not a graph
+    XCTAssertEqual(model.graph?.functions.count, 1)  // x² − 4, whose roots are the solutions
+  }
+
+  func testSolutionsWithRootsAndComplexNumbers() async {
+    let model = makeModel()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["−", "2", "="] { model.press(.symbol(key)) }
+    model.press(.symbol("0"))
+    guard case .solutions(let roots) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(roots.lines.map { $0.exact.parserText }, ["x=−√(2)", "x=√(2)"])
+    XCTAssertEqual(roots.lines[1].decimal?.parserText, "1.41421356237")
+
+    model.clearAll()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["+", "1", "="] { model.press(.symbol(key)) }
+    model.press(.symbol("0"))
+    guard case .solutions(let complex) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(complex.lines.map { $0.exact.parserText }, ["x=−i", "x=i"])
+  }
+
+  func testAnEquationWithNoSolutionAndAnIdentity() async {
+    let model = makeModel()
+    for key in ["x", "+", "1", "=", "x"] { model.press(.symbol(key)) }
+    guard case .solutions(let none) = await answer(model) else { return XCTFail("expected a solution") }
+    XCTAssertEqual(none.kind, .none)
+
+    model.clearAll()
+    for key in ["x", "=", "x"] { model.press(.symbol(key)) }
+    guard case .solutions(let all) = await answer(model) else { return XCTFail("expected a solution") }
+    XCTAssertEqual(all.kind, .everything)
   }
 
   func testTheGraphKeepsItsWindowWhileTheFunctionIsTheSame() async throws {

@@ -386,6 +386,72 @@
           }
         }
       }
+    },
+    "No solution": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解なし"
+          }
+        }
+      }
+    },
+    "Every number": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての数"
+          }
+        }
+      }
+    },
+    "Every number is a solution.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての数が解です。"
+          }
+        }
+      }
+    },
+    "Every number is a solution, except:": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次を除くすべての数が解です:"
+          }
+        }
+      }
+    },
+    "True": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正しい"
+          }
+        }
+      }
+    },
+    "False": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正しくない"
+          }
+        }
+      }
     }
   }
 }

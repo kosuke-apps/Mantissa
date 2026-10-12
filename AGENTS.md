@@ -62,6 +62,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     `Expr` to a closure), `PlotFunction` (+ `Calculator.plotFunctions`: which inputs are something to draw),
     `PlotViewport` (fit, pan, zoom, `PlotSampler` that cuts a curve at gaps and poles), `PlotAnalysis` (roots,
     y-intercept, extrema, crossings).
+  - `Sources/MantissaCore/Algebra/`: what the canonical form deliberately does not do on its own. `Expand` (multiply
+    out, substitute, put a sum over a common denominator), `Polynomial` and `RationalPolynomial` (coefficients as `Expr`
+    or `Rational`; rational roots, squarefree part), `PolynomialRoots` and `NumericRoots` (exact roots, then decimals),
+    `Solver` (`Calculator.solve`: one equation in one unknown).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit. `Calculator.swift`: `evaluate(_:)` returns the
     exact value and its decimal approximation, or a `CalculatorError`.
@@ -79,13 +83,14 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 
 1. Numbers (done): `BigInt`, `Rational`, `BigDecimal` with π, e, exp, ln, log, power, sqrt, trigonometric, inverse
    trigonometric and hyperbolic functions, verified against Python to the last digit.
-2. Expressions (done): parser, expression tree, exact simplification, evaluation with angle modes. Equations parse
-   but are not solved yet (`CalculatorError.unsupported`).
+2. Expressions (done): parser, expression tree, exact simplification, evaluation with angle modes, the imaginary unit.
 3. App: maths keyboard and editor, result card (exact and decimal) (done, first version: `docs/ui-reference.md` says
    what is followed), history, icon (done); the keyboard's remaining pages and long-press alternatives.
 4. Graphs (done, first version): a function of x, or `y = …`, or several lines, with roots, y-intercept, extrema and
    crossings marked and tappable; pan and pinch. To do: implicit curves, inequalities, a trace along the curve.
-5. Solving: linear and polynomial equations, systems, inequalities, then derivatives, integrals, limits, sums.
+5. Solving: one equation in one unknown, polynomial and rational, with complex solutions (done). To do: systems,
+   inequalities, equations with roots, powers of the unknown, logarithms, absolute values and trigonometric functions;
+   then derivatives, integrals, limits, sums.
 6. Polish: Japanese localization, accessibility, icon, running on the author's iPhone.
 
 ## Commands

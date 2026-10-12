@@ -44,9 +44,9 @@ struct ComplexTests {
   @Test(
     "Division by a complex number is rationalised",
     arguments: [
-      ("1/(1+i)", "1/2 - i/2"), ("1/(1-i)", "1/2 + i/2"), ("(1+i)/(1-i)", "i"), ("1/(3+4i)", "3/25 - 4i/25"),
-      ("(2+i)/(1+2i)", "4/5 - 3i/5"), ("1/(2i)", "-i/2"), ("i/(1+i)", "1/2 + i/2"), ("(1+i)/(1+i)", "1"),
-      ("1/(1+√2+i)", "√2/4 + √2i/4 - i/2"),
+      ("1/(1+i)", "(1 - i)/2"), ("1/(1-i)", "(1 + i)/2"), ("(1+i)/(1-i)", "i"), ("1/(3+4i)", "(3 - 4i)/25"),
+      ("(2+i)/(1+2i)", "(4 - 3i)/5"), ("1/(2i)", "-i/2"), ("i/(1+i)", "(1 + i)/2"), ("(1+i)/(1+i)", "1"),
+      ("1/(1+√2+i)", "(√2 + √2i - 2i)/4"),
     ])
   func division(input: String, expected: String) throws {
     #expect(try exact(input) == expected, "\(input)")
@@ -62,18 +62,29 @@ struct ComplexTests {
   @Test(
     "Euler's formula is exact at the angles the trigonometric tables cover",
     arguments: [
-      ("e^(iπ)", "-1"), ("e^(2iπ)", "1"), ("e^(iπ/2)", "i"), ("e^(-iπ/2)", "-i"), ("e^(iπ/6)", "√3/2 + i/2"),
-      ("e^(3iπ)", "-1"), ("e^(iπ/4)", "√2/2 + √2i/2"),
+      ("e^(iπ)", "-1"), ("e^(2iπ)", "1"), ("e^(iπ/2)", "i"), ("e^(-iπ/2)", "-i"), ("e^(iπ/6)", "(√3 + i)/2"),
+      ("e^(3iπ)", "-1"), ("e^(iπ/4)", "(√2 + √2i)/2"),
     ])
   func euler(input: String, expected: String) throws {
     #expect(try exact(input) == expected, "\(input)")
   }
 
+  @Test(
+    "Square roots of complex numbers are simplified when that gives a simpler expression",
+    arguments: [
+      ("√(3+4i)", "2 + i"), ("√(3-4i)", "2 - i"), ("√(2i)", "1 + i"), ("√(-2i)", "1 - i"), ("√(-3+4i)", "1 + 2i"),
+      ("√(-1/2+√3i/2)", "(1 + √3i)/2"), ("√(5+12i)", "3 + 2i"), ("√(-5+12i)", "2 + 3i"), ("(3+4i)^(1/2)", "2 + i"),
+      ("√(i)", "(√2 + √2i)/2"),
+    ])
+  func complexRoots(input: String, expected: String) throws {
+    #expect(try exact(input) == expected, "\(input)")
+  }
+
   @Test("i^(1/2) and other roots of i are the principal values")
   func rootsOfI() throws {
-    #expect(try exact("i^(1/2)") == "√2/2 + √2i/2")
-    #expect(try exact("(-1)^(1/4)") == "√2/2 + √2i/2")
-    #expect(try exact("(-1)^(1/6)") == "√3/2 + i/2")
+    #expect(try exact("i^(1/2)") == "(√2 + √2i)/2")
+    #expect(try exact("(-1)^(1/4)") == "(√2 + √2i)/2")
+    #expect(try exact("(-1)^(1/6)") == "(√3 + i)/2")
   }
 
   @Test("Complex values are given as decimals")

@@ -177,3 +177,35 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
   the curves are there (the 3rd to 97th percentile of their values); curves with nothing to mark get x from −10 to 10.
 - **Gestures**: drag pans, pinch zooms about the fingers, tapping a point shows it with its coordinates, the corner button
   resets. The points are looked for again, for twice the window's width, when a gesture ends.
+
+## Solving equations
+
+- **The canonical form does not expand.** `(x+1)(x-2)` stays a product, so solving starts with `Expr.expanded()`, an explicit
+  operation, and `together(variable:)`, which writes a sum of fractions as one numerator over the denominators that contain
+  the unknown (each with the largest power any term has, so no spurious factors are added). The numerator is read as a
+  `Polynomial` in the unknown whose coefficients may contain other letters (`ax + b`).
+- **The unknown** is `x` if the equation has one, then `y`, `z`, otherwise the first letter alphabetically; other letters
+  are constants. It is looked for in what was typed, not in the difference of the sides, so `x + 1 = x` has no solution
+  and is not a false statement. `y = f(x)` is a function to draw, not an equation to solve for x.
+- **Polynomials with rational coefficients**: the repeated factors are removed (`p / gcd(p, p′)`), zero is divided out,
+  rational roots are found by the rational root theorem (candidates from the divisors of the constant and leading
+  coefficients; skipped when they cannot be factored completely or there are more than 200 000), and what is left is solved
+  by the quadratic formula, or as a polynomial in `x^k` when it has that shape (`x⁴ = 16`, `x⁶ = 1`; the roots of unity are
+  exact for `k` dividing 24, by Euler's formula), and otherwise numerically. No closed form is attempted for a cubic or
+  quartic that does not factor: the result would be a nest of radicals nobody can read, so those roots are decimals
+  (50 digits).
+- **Numeric roots** are found in `Double` by the Aberth–Ehrlich method, which finds all roots at once, and refined by
+  Newton's method at the working precision. A root of a real polynomial whose imaginary part is only rounding is real.
+- **Other coefficients**: degree 1 and 2 are solved symbolically (`−b/a`, `(−b ± √(b² − 4ac))/2a`), so a letter or a radical
+  in a coefficient is fine; higher degrees with such coefficients are not solved.
+- **A value that makes a denominator zero is not a solution** (`(x²−1)/(x−1) = 0` has only −1). An identity says which
+  values are left out.
+- **Complex solutions are solutions.** `x² + 1 = 0` has `−i` and `i`. They come after the real ones, which are in increasing
+  order. The square root of a complex number is simplified exactly when that is simpler (`√(3+4i)` is `2+i`), which is what
+  makes roots such as the sixth roots of unity come out as `(1 + √3i)/2`.
+- **Display**: a sum of numbers with fractional coefficients over one denominator is written as one fraction,
+  `(1 − √5)/2`, in the typeset answer and in the text form.
+- **The graph** of an equation in `x` is its two sides, whose crossings are the solutions (one side that is zero is the x
+  axis, so only the other is drawn).
+- **How it was checked**: 250 random polynomials, some built from chosen rational roots, give as many distinct roots as the
+  polynomial has and each root satisfies it to many digits; hand-worked cases for each branch.

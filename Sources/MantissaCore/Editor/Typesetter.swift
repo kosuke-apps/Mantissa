@@ -104,6 +104,10 @@ public enum Typesetter {
   }
 
   private static func sum(_ terms: [Expr]) -> Piece {
+    if let (denominator, numerator) = Presentation.commonDenominator(terms) {
+      let stacked = MathNode.fraction(numerator: typeset(numerator).nodes, denominator: digits(denominator))
+      return Piece(nodes: [stacked], level: Level.product)
+    }
     var nodes: [MathNode] = []
     for (index, term) in Presentation.displayOrder(terms).enumerated() {
       let (negative, magnitude) = Presentation.splitSign(term)

@@ -12,6 +12,35 @@ enum Presentation {
     }
   }
 
+  /// A sum of numbers written as one fraction, `(1 + √5)/2` for `1/2 + √5/2`: `(denominator, numerator)` when at least two
+  /// terms have a fractional coefficient and no term has anything but a number or radical, `π` or `i` besides it. The
+  /// denominator is the least common multiple of the coefficients' denominators. Sums with unknowns are left alone.
+  static func commonDenominator(_ terms: [Expr]) -> (denominator: BigInt, numerator: Expr)? {
+    guard terms.count >= 2, terms.allSatisfy({ $0.freeSymbols.isEmpty }) else { return nil }
+    var denominator = BigInt(1)
+    var fractional = 0
+    for term in terms {
+      var coefficient = Rational(1)
+      switch term {
+      case .number(let value): coefficient = value
+      case .product(let factors):
+        if case .number(let value) = factors[0] { coefficient = value }
+        // A factor to a negative power is itself a fraction; stacking it inside this one would be hard to read.
+        for factor in factors {
+          if case .power(_, let exponent) = factor, exponent.rational?.isNegative == true { return nil }
+        }
+      case .power(_, let exponent):
+        if exponent.rational?.isNegative == true { return nil }
+      default: break
+      }
+      if !coefficient.denominator.isOne { fractional += 1 }
+      denominator = denominator / BigInt.gcd(denominator, coefficient.denominator) * coefficient.denominator
+    }
+    guard fractional >= 2, !denominator.isOne, denominator.bitWidth < 62 else { return nil }
+    let numerator = Expr.makeSum(terms.map { Expr.makeProduct([.number(Rational(denominator)), $0]) })
+    return (denominator, numerator)
+  }
+
   /// How the terms of a sum are ordered for reading. With unknowns: highest degree first, plain numbers last
   /// (`x^2 - 3x + 2`). Without: a plain number first, then the rest with positive terms before negative ones
   /// (`2 - √3`, `√6/4 - √2/4`). Terms with the imaginary unit come after the real ones (`1 + √2 + 3i`).

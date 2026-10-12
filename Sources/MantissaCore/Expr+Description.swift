@@ -55,6 +55,9 @@ private enum Renderer {
   // MARK: Sums
 
   private static func renderSum(_ terms: [Expr]) -> Rendered {
+    if let (denominator, numerator) = Presentation.commonDenominator(terms) {
+      return Rendered(text: "(" + render(numerator).text + ")/" + denominator.description, level: Level.product)
+    }
     var text = ""
     for (index, term) in Presentation.displayOrder(terms).enumerated() {
       let (negative, magnitude) = Presentation.splitSign(term)

@@ -45,6 +45,14 @@ struct MathLine: View {
     return result
   }
 
+  /// Whether the node at `index` is a plus or minus that is a sign (at the start, or after an operator or a comma) and not
+  /// an operation between two things, so it sits against what it applies to.
+  private func isSign(_ index: Int) -> Bool {
+    guard index > 0 else { return true }
+    guard case .symbol(let text) = nodes[index - 1] else { return false }
+    return SymbolView.spaced.contains(text) || text == ","
+  }
+
   private func childCursor(_ index: Int) -> (slot: Int, state: CursorState)? {
     guard let cursor, let step = cursor.path.first, step.index == index else { return nil }
     return (step.slot, CursorState(path: cursor.path.dropFirst(), offset: cursor.offset))
@@ -56,7 +64,8 @@ struct MathLine: View {
         switch item {
         case .caret: Caret(size: size)
         case .box: PlaceholderBox(size: size)
-        case .node(let index): MathNodeView(node: nodes[index], size: size, cursor: childCursor(index))
+        case .node(let index):
+          MathNodeView(node: nodes[index], size: size, cursor: childCursor(index), isSign: isSign(index))
         }
       }
     }
@@ -67,6 +76,7 @@ private struct MathNodeView: View {
   let node: MathNode
   let size: CGFloat
   let cursor: (slot: Int, state: CursorState)?
+  var isSign = false
 
   private func slot(_ nodes: [MathNode], _ index: Int, scale: CGFloat = 1) -> MathLine {
     MathLine(
@@ -76,7 +86,7 @@ private struct MathNodeView: View {
   var body: some View {
     switch node {
     case .symbol(let text):
-      SymbolView(text: text, size: size)
+      SymbolView(text: text, size: size, isSign: isSign)
 
     case .fraction(let numerator, let denominator):
       VStack(spacing: size * 0.08) {
@@ -141,15 +151,17 @@ private struct MathNodeView: View {
 private struct SymbolView: View {
   let text: String
   let size: CGFloat
+  var isSign = false
 
-  private static let spaced: Set<String> = ["+", "−", "×", "÷", "=", "<", ">", "≤", "≥", "≠", "·"]
+  static let spaced: Set<String> = ["+", "−", "×", "÷", "=", "<", ">", "≤", "≥", "≠", "≈", "·"]
 
   var body: some View {
+    let isOperation = Self.spaced.contains(text) && !(isSign && (text == "+" || text == "−"))
     Text(text)
       .font(.system(size: size))
       .monospacedDigit()
       .fixedSize()
-      .padding(.horizontal, Self.spaced.contains(text) ? size * 0.2 : 0)
+      .padding(.horizontal, isOperation ? size * 0.2 : 0)
   }
 }
 
