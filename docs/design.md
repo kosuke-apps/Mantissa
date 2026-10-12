@@ -209,3 +209,24 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
   axis, so only the other is drawn).
 - **How it was checked**: 250 random polynomials, some built from chosen rational roots, give as many distinct roots as the
   polynomial has and each root satisfies it to many digits; hand-worked cases for each branch.
+
+## Systems and inequalities
+
+- **Linear systems** are reduced by Gauss–Jordan elimination in exact arithmetic (`Expr`), so the answer is exact and
+  fractions stay fractions. The result is one solution, none (a row `0 = c`), or infinitely many: the determined unknowns
+  are then given in terms of the free ones (`x = 5 − y`).
+- **Nonlinear systems** by substitution: an unknown is eliminated through an equation that is linear in it with a constant
+  coefficient (`x + y = 7` gives `x = 7 − y`), the others are rewritten, and the process repeats until one unknown is left,
+  which the single-equation solver handles. A system with no such equation (`x² + y² = 1, x² − y² = 0`) is not solved.
+  Every candidate is checked against all the original equations. Solutions are in increasing order of the first unknown.
+- **The unknowns** of a system are all its letters, ordered x, y, z, then alphabetically.
+- **Inequalities** in one unknown: each condition `f op 0` is cut at the real roots of the numerator (where it is zero) and of
+  the denominators (where it is not defined). The sign is read at one point of each stretch between them, and each critical
+  point is judged by its own rule (a denominator's root never satisfies; a numerator's root satisfies `≤ ≥ =` only), then runs of
+  satisfied stretches and points are joined into intervals. A chain `1 < x ≤ 5` is the conditions `1 − x < 0` and `x − 5 ≤ 0`
+  judged together, so a middle operand may be any expression (`−1 < x² < 4`). `≠` works the same way.
+- **How it was checked**: random linear systems built from a chosen solution return exactly that solution (or a family that
+  contains it when the matrix is singular, with the rank checked independently); random polynomial inequalities agree with
+  direct evaluation at 91 test points each.
+- **Graphs**: an equation in x and y that is of degree 1 in y (`x + y = 3`, `xy = 1`) is drawn as the function it defines,
+  so a system of them is drawn as its lines with the crossing marked.

@@ -25,40 +25,7 @@ final class AppModel {
     var hasNoRealValue: Bool
   }
 
-  /// The solutions of an equation, typeset.
-  struct Solutions: Equatable {
-    enum Kind: Equatable {
-      /// One line for each value of the unknown.
-      case values
-      /// No value of the unknown works.
-      case none
-      /// Every value works (the lines say which are left out, as `x ≠ 1`).
-      case everything
-      /// A statement with no unknown, and whether it is true.
-      case truth(Bool)
-    }
-
-    struct Line: Equatable {
-      var exact: [MathNode]
-      var decimal: [MathNode]?
-    }
-
-    var kind: Kind
-    var lines: [Line] = []
-
-    /// The answer on one line, for the history.
-    var summary: [MathNode] {
-      switch kind {
-      case .values:
-        return Array(lines.map(\.exact).joined(separator: [MathNode.symbol(","), .symbol(" ")]))
-      case .none: return Self.text(String(localized: "No solution"))
-      case .everything: return Self.text(String(localized: "Every number"))
-      case .truth(let value): return Self.text(value ? String(localized: "True") : String(localized: "False"))
-      }
-    }
-
-    private static func text(_ string: String) -> [MathNode] { string.map { .symbol(String($0)) } }
-  }
+  typealias Solutions = SolutionsDisplay
 
   enum Failure: Equatable {
     case divisionByZero
@@ -242,22 +209,10 @@ final class AppModel {
     }
   }
 
-  /// An equation: its solutions, or "not supported yet" for the kinds that are not solved.
+  /// An equation, system or inequality: its solutions, or "not supported yet" for the kinds that are not solved.
   nonisolated private static func solution(for text: String, calculator: Calculator, digits: Int) -> Outcome {
     do {
-      switch try calculator.solve(text) {
-      case .truth(let value):
-        return .solutions(Solutions(kind: .truth(value)))
-      case .none:
-        return .solutions(Solutions(kind: .none))
-      case .everything(let variable, let excluding):
-        let lines = excluding.map { value in
-          Solutions.Line(exact: [.symbol(variable), .symbol("≠")] + nodes(of: value, digits: digits), decimal: nil)
-        }
-        return .solutions(Solutions(kind: .everything, lines: lines))
-      case .values(let variable, let values):
-        return .solutions(Solutions(kind: .values, lines: values.map { line(variable, $0, digits: digits) }))
-      }
+      return .solutions(SolutionsDisplay(try calculator.solve(text), digits: digits))
     } catch {
       switch error {
       case .parse: return .incomplete
@@ -265,29 +220,5 @@ final class AppModel {
       case .math(let math): return failure(math)
       }
     }
-  }
-
-  /// `x = value`, with the decimal beneath when it says something more; a value that has no exact form is `x ≈ decimal`.
-  nonisolated private static func line(_ variable: String, _ value: SolvedValue, digits: Int) -> Solutions.Line {
-    let name = MathNode.symbol(variable)
-    guard let exact = value.exact else {
-      return Solutions.Line(
-        exact: [name, .symbol("≈")] + decimalNodes(value.approximation, digits: digits), decimal: nil)
-    }
-    var decimal: [MathNode]?
-    if value.approximation != nil, exact.rational?.isInteger != true, !exact.isGaussianInteger {
-      decimal = decimalNodes(value.approximation, digits: digits)
-    }
-    return Solutions.Line(exact: [name, .symbol("=")] + Typesetter.nodes(for: exact), decimal: decimal)
-  }
-
-  nonisolated private static func nodes(of value: SolvedValue, digits: Int) -> [MathNode] {
-    value.exact.map { Typesetter.nodes(for: $0) } ?? decimalNodes(value.approximation, digits: digits)
-  }
-
-  nonisolated private static func decimalNodes(_ value: ComplexDecimal?, digits: Int) -> [MathNode] {
-    guard let value else { return [] }
-    if value.isReal { return Typesetter.nodes(for: value.real, significantDigits: digits) }
-    return Typesetter.nodes(for: value, significantDigits: digits)
   }
 }

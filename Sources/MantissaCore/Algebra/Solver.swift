@@ -11,6 +11,58 @@ public struct SolvedValue: Sendable, Equatable {
 
   /// Whether the value is a real number (`false` when it is not a number at all).
   public var isReal: Bool { approximation?.isReal ?? false }
+
+  /// An exact value with its decimal, when it has one. `nil` when the value is a number that cannot be evaluated.
+  static func exact(_ value: Expr) -> SolvedValue? {
+    if let real = try? value.approximation(precision: 50) {
+      return SolvedValue(exact: value, approximation: ComplexDecimal(real: real))
+    }
+    if let complex = try? value.complexApproximation(precision: 50) {
+      return SolvedValue(exact: value, approximation: complex)
+    }
+    // A value with another letter in it has no decimal.
+    return value.freeSymbols.isEmpty ? nil : SolvedValue(exact: value, approximation: nil)
+  }
+}
+
+/// One end of an interval: where it is, and whether the point itself belongs to the interval.
+public struct SolvedBound: Sendable, Equatable {
+  public var value: SolvedValue
+  public var isClosed: Bool
+
+  public init(value: SolvedValue, isClosed: Bool) {
+    self.value = value
+    self.isClosed = isClosed
+  }
+}
+
+/// A stretch of the real line. An end that is `nil` goes on forever. A single point is an interval closed at both ends
+/// with the same value.
+public struct SolvedInterval: Sendable, Equatable {
+  public var lower: SolvedBound?
+  public var upper: SolvedBound?
+
+  public init(lower: SolvedBound?, upper: SolvedBound?) {
+    self.lower = lower
+    self.upper = upper
+  }
+
+  /// Whether the interval is one point.
+  public var isPoint: Bool {
+    guard let lower, let upper, lower.isClosed, upper.isClosed else { return false }
+    return lower.value.exact == upper.value.exact && lower.value.approximation == upper.value.approximation
+  }
+}
+
+/// The value one unknown takes.
+public struct Assignment: Sendable, Equatable {
+  public var variable: String
+  public var value: SolvedValue
+
+  public init(variable: String, value: SolvedValue) {
+    self.variable = variable
+    self.value = value
+  }
 }
 
 /// What solving an equation or a system came to.
@@ -23,6 +75,13 @@ public enum Solved: Sendable, Equatable {
   case none(variable: String)
   /// The values of the unknown that satisfy the equation, real ones first in increasing order.
   case values(variable: String, [SolvedValue])
+  /// The values of the unknown that satisfy an inequality: a union of separate intervals, in increasing order.
+  case intervals(variable: String, [SolvedInterval])
+  /// The solutions of a system: each is a value for every unknown, in the order of `variables`.
+  case tuples(variables: [String], [[SolvedValue]])
+  /// A system with infinitely many solutions: the unknowns that are determined, given in terms of the `free` ones, which
+  /// can be anything.
+  case dependent([Assignment], free: [String])
 }
 
 /// Solves one equation in one unknown, treating any other letters as constants.
@@ -59,7 +118,7 @@ enum EquationSolver {
 
   /// The roots of a polynomial in one unknown, or `nil` if its coefficients are beyond this solver (an unknown letter in a
   /// polynomial of degree above 2).
-  private static func roots(of polynomial: Polynomial) -> [SolvedValue]? {
+  static func roots(of polynomial: Polynomial) -> [SolvedValue]? {
     if let rational = polynomial.rationalCoefficients {
       let solved = PolynomialRoots.solve(RationalPolynomial(rational))
       return solved.exact.compactMap(value(of:)) + solved.numeric.map { SolvedValue(exact: nil, approximation: $0) }
@@ -85,16 +144,7 @@ enum EquationSolver {
     return [(-b + root) * scale, (-b - root) * scale]
   }
 
-  private static func value(of exact: Expr) -> SolvedValue? {
-    if let real = try? exact.approximation(precision: 50) {
-      return SolvedValue(exact: exact, approximation: ComplexDecimal(real: real))
-    }
-    if let complex = try? exact.complexApproximation(precision: 50) {
-      return SolvedValue(exact: exact, approximation: complex)
-    }
-    // A value with another letter in it has no decimal.
-    return exact.freeSymbols.isEmpty ? nil : SolvedValue(exact: exact, approximation: nil)
-  }
+  private static func value(of exact: Expr) -> SolvedValue? { SolvedValue.exact(exact) }
 
   // MARK: Excluded values
 
@@ -161,52 +211,14 @@ enum EquationSolver {
   }
 }
 
-extension Calculator {
-  /// Solves an equation. The unknown is `x` if the equation has one, otherwise `y`, `z` or the first letter in the
-  /// alphabet; other letters are treated as constants. An input that is not an equation, or one of a kind that cannot be
-  /// solved yet, is `CalculatorError.unsupported`.
-  public func solve(_ text: String) throws(CalculatorError) -> Solved {
-    let statement: Statement
-    do {
-      statement = try Parser.parse(text)
-    } catch {
-      throw .parse(error)
-    }
-    guard case .relation(let chain) = statement, chain.links.count == 1, chain.links[0].op == .equal else {
-      throw .unsupported(.equation)
-    }
-    let builder = Builder(angleUnit: settings.angleUnit)
-    let left: Expr
-    let right: Expr
-    do {
-      left = try builder.build(chain.first)
-      right = try builder.build(chain.links[0].operand)
-    } catch {
-      throw .math(error)
-    }
-    // `y = f(x)` defines a function (it is drawn, not solved); `y = x²` is not an equation to solve for x.
-    let definesFunction =
-      (chain.first == .symbol("y") && right.freeSymbols.isSubset(of: ["x"]))
-      || (chain.links[0].operand == .symbol("y") && left.freeSymbols.isSubset(of: ["x"]))
-    if definesFunction { throw .unsupported(.equation) }
-    let difference = left - right
-
-    // The unknown is looked for in what was typed, not in the difference, so that `x + 1 = x` (which has none left after
-    // subtracting) is an equation with no solution and not a false statement.
-    let letters = left.freeSymbols.union(right.freeSymbols)
-    guard let variable = EquationSolver.unknown(in: letters) else {
-      return .truth(isZero(difference))
-    }
-    guard let solved = EquationSolver.solve(difference, for: variable) else { throw .unsupported(.equation) }
-    return solved
-  }
-
-  /// Whether a number with no unknowns is zero: exactly when the canonical form says so, otherwise when its decimal value
-  /// is zero to 40 digits.
-  private func isZero(_ value: Expr) -> Bool {
-    if value.isZero { return true }
-    if let real = try? value.approximation(precision: 40) { return (real.decimalOrder ?? Int.min) < -35 }
-    if let complex = try? value.complexApproximation(precision: 40) {
+extension Expr {
+  /// Whether the expression is zero: exactly when the canonical form says so, and for a number with no unknowns also when
+  /// its decimal value is zero to 40 digits (`sin²1 + cos²1 − 1`).
+  var isZeroValue: Bool {
+    if isZero { return true }
+    guard freeSymbols.isEmpty else { return false }
+    if let real = try? approximation(precision: 40) { return (real.decimalOrder ?? Int.min) < -35 }
+    if let complex = try? complexApproximation(precision: 40) {
       return (complex.magnitudeSquared.decimalOrder ?? Int.min) < -70
     }
     return false

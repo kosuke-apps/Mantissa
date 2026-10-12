@@ -145,6 +145,18 @@ private struct SolutionsView: View {
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .truth(let value):
           Text(value ? "True" : "False").font(.system(size: 28))
+        case .dependent(let free):
+          ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
+          Text("\(free.joined(separator: ", ")) can be any number").font(.system(size: 18)).foregroundStyle(.secondary)
+        case .intervals:
+          ForEach(Array(solutions.lines.enumerated()), id: \.offset) { index, line in
+            if index > 0 { Text("or").font(.system(size: 18)).foregroundStyle(.secondary) }
+            row(line)
+          }
+          if let notation = solutions.notation {
+            ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: notation, size: 24) }
+              .foregroundStyle(.secondary)
+          }
         }
       }
     }
@@ -155,7 +167,7 @@ private struct SolutionsView: View {
       ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: 32) }
       if let decimal = line.decimal {
         HStack(spacing: 6) {
-          Text("≈").font(.system(size: 20)).foregroundStyle(.secondary)
+          if !line.decimalIsLabelled { Text("≈").font(.system(size: 20)).foregroundStyle(.secondary) }
           ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22) }
         }
       }

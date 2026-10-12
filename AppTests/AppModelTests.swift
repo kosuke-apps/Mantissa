@@ -133,6 +133,57 @@ final class AppModelTests: XCTestCase {
     XCTAssertNil(answer.decimal)
   }
 
+  func testASystemOfEquationsIsSolved() async {
+    let model = makeModel()
+    for key in ["x", "+", "y", "=", "3"] { model.press(.symbol(key)) }
+    model.press(.newLine)
+    for key in ["x", "−", "y", "=", "1"] { model.press(.symbol(key)) }
+    guard case .solutions(let solutions) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(solutions.kind, .values)
+    XCTAssertEqual(solutions.lines.map { $0.exact.parserText }, ["x=2, y=1"])
+    XCTAssertNil(solutions.lines[0].decimal)
+  }
+
+  func testASystemWithIrrationalSolutionsShowsLabelledDecimals() async {
+    let model = makeModel()
+    for key in ["x", "−", "y", "=", "0"] { model.press(.symbol(key)) }
+    model.press(.newLine)
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["+", "y"] { model.press(.symbol(key)) }
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["=", "2"] { model.press(.symbol(key)) }
+    guard case .solutions(let solutions) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(solutions.lines.map { $0.exact.parserText }, ["x=−1, y=−1", "x=1, y=1"])
+  }
+
+  func testAnInequalityGivesIntervals() async {
+    let model = makeModel()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["<", "4"] { model.press(.symbol(key)) }
+    guard case .solutions(let solutions) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(solutions.kind, .intervals)
+    XCTAssertEqual(solutions.lines.map { $0.exact.parserText }, ["−2<x<2"])
+    XCTAssertEqual(solutions.notation?.parserText, "(−2, 2)")
+
+    model.clearAll()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["≥", "4"] { model.press(.symbol(key)) }
+    guard case .solutions(let outside) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(outside.lines.map { $0.exact.parserText }, ["x≤−2", "x≥2"])
+    XCTAssertEqual(outside.notation?.parserText, "(−∞, −2]∪[2, ∞)")
+  }
+
   func testAnUnfinishedFormulaIsIncomplete() async {
     let model = makeModel()
     model.press(.symbol("5"))

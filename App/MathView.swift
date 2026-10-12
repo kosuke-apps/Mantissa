@@ -50,7 +50,7 @@ struct MathLine: View {
   private func isSign(_ index: Int) -> Bool {
     guard index > 0 else { return true }
     guard case .symbol(let text) = nodes[index - 1] else { return false }
-    return SymbolView.spaced.contains(text) || text == ","
+    return SymbolView.spaced.contains(text) || [",", " ", "(", "[", "{"].contains(text)
   }
 
   private func childCursor(_ index: Int) -> (slot: Int, state: CursorState)? {
@@ -153,7 +153,7 @@ private struct SymbolView: View {
   let size: CGFloat
   var isSign = false
 
-  static let spaced: Set<String> = ["+", "−", "×", "÷", "=", "<", ">", "≤", "≥", "≠", "≈", "·"]
+  static let spaced: Set<String> = ["+", "−", "×", "÷", "=", "<", ">", "≤", "≥", "≠", "≈", "·", "∪"]
 
   var body: some View {
     let isOperation = Self.spaced.contains(text) && !(isSign && (text == "+" || text == "−"))
