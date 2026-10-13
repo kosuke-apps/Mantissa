@@ -135,6 +135,12 @@ extension Expr {
       if let exact = NumberTheory.exactLogarithm(of: value, base: radix) { return .number(exact) }
     }
     if x == base && base.isKnownPositive { return .one }
+    // log_b(a^p) = p·log_b(a) when log_b(a) is a plain number: log₂(2^(2/3)) is 2/3.
+    if case .power(let inner, let exponent) = x, inner.isKnownPositive, exponent.rational != nil,
+      let reduced = try? logarithm(inner, base: base), reduced.rational != nil
+    {
+      return exponent * reduced
+    }
     return .function(.log, [x, base])
   }
 

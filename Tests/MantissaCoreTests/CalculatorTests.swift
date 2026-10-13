@@ -227,4 +227,20 @@ struct CalculatorTests {
     #expect(approximate.rounded(toSignificantDigits: 10) == BigDecimal("9.990020930e30102"))
     #expect(throws: CalculatorError.math(.overflow)) { try Calculator().evaluate("100000!") }
   }
+
+  /// A value with a hundred million digits is fine to add to or take the logarithm of, but the functions that would need as
+  /// many extra digits to be right (a hyperbolic tangent of it, the sine of it) say it is too large, and everything is quick.
+  @Test("Astronomically large intermediate values do not take forever")
+  func astronomicalValues() throws {
+    let start = ContinuousClock.now
+    #expect(
+      try Calculator().evaluate("atan(cosh(sinh(20)))").approximation?.rounded(toSignificantDigits: 8)
+        == BigDecimal("1.5707963"))
+    #expect(
+      try Calculator().evaluate("ln(cosh(sinh(20)))").approximation?.rounded(toSignificantDigits: 6)
+        == BigDecimal("242583000"))
+    #expect(try Calculator().evaluate("tanh(cosh(sinh(20)))").approximationError == .overflow)
+    #expect(try Calculator().evaluate("sin(cosh(sinh(20)))").approximationError == .overflow)
+    #expect(ContinuousClock.now - start < .seconds(30))
+  }
 }

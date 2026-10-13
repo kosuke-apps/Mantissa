@@ -1,6 +1,11 @@
 // Evaluating an expression to a decimal.
 
 extension Expr {
+  /// A value is not worked out when that would take more than this many extra digits of precision to keep the result right:
+  /// the sine of a number with 10^5 digits, or e to such a power, is not something to compute (and the latter is far beyond
+  /// what a number here can hold anyway).
+  static let maxExtraDigits = 100_000
+
   /// The value to `precision` significant digits. Symbols take their values from `values`; one with no value is
   /// `MathError.notNumeric`. Non-real results (such as the square root of a negative number) are `.domain`.
   public func approximation(
@@ -57,6 +62,7 @@ extension Expr {
       // error in the result, so a large argument needs that many more digits than the result does: cos(2·10^37)
       // from an argument good to 55 significant digits is good to about 18 places, not 55.
       if function.magnifiesArgumentError, let order = evaluated[0].decimalOrder, order > 0 {
+        guard order <= Expr.maxExtraDigits else { throw .overflow }
         evaluated[0] = try arguments[0].evaluate(working: p + order + 3, values: values)
       }
       return try Expr.evaluate(function, evaluated, working: p)
@@ -87,6 +93,7 @@ extension Expr {
     // b^y = e^(y ln b): an error ε in b or y becomes about |y ln b| ε in the result, so a large exponent needs more
     // digits in both.
     if let order = y.decimalOrder, order > 0 {
+      guard order <= Expr.maxExtraDigits else { throw .overflow }
       y = try exponent.evaluate(working: p + order + 3, values: values)
       b = try base.evaluate(working: p + order + 3, values: values)
     }

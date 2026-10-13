@@ -180,6 +180,12 @@ extension Expr {
       if constant == .i { return imaginaryUnitPower(exponent) }
       if constant == .e {
         if case .function(.ln, let arguments) = exponent { return arguments[0] }  // e^(ln x) = x
+        // e^(c ln x) = x^c, with the same assumption of a positive x.
+        if case .product(let factors) = exponent, factors.count == 2, case .number(let c) = factors[0],
+          case .function(.ln, let arguments) = factors[1]
+        {
+          return makePower(arguments[0], .number(c))
+        }
         if let turn = eulerAngle(exponent), let exact = ExactTrigonometry.unitVector(ofTwelfths: turn) { return exact }
       }
       if let split = splitNumericExponent(base: base, exponent: exponent) { return split }

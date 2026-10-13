@@ -106,6 +106,7 @@ extension Expr {
     // b^y = e^(y ln b): an error ε in b or y becomes about |y ln b| ε in the result.
     let rough = try y.multiplied(by: b.ln(precision: 20), precision: 20)
     let extra = [rough.real, rough.imaginary, y.real, y.imaginary].compactMap(\.decimalOrder).max() ?? 0
+    guard extra <= Expr.maxExtraDigits else { throw .overflow }
     if extra > 0 {
       b = try base.complexEvaluate(working: p + extra + 3, values: values)
       y = try exponent.complexEvaluate(working: p + extra + 3, values: values)
@@ -126,6 +127,7 @@ extension Expr {
     if evaluated.allSatisfy(\.isReal) {
       var reals = evaluated.map(\.real)
       if function.magnifiesArgumentError, let order = reals[0].decimalOrder, order > 0 {
+        guard order <= Expr.maxExtraDigits else { throw .overflow }
         reals[0] = try arguments[0].evaluate(working: p + order + 3, values: values)
       }
       do throws(MathError) {

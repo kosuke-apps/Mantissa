@@ -194,6 +194,13 @@ extension BigDecimal {
     precondition(precision >= 1, "Precision must be at least 1")
     guard let order = decimalOrder else { return self }
     if isNegligibleSquare(precision: precision) { return rounded(toSignificantDigits: precision) }
+    // For a huge argument π/2 − 1/a is π/2 to every digit that is kept, and working with a itself would mean a number
+    // of millions of digits.
+    if order > precision + guardDigits {
+      let quarterTurn = (BigDecimal.pi(precision: precision + guardDigits) * BigDecimal(BigInt(5), exponent: -1))
+        .rounded(toSignificantDigits: precision)
+      return isNegative ? -quarterTurn : quarterTurn
+    }
 
     // atan(a) = π/2 − atan(1/a) brings a into [0, 1]; atan(t) = 2 atan(t / (1 + √(1 + t²))) then shrinks it to
     // about 0.05, where the Taylor series gains two digits per term.

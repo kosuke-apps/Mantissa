@@ -96,7 +96,7 @@ enum EquationSolver {
   static func solve(_ expression: Expr, for variable: String) -> Solved? {
     guard let (numerator, denominators) = expression.together(variable: variable),
       let polynomial = numerator.polynomial(in: variable)
-    else { return nil }
+    else { return TranscendentalSolver.solve(expression, for: variable) }
 
     // Where a denominator is zero the expression is not defined, so those values are not solutions.
     let excluded = denominators.compactMap { $0.base.polynomial(in: variable) }
