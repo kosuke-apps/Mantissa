@@ -65,6 +65,23 @@ public struct Assignment: Sendable, Equatable {
   }
 }
 
+/// A family of solutions that repeats: `offset + period·n` for every whole number `n` (`π/6 + 2πn`, or `30 + 360n` in
+/// degrees).
+public struct PeriodicSolution: Sendable, Equatable {
+  public var offset: Expr
+  public var period: Expr
+  /// The two as decimals.
+  public var offsetApproximation: BigDecimal?
+  public var periodApproximation: BigDecimal?
+
+  public init(offset: Expr, period: Expr) {
+    self.offset = offset
+    self.period = period
+    offsetApproximation = offset.realValue
+    periodApproximation = period.realValue
+  }
+}
+
 /// What solving an equation or a system came to.
 public enum Solved: Sendable, Equatable {
   /// A statement with no unknowns: `1 + 1 = 2`.
@@ -77,6 +94,8 @@ public enum Solved: Sendable, Equatable {
   case values(variable: String, [SolvedValue])
   /// The values of the unknown that satisfy an inequality: a union of separate intervals, in increasing order.
   case intervals(variable: String, [SolvedInterval])
+  /// The solutions of an equation that repeat, such as `sin x = 1/2`: each family is `offset + period·n`, `n` any whole number.
+  case periodic(variable: String, [PeriodicSolution])
   /// The solutions of a system: each is a value for every unknown, in the order of `variables`.
   case tuples(variables: [String], [[SolvedValue]])
   /// A system with infinitely many solutions: the unknowns that are determined, given in terms of the `free` ones, which

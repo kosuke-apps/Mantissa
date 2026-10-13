@@ -474,6 +474,17 @@
           }
         }
       }
+    },
+    "%@ is any integer": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ は任意の整数です"
+          }
+        }
+      }
     }
   }
 }

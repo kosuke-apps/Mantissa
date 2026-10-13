@@ -184,6 +184,19 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(outside.notation?.parserText, "(−∞, −2]∪[2, ∞)")
   }
 
+  func testATrigonometricEquationGivesFamiliesOfSolutions() async {
+    let model = makeModel()
+    model.press(.function("sin"))
+    model.press(.symbol("x"))
+    model.press(.right)
+    for key in ["=", "0", "."] { model.press(.symbol(key)) }
+    model.press(.symbol("5"))
+    guard case .solutions(let solutions) = await answer(model) else { return XCTFail("expected solutions") }
+    XCTAssertEqual(solutions.kind, .periodic(integer: "n"))
+    XCTAssertEqual(solutions.lines.map { $0.exact.parserText }.count, 2)
+    XCTAssertEqual(solutions.lines[0].decimal?.parserText, "0.52359878+6.2831853n")
+  }
+
   func testAnUnfinishedFormulaIsIncomplete() async {
     let model = makeModel()
     model.press(.symbol("5"))

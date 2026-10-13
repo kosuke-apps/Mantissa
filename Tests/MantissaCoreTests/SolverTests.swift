@@ -101,7 +101,7 @@ struct SolverTests {
     func variable(_ text: String) throws -> String? {
       switch try Calculator().solve(text) {
       case .values(let name, _), .none(let name), .everything(let name, _), .intervals(let name, _): return name
-      case .truth, .tuples, .dependent: return nil
+      case .truth, .tuples, .dependent, .periodic: return nil
       }
     }
     #expect(try variable("y+x=3") == "x")

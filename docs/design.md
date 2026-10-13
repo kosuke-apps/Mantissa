@@ -230,3 +230,35 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
   direct evaluation at 91 test points each.
 - **Graphs**: an equation in x and y that is of degree 1 in y (`x + y = 3`, `xy = 1`) is drawn as the function it defines,
   so a system of them is drawn as its lines with the crossing marked.
+
+## Equations that are not polynomials
+
+All of these give **real** solutions (the polynomial solver gives complex ones too). Each strategy rewrites the equation into
+polynomial ones and only proposes candidates; every candidate is substituted into the original and kept if it is zero to 30 digits,
+which drops what squaring or a logarithm of a negative number brought in. `TranscendentalSolver` tries them in this order and
+uses the first that applies.
+
+- **Trigonometric**: every sine, cosine and tangent of `mψ + q` (`ψ = a·x` the smallest angle, `m` a whole number up to 8) is
+  written with `S = sin ψ`, `C = cos ψ`, as the real and imaginary parts of `(C + iS)^m` and the addition formulas. Then: `S`
+  alone or `C` alone (using `S² + C² = 1`) gives `arcsin` and `arccos` families; `A sin ψ + B cos ψ + D = 0` is `sign(A)·R·sin(ψ + φ)
+  = −D`; anything else goes through `τ = tan(ψ/2)`, plus `ψ = π`. A solution is a family `offset + period·n` (`PeriodicSolution`),
+  offsets brought into [0, period), and families half a period apart are merged until none are (`π/4 + π/2·n`). In degree mode
+  `a = π/180`, so the same code gives `30 + 360n`.
+- **Absolute values**: the line is cut where an argument of an innermost `|…|` is zero; on each closed stretch the bars are
+  replaced by the signed argument and the rest is solved by recursion; nested bars resolve from the inside.
+- **Exponentials** `g^(cx+d)`: all bases are written as rational powers of one (`4 = 2²`), `t = g^(x/V)` makes each a whole power,
+  the polynomial in `t` is solved, and `x = V·log_g t` for each positive root.
+- **Logarithms**: with natural logarithms, `Σ kᵢ ln gᵢ = δ` (the `kᵢ` rational multiples of each other) is `Π gᵢ^rᵢ = e^δ`.
+  `e^(c ln a)` is `a^c` and `log_b(a^p)` is `p` when `log_b a` is a number, so `log(x) = 2` gives 100.
+- **Roots**: `b^(1/L)` becomes `r` with `r^L = b`; `L` is 2 or 3. Multiplying by the conjugate (`c₀² − c₁²b`, or the cube-root
+  norm) removes `r`; several roots are removed one at a time.
+- **Numerically**, when nothing above applies (`e^x = x + 2`): sampled on [−100, 100], roots located in `Double` by the graph
+  machinery, refined by Newton's method in 60 digits, and given as fractions when they are simple (2 and 4 for `2^x = x²`). An
+  equation with none in the window is not reported as having none, and one with more than 30 is not solved.
+- **Inequalities** with these use the same sign analysis: the real solutions of the equation, and the points where a root or
+  logarithm begins to be defined, cut the line; the sign is read on each stretch from the expression itself (undefined is not
+  satisfied).
+- **Large values**: a function that needs as many extra digits as its argument has (the sine or tanh of a number with 10^8 digits)
+  is an overflow, not an endless computation, and the arctangent of a huge number is π/2. Found by a random expression.
+- **How it was checked**: hand-worked cases for each strategy (one of them showed a wrong expectation, not a wrong answer:
+  `√(3x+1) − √(x−1) = 2` has the solution 1 as well as 5).

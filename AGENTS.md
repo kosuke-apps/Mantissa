@@ -66,7 +66,9 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     out, substitute, put a sum over a common denominator), `Polynomial` and `RationalPolynomial` (coefficients as `Expr`
     or `Rational`; rational roots, squarefree part), `PolynomialRoots` and `NumericRoots` (exact roots, then decimals),
     `Solver` (one equation in one unknown), `SystemSolver` (linear by Gauss–Jordan, nonlinear by substitution),
-    `InequalitySolver` (sign analysis between the real roots), `Calculator+Solve` (`Calculator.solve` routes the input).
+    `InequalitySolver` (sign analysis between the real roots), `Calculator+Solve` (`Calculator.solve` routes the input),
+    `TranscendentalSolver` and its strategies (`AbsoluteValueEquations`, `ExponentialEquations`, `LogarithmicEquations`,
+    `RadicalEquations`, `TrigonometricEquations`, `NumericEquations`), `Atoms` (find and replace parts of an `Expr`).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit. `Calculator.swift`: `evaluate(_:)` returns the
     exact value and its decimal approximation, or a `CalculatorError`.
@@ -89,9 +91,9 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
    what is followed), history, icon (done); the keyboard's remaining pages and long-press alternatives.
 4. Graphs (done, first version): a function of x, or `y = …`, or several lines, with roots, y-intercept, extrema and
    crossings marked and tappable; pan and pinch. To do: implicit curves, inequalities, a trace along the curve.
-5. Solving: one equation in one unknown, polynomial and rational, with complex solutions; systems; inequalities in one
-   unknown (done). To do: equations with roots, powers of the unknown, logarithms, absolute values and trigonometric
-   functions, and inequalities with them; then derivatives, integrals, limits, sums.
+5. Solving: equations in one unknown (polynomial, rational, with roots, absolute values, exponentials, logarithms,
+   trigonometric functions; the rest numerically), systems, inequalities in one unknown (done). To do: derivatives,
+   integrals, limits, sums, and the keyboard page for them.
 6. Polish: Japanese localization, accessibility, icon, running on the author's iPhone.
 
 ## Commands

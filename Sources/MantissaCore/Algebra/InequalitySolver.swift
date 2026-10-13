@@ -10,33 +10,84 @@ enum InequalitySolver {
     var op: RelationOperator
   }
 
+  /// The points where a condition can change: where its expression is zero, where it is not defined because a denominator is
+  /// zero, and (for roots and logarithms) where the domain begins or ends; there the sign is read from the expression itself.
   private struct Analysis {
     var numeratorRoots: [SolvedValue]
     var denominatorRoots: [SolvedValue]
+    var boundaries: [SolvedValue] = []
+  }
+
+  /// A polynomial or a fraction of polynomials: the roots of the numerator and of the denominators, exactly.
+  private static func rationalAnalysis(_ expression: Expr, _ variable: String) -> Analysis? {
+    guard let (numerator, denominators) = expression.together(variable: variable),
+      let polynomial = numerator.polynomial(in: variable)
+    else { return nil }
+    var numeratorRoots: [SolvedValue] = []
+    if polynomial.degree >= 1 {
+      guard let roots = EquationSolver.roots(of: polynomial) else { return nil }
+      numeratorRoots = roots.filter(\.isReal)
+    }
+    var denominatorRoots: [SolvedValue] = []
+    for denominator in denominators {
+      guard let base = denominator.base.polynomial(in: variable), base.degree >= 1,
+        let roots = EquationSolver.roots(of: base)
+      else { return nil }
+      denominatorRoots += roots.filter(\.isReal)
+    }
+    return Analysis(numeratorRoots: numeratorRoots, denominatorRoots: denominatorRoots)
+  }
+
+  /// Anything else the equation solvers can handle (absolute values, roots, exponentials, logarithms): the real solutions of
+  /// the equation, and the points where a root or logarithm begins to be defined.
+  private static func generalAnalysis(_ expression: Expr, _ variable: String) -> Analysis? {
+    guard let solved = EquationSolver.solve(expression, for: variable) else { return nil }
+    var roots: [SolvedValue] = []
+    switch solved {
+    case .values(_, let values): roots = values.filter(\.isReal)
+    case .none: break
+    default: return nil  // identically zero, or periodic
+    }
+
+    var boundaries: [SolvedValue] = []
+    let edges = expression.collectAll(where: { part in
+      switch part {
+      case .function(.ln, let arguments), .function(.log, let arguments): return arguments[0].contains(variable)
+      case .power(let base, let exponent):
+        guard base.contains(variable), let n = exponent.rational else { return false }
+        return !n.isInteger || n.isNegative
+      default: return false
+      }
+    })
+    for edge in edges {
+      let argument: Expr
+      switch edge {
+      case .function(_, let arguments): argument = arguments[0]
+      case .power(let base, _): argument = base
+      default: continue
+      }
+      guard let polynomial = argument.together(variable: variable)?.numerator.polynomial(in: variable) else {
+        return nil
+      }
+      if polynomial.degree >= 1 {
+        guard let found = EquationSolver.roots(of: polynomial) else { return nil }
+        boundaries += found.filter(\.isReal)
+      }
+    }
+    return Analysis(numeratorRoots: roots, denominatorRoots: [], boundaries: boundaries)
   }
 
   static func solve(_ constraints: [Constraint], variable: String) -> Solved? {
     var analyses: [Analysis] = []
     var critical: [SolvedValue] = []
     for constraint in constraints {
-      guard constraint.expression.freeSymbols.isSubset(of: [variable]),
-        let (numerator, denominators) = constraint.expression.together(variable: variable),
-        let polynomial = numerator.polynomial(in: variable)
+      guard constraint.expression.freeSymbols.isSubset(of: [variable]) else { return nil }
+      guard
+        let analysis = rationalAnalysis(constraint.expression, variable)
+          ?? generalAnalysis(constraint.expression, variable)
       else { return nil }
-      var numeratorRoots: [SolvedValue] = []
-      if polynomial.degree >= 1 {
-        guard let roots = EquationSolver.roots(of: polynomial) else { return nil }
-        numeratorRoots = roots.filter(\.isReal)
-      }
-      var denominatorRoots: [SolvedValue] = []
-      for denominator in denominators {
-        guard let base = denominator.base.polynomial(in: variable), base.degree >= 1,
-          let roots = EquationSolver.roots(of: base)
-        else { return nil }
-        denominatorRoots += roots.filter(\.isReal)
-      }
-      analyses.append(Analysis(numeratorRoots: numeratorRoots, denominatorRoots: denominatorRoots))
-      critical += numeratorRoots + denominatorRoots
+      analyses.append(analysis)
+      critical += analysis.numeratorRoots + analysis.denominatorRoots + analysis.boundaries
     }
     critical = EquationSolver.sortedAndDistinct(critical)
 

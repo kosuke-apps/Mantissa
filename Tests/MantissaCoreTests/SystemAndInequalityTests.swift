@@ -287,3 +287,40 @@ struct SystemAndInequalityTests {
     #expect(checked > 100)
   }
 }
+
+@Suite("Inequalities beyond polynomials")
+struct GeneralInequalityTests {
+  private func describe(_ value: SolvedValue) -> String {
+    if let exact = value.exact { return exact.description }
+    return "≈" + "\(value.approximation!.real.rounded(toSignificantDigits: 5))"
+  }
+
+  private func set(_ text: String) throws -> String {
+    switch try Calculator().solve(text) {
+    case .none: return "∅"
+    case .everything: return "ℝ"
+    case .intervals(_, let intervals):
+      return intervals.map { interval in
+        if interval.isPoint { return "{\(describe(interval.lower!.value))}" }
+        let low = interval.lower.map { ($0.isClosed ? "[" : "(") + describe($0.value) } ?? "(-∞"
+        let high = interval.upper.map { describe($0.value) + ($0.isClosed ? "]" : ")") } ?? "∞)"
+        return low + ", " + high
+      }.joined(separator: " ∪ ")
+    default:
+      Issue.record("\(text) did not give a set")
+      return ""
+    }
+  }
+
+  @Test(
+    "Roots, absolute values, exponentials and logarithms",
+    arguments: [
+      ("√x>2", "(4, ∞)"), ("√(x+1)≥x-1", "[-1, 3]"), ("|x-1|<3", "(-2, 4)"), ("|x|≥2", "(-∞, -2] ∪ [2, ∞)"),
+      ("|x-2|+|x+1|≤5", "[-2, 3]"), ("ln(x)<1", "(0, e)"), ("e^x>2", "(ln(2), ∞)"), ("2^x≤8", "(-∞, 3]"),
+      ("ln(x)>0", "(1, ∞)"), ("|x²-4|<3", "(-√7, -1) ∪ (1, √7)"), ("1/√x<1", "(1, ∞)"), ("√x≤x", "{0} ∪ [1, ∞)"),
+      ("|x|>-1", "ℝ"), ("|x|<0", "∅"), ("√x≥0", "[0, ∞)"), ("ln(x)≥ln(2)", "[2, ∞)"),
+    ])
+  func general(input: String, expected: String) throws {
+    #expect(try set(input) == expected, "\(input)")
+  }
+}

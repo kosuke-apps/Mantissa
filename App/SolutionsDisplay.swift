@@ -15,6 +15,9 @@ struct SolutionsDisplay: Equatable {
     case dependent(free: [String])
     /// An inequality: one line for each stretch (`x < −1`, `2 < x ≤ 5`), and the same in interval notation.
     case intervals
+    /// Solutions that repeat, one line for each family (`x = π/6 + 2πn`); `integer` is the letter that stands for any whole
+    /// number.
+    case periodic(integer: String)
   }
 
   struct Line: Equatable {
@@ -33,7 +36,7 @@ struct SolutionsDisplay: Equatable {
   /// The answer on one line, for the history.
   var summary: [MathNode] {
     switch kind {
-    case .values, .dependent:
+    case .values, .dependent, .periodic:
       return Array(lines.map(\.exact).joined(separator: [MathNode.symbol(","), .symbol(" ")]))
     case .intervals: return notation ?? []
     case .none: return Self.text(String(localized: "No solution"))
@@ -72,6 +75,11 @@ struct SolutionsDisplay: Equatable {
       self.init(kind: .values, lines: lines)
     case .dependent(let assignments, let free):
       self.init(kind: .dependent(free: free), lines: assignments.map { Self.line([$0], digits: digits) })
+    case .periodic(let variable, let families):
+      let integer = variable == "n" ? "k" : "n"
+      self.init(
+        kind: .periodic(integer: integer),
+        lines: families.map { Self.line($0, variable: variable, integer: integer, digits: digits) })
     case .intervals(let variable, let intervals):
       let lines = intervals.map { Line(exact: Self.inequality($0, variable: variable, digits: digits)) }
       self.init(kind: .intervals, lines: lines, notation: Self.notation(intervals, digits: digits))
@@ -117,6 +125,28 @@ struct SolutionsDisplay: Equatable {
     guard let value else { return [] }
     if value.isReal { return Typesetter.nodes(for: value.real, significantDigits: digits) }
     return Typesetter.nodes(for: value, significantDigits: digits)
+  }
+
+  // MARK: Periodic solutions
+
+  /// `x = π/6 + 2πn`, with the decimals beneath (`≈ 0.5236 + 6.2832n`) when they say something more.
+  private static func line(_ family: PeriodicSolution, variable: String, integer: String, digits: Int) -> Line {
+    let n = MathNode.symbol(integer)
+    var exact: [MathNode] = [.symbol(variable), .symbol("=")]
+    if !family.offset.isZero { exact += Typesetter.nodes(for: family.offset) + [.symbol("+")] }
+    exact += Typesetter.nodes(for: family.period) + [n]
+    if family.offset.isZero { exact = [.symbol(variable), .symbol("=")] + Typesetter.nodes(for: family.period) + [n] }
+
+    var decimal: [MathNode]?
+    let wholeNumbers = family.offset.rational?.isInteger == true && family.period.rational?.isInteger == true
+    if !wholeNumbers, let offset = family.offsetApproximation, let period = family.periodApproximation {
+      // Two numbers on a line, so fewer digits than for a single value.
+      let shown = min(digits, 8)
+      decimal =
+        (offset.isZero ? [] : Typesetter.nodes(for: offset, significantDigits: shown) + [.symbol("+")])
+        + Typesetter.nodes(for: period, significantDigits: shown) + [n]
+    }
+    return Line(exact: exact, decimal: decimal)
   }
 
   // MARK: Inequalities

@@ -8,6 +8,8 @@ enum TranscendentalSolver {
   static func solve(_ expression: Expr, for variable: String) -> Solved? {
     guard expression.freeSymbols == [variable] else { return nil }
 
+    if let periodic = TrigonometricEquations.solve(expression, variable) { return periodic }
+
     let strategies: [(Expr, String) -> [SolvedValue]?] = [
       AbsoluteValueEquations.solve, ExponentialEquations.solve, LogarithmicEquations.solve, RadicalEquations.solve,
     ]
@@ -16,6 +18,8 @@ enum TranscendentalSolver {
       let verified = EquationSolver.sortedAndDistinct(candidates.filter { verifies($0, expression, variable) })
       return verified.isEmpty ? .none(variable: variable) : .values(variable: variable, verified)
     }
+    // No closed form: the real solutions near the origin, as decimals.
+    if let numeric = NumericEquations.solve(expression, variable) { return .values(variable: variable, numeric) }
     return nil
   }
 

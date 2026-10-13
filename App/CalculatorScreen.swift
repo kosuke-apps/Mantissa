@@ -145,6 +145,9 @@ private struct SolutionsView: View {
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .truth(let value):
           Text(value ? "True" : "False").font(.system(size: 28))
+        case .periodic(let integer):
+          ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
+          Text("\(integer) is any integer").font(.system(size: 18)).foregroundStyle(.secondary)
         case .dependent(let free):
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
           Text("\(free.joined(separator: ", ")) can be any number").font(.system(size: 18)).foregroundStyle(.secondary)

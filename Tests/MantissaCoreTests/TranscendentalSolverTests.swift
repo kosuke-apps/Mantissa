@@ -66,3 +66,86 @@ struct TranscendentalSolverTests {
     #expect(try solutions(input) == expected, "\(input)")
   }
 }
+
+@Suite("Trigonometric equations")
+struct TrigonometricEquationTests {
+  private func families(_ text: String, unit: AngleUnit = .radians) throws -> [String] {
+    var settings = CalculatorSettings()
+    settings.angleUnit = unit
+    switch try Calculator(settings: settings).solve(text) {
+    case .periodic(_, let found): return found.map { "\($0.offset) + \($0.period)n" }
+    case .none: return []
+    default:
+      Issue.record("\(text) did not give families")
+      return []
+    }
+  }
+
+  @Test(
+    "Radians",
+    arguments: [
+      ("sin(x)=1/2", ["π/6 + 2πn", "5π/6 + 2πn"]), ("sin(x)=0", ["0 + πn"]), ("cos(x)=0", ["π/2 + πn"]),
+      ("cos(x)=1/2", ["π/3 + 2πn", "5π/3 + 2πn"]), ("sin(x)=-1/2", ["7π/6 + 2πn", "11π/6 + 2πn"]),
+      ("sin(x)=1", ["π/2 + 2πn"]), ("cos(x)=-1", ["π + 2πn"]), ("tan(x)=1", ["π/4 + πn"]), ("tan(x)=√3", ["π/3 + πn"]),
+      ("sin(x)=cos(x)", ["π/4 + πn"]), ("2sin(x)²-sin(x)-1=0", ["π/2 + 2πn", "7π/6 + 2πn", "11π/6 + 2πn"]),
+      ("sin(2x)=1/2", ["π/12 + πn", "5π/12 + πn"]), ("sin(x)=2", []), ("cos(x)=-2", []),
+      ("sin(x)+cos(x)=1", ["0 + 2πn", "π/2 + 2πn"]), ("sin(x)+cos(x)=√2", ["π/4 + 2πn"]),
+      ("sin(2x)=sin(x)", ["0 + πn", "π/3 + 2πn", "5π/3 + 2πn"]), ("cos(2x)=0", ["π/4 + π/2n"]),
+      ("2cos(x)²=1", ["π/4 + π/2n"]), ("sin(x)²=1", ["π/2 + πn"]), ("tan(x)²=3", ["π/3 + πn", "2π/3 + πn"]),
+    ])
+  func radians(input: String, expected: [String]) throws {
+    #expect(try families(input) == expected, "\(input)")
+  }
+
+  @Test(
+    "Degrees",
+    arguments: [
+      ("sin(x)=1/2", ["30 + 360n", "150 + 360n"]), ("tan(x)=1", ["45 + 180n"]), ("cos(2x)=0", ["45 + 90n"]),
+      ("cos(x)=-1/2", ["120 + 360n", "240 + 360n"]), ("sin(x)=0", ["0 + 180n"]),
+    ])
+  func degrees(input: String, expected: [String]) throws {
+    #expect(try families(input, unit: .degrees) == expected, "\(input)")
+  }
+
+  @Test("A value with no closed-form angle keeps the inverse function")
+  func inverseFunctions() throws {
+    guard case .periodic(_, let found) = try Calculator().solve("sin(x)=1/3") else {
+      Issue.record("expected families")
+      return
+    }
+    #expect(found.map { $0.offset.description } == ["asin(1/3)", "π - asin(1/3)"])
+    #expect(found[0].offsetApproximation?.rounded(toSignificantDigits: 8) == BigDecimal("0.33983691"))
+    #expect(found[1].periodApproximation?.rounded(toSignificantDigits: 8) == BigDecimal("6.2831853"))
+  }
+}
+
+@Suite("Numerical solutions")
+struct NumericalEquationTests {
+  private func decimals(_ text: String) throws -> [String] {
+    guard case .values(_, let values) = try Calculator().solve(text) else {
+      Issue.record("\(text) did not give values")
+      return []
+    }
+    return values.map { value in
+      if let exact = value.exact { return exact.description }
+      return "≈" + "\(value.approximation!.real.rounded(toSignificantDigits: 8))"
+    }
+  }
+
+  @Test(
+    "Equations with no closed form",
+    arguments: [
+      ("e^x=x+2", ["≈-1.8414057", "≈1.1461932"]), ("x=cos(x)", ["≈0.73908513"]),
+      ("ln(x)=x-2", ["≈0.15859434", "≈3.1461932"]),
+      ("2^x=x²", ["≈-0.7666647", "2", "4"]), ("sin(x)=x/2", ["≈-1.8954943", "0", "≈1.8954943"]),
+      ("x^x=2", ["≈1.5596105"]), ("x+ln(x)=0", ["≈0.56714329"]),
+    ])
+  func numeric(input: String, expected: [String]) throws {
+    #expect(try decimals(input) == expected, "\(input)")
+  }
+
+  @Test("An equation with no solution in the window is not claimed to have none")
+  func notClaimed() {
+    #expect(throws: CalculatorError.unsupported(.equation)) { try Calculator().solve("e^x=-x²-1") }
+  }
+}

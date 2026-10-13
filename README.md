@@ -4,7 +4,7 @@ A free scientific and graphing calculator for iPhone. It works entirely offline,
 roots, π), solves equations and keeps a history. No ads, no accounts, no network access.
 
 > **Status: early development.** The calculator, history, graphs, equations, systems and inequalities work in the iOS
-> Simulator. Not released yet.
+> Simulator. Derivatives and integrals are next. Not released yet.
 > Not released yet.
 
 ## Features
@@ -24,10 +24,11 @@ Working today (in the `MantissaCore` package):
 - An iPhone app on top of the engine: a maths keyboard with stacked fractions and roots, a live exact and decimal
   answer, a history of solved problems (saved on the phone), and graphs of functions of x with their roots, extrema and
   crossings marked, solutions of equations (exact where there is a closed form, complex ones included, the rest as
-  decimals), systems of equations and inequalities in one unknown (`x² > 4` is `x < −2 or x > 2`). English and Japanese.
+  decimals), equations with roots, absolute values, exponentials, logarithms and trigonometric functions (`sin x = 1/2`
+  is `π/6 + 2πn` or `5π/6 + 2πn`), systems of equations, and inequalities in one unknown (`x² > 4` is `x < −2 or x > 2`).
+  English and Japanese.
 
-Planned: equations with roots, logarithms, absolute values and trigonometric functions, derivatives and integrals,
-limits and sums.
+Planned: derivatives and integrals, limits and sums.
 
 ## Getting started
 
