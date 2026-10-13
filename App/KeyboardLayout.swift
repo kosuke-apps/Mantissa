@@ -49,6 +49,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
   case basic
   case functions
   case trigonometry
+  case calculus
 
   var id: Self { self }
 
@@ -58,6 +59,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
     case .basic: return ("+ −", "× ÷")
     case .functions: return ("f(x) e", "log ln")
     case .trigonometry: return ("sin cos", "tan cot")
+    case .calculus: return ("lim d/dx", "∫ Σ ∞")
     }
   }
 }
@@ -132,6 +134,20 @@ enum KeyboardLayout {
           symbol("°"), symbol("π"), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol(","),
           symbol("="),
         ],
+      ]
+
+    case .calculus:
+      // Each takes its arguments separated by commas: ∫(f, x) or ∫(f, x, a, b), lim(f, x, a), Σ(f, k, a, b), d/dx(f, x).
+      return [
+        [
+          function("lim"), KeySpec("d/dx", [.function("diff")]), KeySpec("∫", [.function("int")]),
+          KeySpec("Σ", [.function("sum")]), symbol("∞"), symbol(","),
+        ],
+        [
+          symbol("x"), symbol("y"), symbol("k"), symbol("n"), KeySpec("(", [.symbol("(")]),
+          KeySpec(")", [.symbol(")")]),
+        ],
+        [symbol("π"), symbol("e"), symbol("i"), symbol("−"), symbol("+"), symbol("=")],
       ]
     }
   }

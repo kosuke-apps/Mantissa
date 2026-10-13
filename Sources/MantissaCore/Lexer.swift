@@ -11,6 +11,7 @@ enum Token: Equatable, Sendable {
   case relation(RelationOperator)
   /// √ (index 2), ∛ (3) or ∜ (4).
   case radical(Int)
+  case infinity
 
   /// A readable form for error messages.
   var text: String {
@@ -42,6 +43,7 @@ enum Token: Equatable, Sendable {
       case .greaterOrEqual: return "≥"
       }
     case .radical(let index): return index == 2 ? "√" : (index == 3 ? "∛" : "∜")
+    case .infinity: return "∞"
     }
   }
 }
@@ -132,6 +134,9 @@ enum Lexer {
         case "√": add(.radical(2), at: start)
         case "∛": add(.radical(3), at: start)
         case "∜": add(.radical(4), at: start)
+        case "∞": add(.infinity, at: start)
+        case "∫": add(.function(.int), at: start)
+        case "Σ", "∑": add(.function(.sum), at: start)
         default: throw ParseError(reason: .unexpectedCharacter(character), offset: start)
         }
       }

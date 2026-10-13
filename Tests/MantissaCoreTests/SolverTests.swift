@@ -91,7 +91,7 @@ struct SolverTests {
   @Test("Equations with other letters are solved for x")
   func parameters() throws {
     #expect(try solutions("ax+b=0") == ["-b/a"])
-    #expect(try solutions("2x+y=10") == ["-y/2 + 5"])
+    #expect(try solutions("2x+y=10") == ["5 - y/2"])
     #expect(try solutions("x²=a") == ["√a", "-√a"])
     #expect(try solutions("z=3x+1") == ["z/3 - 1/3"])
   }

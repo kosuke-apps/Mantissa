@@ -1,3 +1,5 @@
+import Foundation
+
 /// An arbitrary-precision decimal number: `significand × 10^exponent`.
 ///
 /// Addition, subtraction and multiplication are exact. Division, roots and the transcendental functions take a
@@ -257,9 +259,13 @@ public struct BigDecimal: Sendable, Hashable {
     }
     if exponent == 0 { return BigDecimal(1) }
 
-    // The result has about |exponent| × order digits before the decimal point; refuse what cannot be represented.
-    let (size, overflow) = (decimalOrder ?? 0).magnitude.multipliedReportingOverflow(by: exponent.magnitude)
-    guard !overflow, size < 1_000_000_000 else { throw .overflow }
+    // The result has about |exponent| × |log₁₀ self| digits (1.0000000001^(10¹²) has 22, not 10¹²); refuse what cannot be
+    // represented.
+    let approximate = magnitude.doubleValue
+    let digitsPerFactor =
+      approximate.isFinite && approximate > 0
+      ? abs(Foundation.log10(approximate)) : Double((decimalOrder ?? 0).magnitude)
+    guard digitsPerFactor * Double(exponent.magnitude) < 1_000_000_000 else { throw .overflow }
 
     // Square and multiply, rounding each step. Every rounding adds at most half a unit of the last digit and there
     // are at most 2 log2(n) of them, so a few guard digits per bit of the exponent are plenty.

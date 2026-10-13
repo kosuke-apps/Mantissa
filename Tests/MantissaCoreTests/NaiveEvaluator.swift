@@ -11,8 +11,13 @@ struct NaiveEvaluator {
     let p = precision
     switch syntax {
     case .number(let value): return BigDecimal(value, precision: p)
-    case .symbol: throw .notNumeric
-    case .constant(let constant): return constant == .pi ? BigDecimal.pi(precision: p) : BigDecimal.e(precision: p)
+    case .symbol, .infinity: throw .notNumeric
+    case .constant(let constant):
+      switch constant {
+      case .pi: return BigDecimal.pi(precision: p)
+      case .e: return BigDecimal.e(precision: p)
+      default: throw .domain
+      }
     case .negate(let operand): return -(try evaluate(operand))
     case .binary(let op, let left, let right):
       let a = try evaluate(left)
@@ -127,6 +132,7 @@ struct NaiveEvaluator {
     case .floor: return BigDecimal(x[0].floor)
     case .ceil: return -BigDecimal((-x[0]).floor)
     case .round: return x[0].rounded(toPlaces: 0)
+    case .diff, .int, .lim, .sum: throw .notNumeric
     case .nCr, .nPr:
       guard let n = x[0].asInt, let r = x[1].asInt, n >= 0, r >= 0, r <= n else { throw .domain }
       let value = function == .nCr ? NumberTheory.combinations(n, r) : NumberTheory.permutations(n, r)

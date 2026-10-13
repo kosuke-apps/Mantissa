@@ -109,7 +109,7 @@ struct Parser {
 
   private func startsPrimary(_ token: Token) -> Bool {
     switch token {
-    case .number, .letter, .constant, .function, .leftParen, .radical: return true
+    case .number, .letter, .constant, .function, .leftParen, .radical, .infinity: return true
     case .bar: return barDepth == 0  // inside |…| a bar closes it
     default: return false
     }
@@ -162,6 +162,9 @@ struct Parser {
     case .constant(let constant):
       advance()
       return .constant(constant)
+    case .infinity:
+      advance()
+      return .infinity
     case .leftParen:
       advance()
       let inner = try parseExpression()

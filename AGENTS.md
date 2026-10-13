@@ -69,6 +69,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     `InequalitySolver` (sign analysis between the real roots), `Calculator+Solve` (`Calculator.solve` routes the input),
     `TranscendentalSolver` and its strategies (`AbsoluteValueEquations`, `ExponentialEquations`, `LogarithmicEquations`,
     `RadicalEquations`, `TrigonometricEquations`, `NumericEquations`), `Atoms` (find and replace parts of an `Expr`).
+  - `Sources/MantissaCore/Calculus/`: `Differentiation` (rules on the canonical form), `Integration` (a toolbox that checks
+    every answer by differentiating it), `Limits` (substitution, then sequences at high precision and recognising the value),
+    `Series` (sums), `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
+    the builder works out while it turns the syntax into an `Expr`).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit. `Calculator.swift`: `evaluate(_:)` returns the
     exact value and its decimal approximation, or a `CalculatorError`.
@@ -92,9 +96,10 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 4. Graphs (done, first version): a function of x, or `y = …`, or several lines, with roots, y-intercept, extrema and
    crossings marked and tappable; pan and pinch. To do: implicit curves, inequalities, a trace along the curve.
 5. Solving: equations in one unknown (polynomial, rational, with roots, absolute values, exponentials, logarithms,
-   trigonometric functions; the rest numerically), systems, inequalities in one unknown (done). To do: derivatives,
-   integrals, limits, sums, and the keyboard page for them.
-6. Polish: Japanese localization, accessibility, icon, running on the author's iPhone.
+   trigonometric functions; the rest numerically), systems, inequalities in one unknown (done).
+6. Calculus: derivatives, indefinite and definite integrals (improper too), limits, sums and series, with the keyboard page
+   (done, first version: arguments are typed separated by commas). To do: structured ∫, lim and Σ with their own slots.
+7. Polish: Japanese localization, accessibility, running on the author's iPhone.
 
 ## Commands
 

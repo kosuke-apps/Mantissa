@@ -262,3 +262,33 @@ uses the first that applies.
   is an overflow, not an endless computation, and the arctangent of a huge number is π/2. Found by a random expression.
 - **How it was checked**: hand-worked cases for each strategy (one of them showed a wrong expectation, not a wrong answer:
   `√(3x+1) − √(x−1) = 2` has the solution 1 as well as 5).
+
+## Calculus
+
+The functions `diff(f, x, n)`, `int(f, x, a, b)`, `lim(f, x, a, side)` and `sum(f, k, a, b)` (also written `∫`, `Σ`, with `∞` for
+infinity) are read by the parser like any function, but `Builder` works them out on the syntax while it builds the `Expr`
+(the unknown is an argument, and ∞ is only an argument), so their value is an ordinary expression. `MathError.unsupported`
+is a calculation this version cannot do; `MathError.undefined` is a limit whose sides disagree or that oscillates, and an
+integral or series that diverges. `MathConstant.infinity` exists only as a result; the canonical form does no arithmetic with it.
+
+- **Derivatives** follow the rules on the canonical form (sum, product, general power `b^e`, chain rule for each function). A
+  result with denominators is written as one fraction when that has fewer parts (`1/(x+1) − x/(x+1)²` is `1/(x+1)²`).
+  Checked against a central difference at 50 digits on random expressions.
+- **Integrals**: a table of the basic ones; linearity and constant factors; polynomial × exponential/sine/cosine by repeated
+  integration by parts; polynomial × logarithm or inverse trigonometric function by parts; `e^(ax) sin(bx)` by formula;
+  `sinⁿ cosᵐ` and the product of sines and cosines of different angles through Euler's formula; rational functions by partial
+  fractions over the rationals (linear factors, and one irreducible quadratic); and substitution `u = g(x)` for any subexpression
+  `g` when `f/g′` is a function of `g` alone (for a linear `g`, an `x` left over is `(u − b)/a`). **Every result is differentiated and
+  compared with the integrand at several points before it is returned**, so a wrong antiderivative is never answered; with none
+  found, `unsupported`. A definite integral is `F(b) − F(a)`, with limits at an end where `F` is not defined or is infinite; a
+  pole inside the interval, or an infinite end, is `undefined`.
+- **Limits**: substitution where the expression is continuous; otherwise it is evaluated at 10⁻⁸ … 10⁻³⁰ from the point (or at
+  10⁶ … 10⁴⁸ out, with nearer lists where an exponential overflows) to 330 digits. A sequence that settles is recognised as zero, a
+  fraction with a small denominator, or such a fraction of π, π², e, e², 1/e, ln 2, ln 3, √2, √3, √5; one that keeps growing is ±∞; the two
+  sides must agree. Values too large or too small to subtract are compared by size only.
+- **Sums**: a short sum is added; a polynomial summand has a closed form through Newton's differences (`n²/2 + n/2`); a geometric
+  term `c·rᵏ` (with a polynomial factor, by differentiating the geometric series) in closed form or to ∞ when |r| < 1; rational
+  functions with whole-number poles telescope to harmonic numbers; ζ of even numbers up to 12, the alternating 1/k, 1/k², 1/k⁴; and
+  `Σ rᵏ/k!` is `e^r`. A series whose terms do not tend to zero is `undefined`.
+- **Found while testing**: `BigDecimal.power` refused `(1 + 10⁻⁴⁸)^(10⁴⁸)` because it estimated the size of the result from the number of
+  digits of the base and not from its logarithm; the integer power is now judged by `|exponent|·|log₁₀ base|`.

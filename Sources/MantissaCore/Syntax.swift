@@ -10,6 +10,8 @@ indirect enum Syntax: Equatable, Sendable {
   case call(FunctionName, [Syntax])
   /// A root: `√x` has no index, `∛x` has index 3.
   case radical(index: Syntax?, radicand: Syntax)
+  /// ∞, which only means something as a limit, an end of an integral or a sum.
+  case infinity
 }
 
 extension Syntax {
@@ -17,7 +19,7 @@ extension Syntax {
   var mentionsPi: Bool {
     switch self {
     case .constant(let constant): return constant == .pi
-    case .number, .symbol: return false
+    case .number, .symbol, .infinity: return false
     case .negate(let operand), .postfix(_, let operand): return operand.mentionsPi
     case .binary(_, let left, let right): return left.mentionsPi || right.mentionsPi
     case .call(_, let arguments): return arguments.contains { $0.mentionsPi }
@@ -46,6 +48,16 @@ enum FunctionName: String, CaseIterable, Sendable {
   case sqrt, cbrt, root, exp
   case abs, floor, ceil, round
   case nCr, nPr, gcd, lcm
+  /// Calculus: `diff(f, x, n)`, `int(f, x, a, b)`, `lim(f, x, a)`, `sum(f, k, a, b)`.
+  case diff, int, lim, sum
+
+  /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
+  var isCalculus: Bool {
+    switch self {
+    case .diff, .int, .lim, .sum: return true
+    default: return false
+    }
+  }
 
   /// Alternative spellings the parser accepts.
   static let aliases: [String: FunctionName] = [
@@ -65,6 +77,10 @@ enum FunctionName: String, CaseIterable, Sendable {
   var arities: ClosedRange<Int> {
     switch self {
     case .log: return 1...2
+    case .diff: return 1...3
+    case .int: return 1...4
+    case .lim: return 3...4
+    case .sum: return 4...4
     case .root, .nCr, .nPr, .gcd, .lcm: return 2...2
     default: return 1...1
     }

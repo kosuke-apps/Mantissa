@@ -52,7 +52,7 @@ enum Presentation {
       return 0
     }
     let indexed = terms.enumerated().map { (index: $0.offset, term: $0.element) }
-    return indexed.sorted { a, b in
+    let sorted = indexed.sorted { a, b in
       let (ga, gb) = (group(a.term), group(b.term))
       if ga != gb { return ga < gb }
       if hasUnknowns {
@@ -67,6 +67,9 @@ enum Presentation {
       }
       return a.index < b.index
     }.map(\.term)
+    // Two terms with a minus sign first read better the other way round: 1 − x², not −x² + 1.
+    if hasUnknowns, sorted.count == 2, splitSign(sorted[0]).0, !splitSign(sorted[1]).0 { return sorted.reversed() }
+    return sorted
   }
 
   /// A polynomial-style degree, used only to order terms for reading.

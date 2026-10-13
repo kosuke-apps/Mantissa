@@ -48,14 +48,14 @@ struct SystemAndInequalityTests {
       return
     }
     #expect(free == ["y"])
-    #expect(assignments.map { "\($0.variable)=\($0.value.exact!)" } == ["x=-y + 5"])
+    #expect(assignments.map { "\($0.variable)=\($0.value.exact!)" } == ["x=5 - y"])
 
     guard case .dependent(let more, let freeMore) = try Calculator().solve("x+y+z=3, x-y=0") else {
       Issue.record("expected a family of solutions")
       return
     }
     #expect(freeMore == ["z"])
-    #expect(more.map { "\($0.variable)=\($0.value.exact!)" } == ["x=-z/2 + 3/2", "y=-z/2 + 3/2"])
+    #expect(more.map { "\($0.variable)=\($0.value.exact!)" } == ["x=3/2 - z/2", "y=3/2 - z/2"])
   }
 
   @Test(

@@ -68,17 +68,6 @@
         }
       }
     },
-    "Equations and inequalities are not supported yet.": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "方程式と不等式にはまだ対応していません。"
-          }
-        }
-      }
-    },
     "This has no real value.": {
       "extractionState": "manual",
       "localizations": {
@@ -482,6 +471,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ は任意の整数です"
+          }
+        }
+      }
+    },
+    "This isn't supported yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この計算にはまだ対応していません。"
+          }
+        }
+      }
+    },
+    "This does not exist: it diverges, or the two sides of a limit disagree.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存在しません(発散する、または極限の左右が一致しません)。"
           }
         }
       }

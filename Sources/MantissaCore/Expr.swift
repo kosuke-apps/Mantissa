@@ -4,6 +4,9 @@ public enum MathConstant: Int, Hashable, Sendable, CaseIterable {
   case e
   /// The imaginary unit, i² = −1. A power of it is always reduced to 1, i, −1 or −i.
   case i
+  /// ∞, the value of a limit, a sum or an integral that grows without bound (and −∞ is −1 times it). It is only ever a result:
+  /// the canonical form does no arithmetic with it.
+  case infinity
 
   /// The character that stands for the constant.
   public var symbol: String {
@@ -11,6 +14,7 @@ public enum MathConstant: Int, Hashable, Sendable, CaseIterable {
     case .pi: return "π"
     case .e: return "e"
     case .i: return "i"
+    case .infinity: return "∞"
     }
   }
 }
@@ -119,6 +123,16 @@ extension Expr {
     case .sum(let parts), .product(let parts), .function(_, let parts):
       return parts.contains { $0.containsImaginaryUnit }
     case .power(let base, let exponent): return base.containsImaginaryUnit || exponent.containsImaginaryUnit
+    }
+  }
+
+  /// Whether ∞ occurs anywhere in the expression.
+  public var containsInfinity: Bool {
+    switch self {
+    case .constant(let constant): return constant == .infinity
+    case .number, .symbol: return false
+    case .sum(let parts), .product(let parts), .function(_, let parts): return parts.contains { $0.containsInfinity }
+    case .power(let base, let exponent): return base.containsInfinity || exponent.containsInfinity
     }
   }
 

@@ -21,6 +21,7 @@ struct Builder {
     switch syntax {
     case .number(let value): return .number(value)
     case .symbol(let name): return .symbol(name)
+    case .infinity: throw .domain  // ∞ is only an argument of a limit, an integral or a sum
     case .constant(let constant): return .constant(constant)
     case .negate(let operand): return -(try build(operand))
     case .binary(let op, let left, let right):
@@ -40,6 +41,8 @@ struct Builder {
       case .percent: return value * .fraction(1, 100)
       case .degree: return angleUnit == .degrees ? value : value * Builder.degreesToRadians
       }
+    case .call(let function, let arguments) where function.isCalculus:
+      return try Calculus(builder: self).evaluate(function, arguments)
     case .call(let function, let arguments):
       var built: [Expr] = []
       for argument in arguments { built.append(try build(argument)) }
@@ -67,6 +70,7 @@ struct Builder {
       return try Expr.apply(MathFunction(rawValue: function.rawValue)!, x)
     case .log:
       return try Expr.apply(.log, [x[0], x.count == 2 ? x[1] : 10])
+    case .diff, .int, .lim, .sum: throw .unsupported  // handled before the arguments are built
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))
     case .cbrt: return try x[0].raised(to: .fraction(1, 3))
     case .root: return try root(x[0], index: x[1])

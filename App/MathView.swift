@@ -78,6 +78,16 @@ private struct MathNodeView: View {
   let cursor: (slot: Int, state: CursorState)?
   var isSign = false
 
+  /// The calculus functions are written the way they are read: d/dx, ∫ and Σ.
+  private static func displayName(of name: String) -> String {
+    switch name {
+    case "diff": return "d/dx"
+    case "int": return "∫"
+    case "sum": return "Σ"
+    default: return name
+    }
+  }
+
   private func slot(_ nodes: [MathNode], _ index: Int, scale: CGFloat = 1) -> MathLine {
     MathLine(
       nodes: nodes, size: size * scale, cursor: cursor?.slot == index ? cursor?.state : nil, placeholder: true)
@@ -128,7 +138,7 @@ private struct MathNodeView: View {
 
     case .function(let name, let argument):
       HStack(alignment: .mathAxis, spacing: size * 0.04) {
-        Text(name).font(.system(size: size)).fixedSize()
+        Text(Self.displayName(of: name)).font(.system(size: size)).fixedSize()
         slot(argument, 0)
           .padding(.horizontal, size * 0.3)
           .overlay(alignment: .leading) {

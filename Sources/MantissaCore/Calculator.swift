@@ -19,6 +19,8 @@ public struct Evaluation: Sendable, Equatable {
   public var complexApproximation: ComplexDecimal?
   /// Why there is no decimal value, for an exact expression that cannot be evaluated (`1/0`, `ln(0)`).
   public var approximationError: MathError?
+  /// Whether the answer is an antiderivative, which is one of many that differ by a constant (`+ C`).
+  public var isAntiderivative = false
 
   public init(
     exact: Expr, approximation: BigDecimal? = nil, complexApproximation: ComplexDecimal? = nil,
@@ -68,14 +70,16 @@ public struct Calculator: Sendable {
       } catch {
         throw .math(error)
       }
-      return evaluation(of: exact)
+      var result = evaluation(of: exact)
+      if case .call(.int, let arguments) = syntax, arguments.count <= 2 { result.isAntiderivative = true }
+      return result
     case .relation: throw .unsupported(.equation)
     case .system: throw .unsupported(.system)
     }
   }
 
   private func evaluation(of exact: Expr) -> Evaluation {
-    guard exact.freeSymbols.isEmpty else { return Evaluation(exact: exact) }
+    guard exact.freeSymbols.isEmpty, !exact.containsInfinity else { return Evaluation(exact: exact) }
     do throws(MathError) {
       return Evaluation(exact: exact, approximation: try exact.approximation(precision: settings.precision))
     } catch {

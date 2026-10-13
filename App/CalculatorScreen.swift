@@ -94,7 +94,8 @@ private struct ResultView: View {
       case .divisionByZero: warning("Dividing by zero has no answer.")
       case .noRealAnswer: warning("This has no real answer.")
       case .tooLarge: warning("This is too large to work out.")
-      case .notSupportedYet: warning("Equations and inequalities are not supported yet.")
+      case .notSupportedYet: warning("This isn't supported yet.")
+      case .doesNotExist: warning("This does not exist: it diverges, or the two sides of a limit disagree.")
       }
     case .solutions(let solutions):
       SolutionsView(solutions: solutions)

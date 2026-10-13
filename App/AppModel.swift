@@ -32,6 +32,8 @@ final class AppModel {
     case noRealAnswer
     case tooLarge
     case notSupportedYet
+    /// A limit whose sides disagree, an integral or a series that diverges.
+    case doesNotExist
   }
 
   enum Outcome: Equatable {
@@ -182,9 +184,11 @@ final class AppModel {
   nonisolated private static func outcome(for text: String, calculator: Calculator, digits: Int) -> Outcome {
     do {
       let evaluation = try calculator.evaluate(text)
-      let exact = Typesetter.nodes(for: evaluation.exact)
+      var exact = Typesetter.nodes(for: evaluation.exact)
       // An answer that says what was typed (a lone number, `x²`) adds nothing.
       if exact.parserText == text { return .empty }
+      // An antiderivative is one of many.
+      if evaluation.isAntiderivative { exact += [.symbol("+"), .symbol("C")] }
       var decimal: [MathNode]?
       if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
@@ -206,6 +210,8 @@ final class AppModel {
     case .divisionByZero: return .failure(.divisionByZero)
     case .domain, .notNumeric: return .failure(.noRealAnswer)
     case .overflow: return .failure(.tooLarge)
+    case .unsupported: return .failure(.notSupportedYet)
+    case .undefined: return .failure(.doesNotExist)
     }
   }
 

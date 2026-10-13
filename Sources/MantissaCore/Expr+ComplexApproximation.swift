@@ -35,6 +35,7 @@ extension Expr {
       case .pi: return ComplexDecimal(real: BigDecimal.pi(precision: p))
       case .e: return ComplexDecimal(real: BigDecimal.e(precision: p))
       case .i: return ComplexDecimal(real: BigDecimal(0), imaginary: BigDecimal(1))
+      case .infinity: throw .overflow
       }
 
     case .symbol(let name):

@@ -197,6 +197,39 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(solutions.lines[0].decimal?.parserText, "0.52359878+6.2831853n")
   }
 
+  func testAnAntiderivativeEndsWithPlusC() async {
+    let model = makeModel()
+    model.press(.function("int"))
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in [",", "x"] { model.press(.symbol(key)) }
+    guard case .answer(let answer) = await answer(model) else { return XCTFail("expected an answer") }
+    XCTAssertTrue(answer.exact.parserText.hasSuffix("+C"), answer.exact.parserText)
+  }
+
+  func testALimitAtInfinityIsInfinity() async {
+    let model = makeModel()
+    model.press(.function("lim"))
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in [",", "x", ",", "∞"] { model.press(.symbol(key)) }
+    guard case .answer(let answer) = await answer(model) else { return XCTFail("expected an answer") }
+    XCTAssertEqual(answer.exact.parserText, "∞")
+    XCTAssertNil(answer.decimal)
+  }
+
+  func testADivergentSeriesDoesNotExist() async {
+    let model = makeModel()
+    model.press(.function("sum"))
+    for key in ["k", ",", "k", ",", "1", ",", "∞"] { model.press(.symbol(key)) }
+    let outcome = await answer(model)
+    XCTAssertEqual(outcome, .failure(.doesNotExist))
+  }
+
   func testAnUnfinishedFormulaIsIncomplete() async {
     let model = makeModel()
     model.press(.symbol("5"))

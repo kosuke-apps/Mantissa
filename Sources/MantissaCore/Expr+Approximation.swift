@@ -27,6 +27,7 @@ extension Expr {
       case .pi: return BigDecimal.pi(precision: p)
       case .e: return BigDecimal.e(precision: p)
       case .i: throw .domain  // not a real number
+      case .infinity: throw .overflow
       }
 
     case .symbol(let name):
