@@ -67,9 +67,13 @@ struct TypesetterTests {
   func functions() throws {
     #expect(Typesetter.nodes(for: try exact("x!")) == [.symbol("x"), .symbol("!")])
     #expect(Typesetter.nodes(for: try exact("|x|")) == [.absolute([.symbol("x")])])
+    // The base is written small below `log`.
+    #expect(Typesetter.nodes(for: try exact("log(5,3)")) == [.logarithm(base: digits("3"), argument: digits("5"))])
     #expect(
-      Typesetter.nodes(for: try exact("log(5,3)"))
-        == [.function(name: "log", argument: digits("5") + [.symbol(",")] + digits("3"))])
+      Typesetter.nodes(for: try exact("log(x,2)")) == [.logarithm(base: digits("2"), argument: [.symbol("x")])])
+    // Base 10 is the plain `log`, and base e is `ln`.
+    #expect(Typesetter.nodes(for: try exact("log(x)")) == [.function(name: "log", argument: [.symbol("x")])])
+    #expect(Typesetter.nodes(for: try exact("log(x,e)")) == [.function(name: "ln", argument: [.symbol("x")])])
   }
 
   @Test(

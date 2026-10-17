@@ -61,9 +61,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     function, arrows, backspace, new line; cursor as a path), `MathNode+Text` (writes the lines as parser text),
     `Typesetter` (an exact `Expr`, or a decimal, as `MathNode`s for display).
   - `Sources/MantissaCore/Plot/`: graphing in `Double` (the only place it is used for a result). `DoubleCompiler` (an
-    `Expr` to a closure), `PlotFunction` (+ `Calculator.plotFunctions`: which inputs are something to draw),
-    `PlotViewport` (fit, pan, zoom, `PlotSampler` that cuts a curve at gaps and poles), `PlotAnalysis` (roots,
-    y-intercept, extrema, crossings).
+    `Expr` to a closure of one or two variables), `PlotFunction` (+ `Calculator.plotFunctions`: which inputs are the graph
+    of a function), `PlotRelation` (+ `Calculator.plotContent`: curves and regions in x and y), `PlotContours` (marching
+    squares and shaded runs), `PlotViewport` (fit, pan, zoom, equal scales, `PlotSampler` that cuts a curve at gaps and
+    poles), `PlotAnalysis` (roots, intercepts, y-intercept, extrema, crossings).
   - `Sources/MantissaCore/Algebra/`: what the canonical form deliberately does not do on its own. `Expand` (multiply
     out, substitute, put a sum over a common denominator), `Polynomial` and `RationalPolynomial` (coefficients as `Expr`
     or `Rational`; rational roots, squarefree part), `PolynomialRoots` and `NumericRoots` (exact roots, then decimals),
@@ -77,7 +78,8 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     `Series` (sums), `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
     the builder works out while it turns the syntax into an `Expr`).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
-    `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit. `Calculator.swift`: `evaluate(_:)` returns the
+    `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit; `Builder+Functions.swift`: the functions that
+    are written with others (`mod`, `min`, `max`, `sign`, `re`, `im`, `conj`, `arg`, `acot`, `coth`, …). `Calculator.swift`: `evaluate(_:)` returns the
     exact value and its decimal approximation, or a `CalculatorError`.
   - `Tests/MantissaCoreTests/`: Swift Testing suites. `Resources/*.json` are reference vectors produced by
     `tools/gen_number_vectors.py` (Python's exact `int` and `Fraction`) and `tools/gen_decimal_vectors.py` (Python's

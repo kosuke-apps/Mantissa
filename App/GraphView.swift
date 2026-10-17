@@ -2,29 +2,62 @@ import MantissaCore
 import Observation
 import SwiftUI
 
-/// What the graph shows: the functions, the window onto the plane, and the points worth marking.
+/// What the graph shows: the functions and other curves and regions, the window onto the plane, and the points worth marking.
 @MainActor @Observable
 final class GraphModel {
-  let functions: [PlotFunction]
+  let content: PlotContent
   var viewport: PlotViewport
   private(set) var points: [PlotPoint] = []
   var selected: PlotPoint?
+  /// The size of the drawing, once it is known, so that a window with curves of both unknowns can have equal scales.
+  private(set) var drawingSize: CGSize?
 
-  init(functions: [PlotFunction]) {
-    self.functions = functions
-    viewport = PlotViewport.fit(functions)
+  var functions: [PlotFunction] { content.functions }
+
+  /// `size` is the size of the drawing the graph replaces, if there was one: the new window is then fitted to it at once.
+  init(content: PlotContent, size: CGSize? = nil) {
+    self.content = content
+    viewport = PlotViewport.fit(content)
+    drawingSize = size
+    if let size, !content.relations.isEmpty {
+      viewport = viewport.matchingAspect(width: Double(size.width), height: Double(size.height))
+    }
+    findPoints()
+  }
+
+  /// Called with the size of the drawing. The first time (and after a reset), a graph with curves in both unknowns gets a
+  /// window with the same scale on both axes, so that a circle is round.
+  func fit(to size: CGSize) {
+    guard size.width > 0, size.height > 0 else { return }
+    let isFirst = drawingSize == nil
+    drawingSize = size
+    guard isFirst, !content.relations.isEmpty else { return }
+    viewport = viewport.matchingAspect(width: Double(size.width), height: Double(size.height))
     findPoints()
   }
 
   /// Finds the points to mark in the window and a little beyond it, so that panning a little shows them at once.
   func findPoints() {
     let margin = viewport.width * 0.5
-    points = PlotAnalysis.points(of: functions, from: viewport.xMin - margin, to: viewport.xMax + margin)
+    let from = viewport.xMin - margin
+    let to = viewport.xMax + margin
+    var found = PlotAnalysis.points(of: content.functions, from: from, to: to)
+    if !content.relations.isEmpty {
+      let range = max(abs(from), abs(to), abs(viewport.yMin) + viewport.height, abs(viewport.yMax) + viewport.height)
+      for (index, relation) in content.relations.enumerated() where !relation.isRegion {
+        found += PlotAnalysis.intercepts(of: relation, index: content.functions.count + index, within: range)
+      }
+      found += PlotAnalysis.crossings(of: content.functions, with: content.relations, from: from, to: to)
+    }
+    points = found.sorted { $0.x < $1.x }
     if let selected, !points.contains(selected) { self.selected = nil }
   }
 
   func reset() {
-    viewport = PlotViewport.fit(functions)
+    viewport = PlotViewport.fit(content)
+    if let drawingSize, !content.relations.isEmpty {
+      viewport = viewport.matchingAspect(width: Double(drawingSize.width), height: Double(drawingSize.height))
+    }
     selected = nil
     findPoints()
   }
@@ -46,6 +79,7 @@ struct GraphCard: View {
     GeometryReader { proxy in
       let size = proxy.size
       Canvas { context, size in draw(in: &context, size: size) }
+        .onAppear { graph.fit(to: size) }
         .contentShape(Rectangle())
         .gesture(pan(in: size))
         .simultaneousGesture(zoom(in: size))
@@ -131,6 +165,10 @@ struct GraphCard: View {
 
   private func draw(in context: inout GraphicsContext, size: CGSize) {
     drawGrid(in: &context, size: size)
+    let first = graph.functions.count
+    for (index, relation) in graph.content.relations.enumerated() where relation.isRegion {
+      drawRegion(of: relation, color: curveColors[(first + index) % curveColors.count], in: &context, size: size)
+    }
     for (index, function) in graph.functions.enumerated() {
       let color = curveColors[index % curveColors.count]
       var path = Path()
@@ -142,7 +180,54 @@ struct GraphCard: View {
       }
       context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
     }
+    for (index, relation) in graph.content.relations.enumerated() {
+      drawBoundary(of: relation, color: curveColors[(first + index) % curveColors.count], in: &context, size: size)
+    }
     drawPoints(in: &context, size: size)
+  }
+
+  /// The cell size, in points, of the grids a relation is sampled on.
+  private static let cell: CGFloat = 4
+
+  /// The part of the plane where an inequality holds, as a light tint.
+  private func drawRegion(of relation: PlotRelation, color: Color, in context: inout GraphicsContext, size: CGSize) {
+    let columns = max(Int((size.width / Self.cell).rounded(.up)), 1)
+    let rows = max(Int((size.height / Self.cell).rounded(.up)), 1)
+    let width = size.width / CGFloat(columns)
+    let height = size.height / CGFloat(rows)
+    var path = Path()
+    for run in PlotSampler.region(of: relation, in: graph.viewport, columns: columns, rows: rows) {
+      // Rows count up from the bottom of the window.
+      path.addRect(
+        CGRect(
+          x: CGFloat(run.firstColumn) * width, y: size.height - CGFloat(run.row + 1) * height,
+          width: CGFloat(run.endColumn - run.firstColumn) * width, height: height + 0.5))
+    }
+    context.fill(path, with: .color(color.opacity(0.2)))
+  }
+
+  /// The curve of an equation, or the edge of a region: solid when it belongs to it, dashed when it does not.
+  private func drawBoundary(of relation: PlotRelation, color: Color, in context: inout GraphicsContext, size: CGSize) {
+    let columns = max(Int((size.width / Self.cell).rounded(.up)), 1)
+    let rows = max(Int((size.height / Self.cell).rounded(.up)), 1)
+    var path = Path()
+    if relation.includesBoundary {
+      for segment in PlotSampler.contour(of: relation, in: graph.viewport, columns: columns, rows: rows) {
+        path.move(to: screen(segment.x0, segment.y0, in: size))
+        path.addLine(to: screen(segment.x1, segment.y1, in: size))
+      }
+    } else {
+      // A dashed line needs the pieces joined, or the pattern starts again with every piece.
+      for line in PlotSampler.contourLines(of: relation, in: graph.viewport, columns: columns, rows: rows) {
+        for (offset, sample) in line.enumerated() {
+          let point = screen(sample.x, sample.y, in: size)
+          if offset == 0 { path.move(to: point) } else { path.addLine(to: point) }
+        }
+      }
+    }
+    let style = StrokeStyle(
+      lineWidth: 2.5, lineCap: .round, lineJoin: .round, dash: relation.includesBoundary ? [] : [7, 5])
+    context.stroke(path, with: .color(color), style: style)
   }
 
   /// A step of 1, 2 or 5 times a power of ten that fits about six times into the range.
@@ -234,6 +319,7 @@ struct GraphCard: View {
   private static func name(of kind: PlotPoint.Kind) -> String {
     switch kind {
     case .root: return Localizer.string("Root")
+    case .xIntercept: return Localizer.string("x-intercept")
     case .yIntercept: return Localizer.string("y-intercept")
     case .minimum: return Localizer.string("Minimum")
     case .maximum: return Localizer.string("Maximum")

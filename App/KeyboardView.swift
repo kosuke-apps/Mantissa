@@ -219,6 +219,14 @@ private struct GlyphView: View {
         box
         Text(")").font(.system(size: 24))
       }
+    case .logarithm:
+      HStack(alignment: .bottom, spacing: 0) {
+        Text("log").font(.system(size: 22))
+        RoundedRectangle(cornerRadius: 1)
+          .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 1.5]))
+          .frame(width: 6, height: 7)
+          .padding(.bottom, -2)
+      }
     case .absolute:
       HStack(spacing: 2) {
         Text("|").font(.system(size: 24))

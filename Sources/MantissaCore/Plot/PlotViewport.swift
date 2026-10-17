@@ -28,6 +28,38 @@ public struct PlotViewport: Equatable, Sendable {
       yMax: y + (yMax - y) * scale)
   }
 
+  /// The same window, widened about its centre in whichever direction has more screen to spare, so that a length on the x axis
+  /// is as long on screen as the same length on the y axis in a drawing of `width` × `height`. Nothing is cut off, and
+  /// circles look round.
+  public func matchingAspect(width: Double, height: Double) -> PlotViewport {
+    guard width > 0, height > 0 else { return self }
+    let perPoint = max(self.width / width, self.height / height)
+    let centreX = (xMin + xMax) / 2
+    let centreY = (yMin + yMax) / 2
+    return PlotViewport(
+      xMin: centreX - perPoint * width / 2, xMax: centreX + perPoint * width / 2, yMin: centreY - perPoint * height / 2,
+      yMax: centreY + perPoint * height / 2)
+  }
+
+  /// A window on everything an input draws: `fit` for the functions, and for the other curves and regions a square window
+  /// that takes in where they meet the axes (or −10 to 10 when they do not), with room around. Both, when there are both.
+  public static func fit(_ content: PlotContent) -> PlotViewport {
+    guard !content.relations.isEmpty else { return fit(content.functions) }
+    var extent = 0.0
+    for (index, relation) in content.relations.enumerated() {
+      for point in PlotAnalysis.intercepts(of: relation, index: index, within: 100) {
+        extent = max(extent, abs(point.x), abs(point.y))
+      }
+    }
+    let half = extent > 1e-6 ? extent * 1.6 : 10
+    let relations = PlotViewport(xMin: -half, xMax: half, yMin: -half, yMax: half)
+    guard !content.functions.isEmpty else { return relations }
+    let functions = fit(content.functions)
+    return PlotViewport(
+      xMin: min(functions.xMin, relations.xMin), xMax: max(functions.xMax, relations.xMax),
+      yMin: min(functions.yMin, relations.yMin), yMax: max(functions.yMax, relations.yMax))
+  }
+
   /// A window on the interesting part of `functions`: wide enough for the points nearest the origin that are worth marking
   /// (roots, turning points, crossings) with some room around them, and as high as the curves are there, with the x axis in
   /// view unless the curves are far from it. Curves with nothing to mark get x from −10 to 10.

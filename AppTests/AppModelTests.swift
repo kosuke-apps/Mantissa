@@ -299,4 +299,69 @@ final class AppModelTests: XCTestCase {
     let outcome = await answer(model)
     XCTAssertEqual(outcome, .failure(.divisionByZero))
   }
+
+  func testALogarithmWithABaseIsTypedAndAnswered() async {
+    let model = makeModel()
+    model.press(.logarithm)
+    model.press(.symbol("2"))
+    model.press(.right)
+    model.press(.symbol("8"))
+    guard case .answer(let answer) = await answer(model) else { return XCTFail("expected an answer") }
+    XCTAssertEqual(answer.exact.parserText, "3")
+    XCTAssertEqual(model.editor.text, "log(8,2)")
+  }
+
+  func testNewFunctionKeysGiveAnswers() async {
+    let model = makeModel()
+    for (keys, expected) in [(["mod"], "2"), (["max"], "7")] {
+      model.clearAll()
+      model.press(.function(keys[0]))
+      for key in keys[0] == "mod" ? ["1", "7", ",", "5"] : ["3", ",", "7", ",", "2"] { model.press(.symbol(key)) }
+      guard case .answer(let answer) = await answer(model) else { return XCTFail("expected an answer for \(keys)") }
+      XCTAssertEqual(answer.exact.parserText, expected, "\(keys)")
+    }
+  }
+
+  func testACircleIsDrawnWithEqualScales() async throws {
+    let model = makeModel()
+    for key in ["x"] { model.press(.symbol(key)) }
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    model.press(.symbol("+"))
+    model.press(.symbol("y"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    model.press(.symbol("="))
+    for key in ["2", "5"] { model.press(.symbol(key)) }
+    _ = await answer(model)
+    try await Task.sleep(for: .milliseconds(300))
+    let graph = try XCTUnwrap(model.graph)
+    XCTAssertTrue(graph.functions.isEmpty)
+    XCTAssertEqual(graph.content.relations.count, 1)
+    // The graph tells where the circle meets each axis.
+    XCTAssertEqual(graph.points.filter { $0.kind == .xIntercept }.count, 2)
+    XCTAssertEqual(graph.points.filter { $0.kind == .yIntercept }.count, 2)
+
+    // Once it is drawn at a size, the scales are equal; a later circle keeps them.
+    graph.fit(to: CGSize(width: 360, height: 320))
+    XCTAssertEqual(graph.viewport.width / 360, graph.viewport.height / 320, accuracy: 1e-9)
+    model.press(.symbol("0"))
+    _ = await answer(model)
+    try await Task.sleep(for: .milliseconds(300))
+    let next = try XCTUnwrap(model.graph)
+    XCTAssertFalse(next === graph)
+    XCTAssertEqual(next.viewport.width / 360, next.viewport.height / 320, accuracy: 1e-9)
+  }
+
+  func testAnInequalityInTwoUnknownsIsAShadedRegionWithoutAMessage() async throws {
+    let model = makeModel()
+    for key in ["y", ">", "x"] { model.press(.symbol(key)) }
+    let outcome = await answer(model)
+    try await Task.sleep(for: .milliseconds(300))
+    // There is nothing to solve for, and the graph says it all: no "not supported yet".
+    XCTAssertEqual(outcome, .empty)
+    XCTAssertEqual(model.graph?.content.relations.map(\.isRegion), [true])
+  }
 }

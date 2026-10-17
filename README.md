@@ -41,6 +41,13 @@ Working today (in the `MantissaCore` package):
   sums and series, with exact answers (`∫ x e^x dx`, `lim (1 + 1/x)^x = e`, `Σ 1/k² = π²/6`).
 
 The keyboard places ∫, Σ, lim and d/dx with boxes for their expression, variable and ends, as in the app this one follows.
+`log` with a base is typed with its base small below it (`log₂(8)`), and a small + or − after the point of a limit means from above
+or from below.
+
+- Also: `mod`, `min`, `max`, `sign`, the real and imaginary parts, conjugate and argument of a complex number, `atan(y, x)`, and
+  the reciprocal trigonometric and hyperbolic functions with their inverses.
+- Graphs of circles and other curves in x and y (`x² + y² = 25`, with the intercepts marked) and shaded regions for inequalities
+  (`y > x²`, dashed where the edge is not included); a line and a circle show where they cross.
 
 ## Getting started
 

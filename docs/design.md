@@ -177,6 +177,18 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
   the curves are there (the 3rd to 97th percentile of their values); curves with nothing to mark get x from −10 to 10.
 - **Gestures**: drag pans, pinch zooms about the fingers, tapping a point shows it with its coordinates, the corner button
   resets. The points are looked for again, for twice the window's width, when a gesture ends.
+- **Curves and regions in x and y** (`PlotRelation`, `Calculator.plotContent`): an equation that is not a function of x (a circle,
+  `x = y²`) and an inequality (`y > x²`, `x² + y² ≤ 4`, or `x² ≥ 4`, which shades whole columns) are drawn from `left − right`
+  compiled to a function of two variables (`DoubleCompiler.compilePlane`). The curve is found by **marching squares** over a
+  grid of 4-point cells: where the sign changes between two corners the curve crosses that edge, at the point linear
+  interpolation gives, and a cell with an undefined corner is skipped; in the ambiguous cell (opposite corners alike) the middle
+  of the cell decides which way round. A region is the cells whose centre satisfies the relation, merged into runs along each
+  row. The boundary is solid for `≤`, `≥` and `=` and dashed for `<` and `>`; a dashed stroke restarts its pattern with every
+  piece, so the segments are first joined into lines by their shared ends (neighbouring cells compute a shared edge from the
+  same two numbers, so the ends agree exactly). The window is square in scale (`matchingAspect`), fitted to where the curve meets
+  the axes, so a circle is round; the axis intercepts are marked, and so are the crossings of a function with a curve (a line
+  and a circle). A system is drawn when each line is a function or a relation: the common part of inequalities is where the
+  tints overlap.
 
 ## Solving equations
 
@@ -292,6 +304,17 @@ integral or series that diverges. `MathConstant.infinity` exists only as a resul
   `Σ rᵏ/k!` is `e^r`. A series whose terms do not tend to zero is `undefined`.
 - **Found while testing**: `BigDecimal.power` refused `(1 + 10⁻⁴⁸)^(10⁴⁸)` because it estimated the size of the result from the number of
   digits of the base and not from its logarithm; the integer power is now judged by `|exponent|·|log₁₀ base|`.
+
+## More functions
+
+`mod(a, b)`, `min`, `max`, `sign`, the parts of a complex number (`re`, `im`, `conj`, `arg`), the two-argument `atan(y, x)`, and
+the inverse reciprocal and reciprocal hyperbolic functions have no case of their own in `MathFunction`: `Builder` writes each with
+the functions the engine has (`a − b·floor(a/b)`, `(a + b ± |a − b|)/2` when the values are not numbers, `acot(x) = π/2 − atan x`,
+`asec(x) = acos(1/x)`, `coth = cosh/sinh`), so every other layer (approximation, derivatives, graphs) works on them unchanged.
+A number is compared by its decimal value (`max(√2, 3/2)` is `3/2`), and the angle of a point needs to know on which side of
+each axis it lies, so `atan(y, x)` with unknowns in it is not supported. `re`, `im`, `conj`, `arg`, `mod`, `min`, `max` and
+`sign` are read as functions only when a parenthesis follows (`re` alone is r times e), as the keyboard writes them.
+A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 2)`.
 
 ## Settings and other forms of an answer
 

@@ -6,6 +6,9 @@ struct SyntaxGenerator {
   var random: SplitMix64
   /// Whether `x` may appear as a leaf, for tests that evaluate at chosen values.
   var includesUnknown = false
+  /// Whether `mod`, `min`, `max`, `sign`, the inverse reciprocals and the hyperbolic reciprocals may appear. Off by default,
+  /// so that the random sequences of the older tests stay as they were.
+  var includesDerivedFunctions = false
 
   init(seed: UInt64) { random = SplitMix64(seed: seed) }
 
@@ -45,7 +48,7 @@ struct SyntaxGenerator {
   mutating func make(depth: Int) -> Syntax {
     if depth == 0 || int(0...3) == 0 { return leaf() }
     let child = depth - 1
-    switch int(0...16) {
+    switch int(0...(includesDerivedFunctions ? 20 : 16)) {
     case 0: return .negate(make(depth: child))
     case 1, 2: return .binary(.add, make(depth: child), make(depth: child))
     case 3: return .binary(.subtract, make(depth: child), make(depth: child))
@@ -60,6 +63,11 @@ struct SyntaxGenerator {
     case 13: return .call(.log, [make(depth: child)])
     case 14: return .postfix(.factorial, .number(Rational(int(0...8))))
     case 15: return .call([.sinh, .cosh, .tanh, .atan][int(0...3)], [make(depth: child)])
+    case 17: return .call([.mod, .min, .max][int(0...2)], [make(depth: child), make(depth: child)])
+    case 18: return .call(.sign, [make(depth: child)])
+    case 19: return .call([.acot, .asec, .acsc][int(0...2)], [make(depth: child)])
+    case 20:
+      return .call([.coth, .sech, .csch, .acoth, .asech, .acsch][int(0...5)], [make(depth: child)])
     default: return .call(.root, [make(depth: child), .number(Rational(int(2...4)))])
     }
   }

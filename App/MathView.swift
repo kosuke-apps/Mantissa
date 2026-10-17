@@ -230,6 +230,14 @@ private struct MathNodeView: View {
           }
       }
 
+    case .logarithm(let base, let argument):
+      HStack(alignment: .mathAxis, spacing: size * 0.04) {
+        word("log")
+        slot(base, 0, scale: 0.6)
+          .alignmentGuide(.mathAxis) { $0[.top] - size * 0.18 }
+        parenthesised(argument, 1)
+      }
+
     case .calculus(let kind, let slots):
       calculus(kind, slots)
 

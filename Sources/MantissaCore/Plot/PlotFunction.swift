@@ -20,64 +20,63 @@ extension Calculator {
   public func plotFunctions(_ text: String) -> [PlotFunction] {
     guard let statement = try? Parser.parse(text) else { return [] }
     let builder = Builder(angleUnit: settings.angleUnit)
-
-    func function(_ syntax: Syntax, requiresUnknown: Bool) -> PlotFunction? {
-      guard let expression = try? builder.build(syntax) else { return nil }
-      let symbols = expression.freeSymbols
-      guard symbols.isSubset(of: ["x"]), !requiresUnknown || !symbols.isEmpty, !expression.containsImaginaryUnit
-      else { return nil }
-      return PlotFunction(expression)
-    }
-
-    /// An equation in `x` and `y` of degree 1 in `y`, solved for `y`.
-    func solvedForY(_ chain: RelationChain) -> PlotFunction? {
-      guard let left = try? builder.build(chain.first), let right = try? builder.build(chain.links[0].operand) else {
-        return nil
-      }
-      let difference = left - right
-      guard difference.freeSymbols == ["x", "y"], let polynomial = difference.polynomial(in: "y"),
-        polynomial.degree == 1,
-        let expression = try? (-polynomial.coefficients[0]).divided(by: polynomial.coefficients[1]),
-        expression.freeSymbols.isSubset(of: ["x"]), !expression.containsImaginaryUnit
-      else { return nil }
-      return PlotFunction(expression)
-    }
-
-    /// The line a statement is: an expression, `y = …`, or an equation that can be solved for `y`. An equation in `x` alone
-    /// is a line only on its own.
-    func line(_ statement: Statement) -> PlotFunction? {
-      switch statement {
-      case .expression(let syntax):
-        return function(syntax, requiresUnknown: true)
-      case .relation(let chain):
-        guard chain.links.count == 1, chain.links[0].op == .equal else { return nil }
-        if chain.first == .symbol("y") { return function(chain.links[0].operand, requiresUnknown: false) }
-        if chain.links[0].operand == .symbol("y") { return function(chain.first, requiresUnknown: false) }
-        return solvedForY(chain)
-      case .system:
-        return nil
-      }
-    }
-
-    /// The two sides of an equation in `x`.
-    func sides(_ statement: Statement) -> [PlotFunction] {
-      guard case .relation(let chain) = statement, chain.links.count == 1, chain.links[0].op == .equal,
-        let left = function(chain.first, requiresUnknown: false),
-        let right = function(chain.links[0].operand, requiresUnknown: false),
-        !left.expression.freeSymbols.union(right.expression.freeSymbols).isEmpty
-      else { return [] }
-      if right.expression.isZero { return [left] }
-      if left.expression.isZero { return [right] }
-      return [left, right]
-    }
-
     switch statement {
     case .system(let lines):
-      let functions = lines.compactMap(line)
+      let functions = lines.compactMap { plotLine($0, builder) }
       return functions.count == lines.count ? functions : []
     default:
-      if let single = line(statement) { return [single] }
-      return sides(statement)
+      if let single = plotLine(statement, builder) { return [single] }
+      return plotSides(statement, builder)
     }
+  }
+
+  private func plotFunction(_ syntax: Syntax, _ builder: Builder, requiresUnknown: Bool) -> PlotFunction? {
+    guard let expression = try? builder.build(syntax) else { return nil }
+    let symbols = expression.freeSymbols
+    guard symbols.isSubset(of: ["x"]), !requiresUnknown || !symbols.isEmpty, !expression.containsImaginaryUnit
+    else { return nil }
+    return PlotFunction(expression)
+  }
+
+  /// An equation in `x` and `y` of degree 1 in `y`, solved for `y`.
+  private func plotSolvedForY(_ chain: RelationChain, _ builder: Builder) -> PlotFunction? {
+    guard let left = try? builder.build(chain.first), let right = try? builder.build(chain.links[0].operand) else {
+      return nil
+    }
+    let difference = left - right
+    guard difference.freeSymbols == ["x", "y"], let polynomial = difference.polynomial(in: "y"),
+      polynomial.degree == 1,
+      let expression = try? (-polynomial.coefficients[0]).divided(by: polynomial.coefficients[1]),
+      expression.freeSymbols.isSubset(of: ["x"]), !expression.containsImaginaryUnit
+    else { return nil }
+    return PlotFunction(expression)
+  }
+
+  /// The line a statement is: an expression, `y = …`, or an equation that can be solved for `y`. An equation in `x` alone
+  /// is a line only on its own.
+  func plotLine(_ statement: Statement, _ builder: Builder) -> PlotFunction? {
+    switch statement {
+    case .expression(let syntax):
+      return plotFunction(syntax, builder, requiresUnknown: true)
+    case .relation(let chain):
+      guard chain.links.count == 1, chain.links[0].op == .equal else { return nil }
+      if chain.first == .symbol("y") { return plotFunction(chain.links[0].operand, builder, requiresUnknown: false) }
+      if chain.links[0].operand == .symbol("y") { return plotFunction(chain.first, builder, requiresUnknown: false) }
+      return plotSolvedForY(chain, builder)
+    case .system:
+      return nil
+    }
+  }
+
+  /// The two sides of an equation in `x`.
+  private func plotSides(_ statement: Statement, _ builder: Builder) -> [PlotFunction] {
+    guard case .relation(let chain) = statement, chain.links.count == 1, chain.links[0].op == .equal,
+      let left = plotFunction(chain.first, builder, requiresUnknown: false),
+      let right = plotFunction(chain.links[0].operand, builder, requiresUnknown: false),
+      !left.expression.freeSymbols.union(right.expression.freeSymbols).isEmpty
+    else { return [] }
+    if right.expression.isZero { return [left] }
+    if left.expression.isZero { return [right] }
+    return [left, right]
   }
 }

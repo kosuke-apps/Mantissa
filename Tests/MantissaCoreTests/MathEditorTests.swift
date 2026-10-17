@@ -529,3 +529,92 @@ struct CalculusEditorTests {
     }
   }
 }
+
+@Suite("Logarithms with a base and one-sided limits in the editor")
+struct LogarithmAndSideTests {
+  private func evaluate(_ editor: MathEditor) throws -> String {
+    try Calculator().evaluate(editor.text).exact.description
+  }
+
+  @Test("A logarithm has its base first and its argument second, and is written as log(argument, base)")
+  func logarithm() throws {
+    var editor = MathEditor()
+    editor.insertLogarithm()
+    #expect(editor.isValid)
+    #expect(editor.text == "log(,)")  // both empty: unfinished
+    editor.type("2")  // the base
+    editor.moveRight()  // into the argument
+    editor.type("8")
+    #expect(editor.isValid)
+    #expect(editor.text == "log(8,2)")
+    #expect(try evaluate(editor) == "3")
+    #expect(editor.lines == [[.logarithm(base: [.symbol("2")], argument: [.symbol("8")])]])
+  }
+
+  @Test("A closing parenthesis ends the argument but not the base, and the cursor stays valid on every key")
+  func closingAndBackspace() throws {
+    var editor = MathEditor()
+    editor.insertLogarithm()
+    editor.type("1")
+    editor.insert(")")  // in the base: nothing to close
+    #expect(editor.cursor.path.count == 1 && editor.cursor.path[0].slot == 0)
+    editor.moveRight()
+    editor.type("5")
+    editor.insert(")")  // in the argument: steps out
+    #expect(editor.cursor.path.isEmpty)
+    editor.type("+")
+    editor.type("1")
+    #expect(editor.text == "log(5,1)+1")
+    #expect(editor.isValid)
+
+    // Backspace takes the contents out first, then the whole structure when it is empty.
+    var walk = MathEditor()
+    walk.insertLogarithm()
+    walk.type("2")
+    walk.moveRight()
+    walk.type("9")
+    for _ in 0..<6 {
+      walk.backspace()
+      #expect(walk.isValid)
+    }
+    #expect(walk.isEmpty)
+  }
+
+  @Test("A fraction takes a logarithm as its numerator")
+  func fractionOfLogarithm() throws {
+    var editor = MathEditor()
+    editor.insertLogarithm()
+    editor.type("2")
+    editor.moveRight()
+    editor.type("8")
+    editor.insert(")")
+    editor.insertFraction()
+    editor.type("3")
+    #expect(editor.text == "((log(8,2))/(3))")
+    #expect(try evaluate(editor) == "1")
+  }
+
+  @Test("A small plus or minus after the point of a limit means from above or from below")
+  func oneSidedLimit() throws {
+    func limit(of body: String, to point: String, side: String) -> MathEditor {
+      var editor = MathEditor()
+      editor.insertCalculus(.limit)
+      editor.type(body)
+      for _ in 0..<3 { editor.moveRight() }  // into the variable, over it, and into the point
+      editor.type(point)
+      editor.insert(side)
+      return editor
+    }
+    let above = limit(of: "1/x", to: "0", side: "⁺")
+    #expect(above.isValid)
+    #expect(above.text == "lim(1/x,x,0,1)")
+    #expect(try evaluate(above) == "∞")
+    let below = limit(of: "1/x", to: "0", side: "⁻")
+    #expect(below.text == "lim(1/x,x,0,-1)")
+    #expect(try evaluate(below) == "-∞")
+    // Without a mark it is two-sided, and with only a mark it is unfinished.
+    #expect(limit(of: "x", to: "3", side: "").text == "lim(x,x,3)")
+    #expect(limit(of: "x", to: "", side: "⁺").text == "lim(x,x,,1)")
+    #expect(throws: CalculatorError.self) { try Calculator().evaluate("lim(x,x,,1)") }
+  }
+}

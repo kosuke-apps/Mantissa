@@ -2,6 +2,8 @@
 public struct PlotPoint: Hashable, Sendable {
   public enum Kind: Hashable, Sendable {
     case root
+    /// Where the curve of an equation in `x` and `y` meets the x axis (for a function this is a root).
+    case xIntercept
     case yIntercept
     case minimum
     case maximum
@@ -68,6 +70,38 @@ public enum PlotAnalysis {
       }
     }
     return points.sorted { $0.x < $1.x }
+  }
+
+  /// Where the curve of an equation meets the axes: the roots of the expression with `y` set to 0 (the x-intercepts) and with
+  /// `x` set to 0 (the y-intercepts), within `range` of the origin. `index` is the number the points carry, for their colour.
+  public static func intercepts(of relation: PlotRelation, index: Int, within range: Double) -> [PlotPoint] {
+    let alongX: RealFunction = { relation.evaluate($0, 0) }
+    let alongY: RealFunction = { relation.evaluate(0, $0) }
+    var points: [PlotPoint] = []
+    for x in rootsOf(alongX, samplesOf(alongX, from: -range, to: range, count: 2001)) {
+      points.append(PlotPoint(kind: .xIntercept, x: x, y: 0, functionIndex: index))
+    }
+    for y in rootsOf(alongY, samplesOf(alongY, from: -range, to: range, count: 2001)) {
+      points.append(PlotPoint(kind: .yIntercept, x: 0, y: y, functionIndex: index))
+    }
+    return points
+  }
+
+  /// Where the graph of each function meets the curve of each equation: the roots of the expression along the graph.
+  public static func crossings(
+    of functions: [PlotFunction], with relations: [PlotRelation], from xMin: Double, to xMax: Double,
+    samples: Int = 2000
+  ) -> [PlotPoint] {
+    var points: [PlotPoint] = []
+    for (functionIndex, function) in functions.enumerated() {
+      for relation in relations where !relation.isRegion {
+        let along: RealFunction = { relation.evaluate($0, function.evaluate($0)) }
+        for x in rootsOf(along, samplesOf(along, from: xMin, to: xMax, count: samples)) {
+          points.append(PlotPoint(kind: .intersection, x: x, y: function.evaluate(x), functionIndex: functionIndex))
+        }
+      }
+    }
+    return points
   }
 
   // MARK: Sampling

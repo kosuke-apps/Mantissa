@@ -232,6 +232,12 @@ public enum Typesetter {
       return Piece(nodes: typeset(arguments[0]).wrapped(minimum: Level.atom) + [.symbol("!")], level: Level.atom)
     case .abs:
       return Piece(nodes: [.absolute(typeset(arguments[0]).nodes)], level: Level.atom)
+    case .log where arguments[1] != .integer(10):
+      return Piece(
+        nodes: [.logarithm(base: typeset(arguments[1]).nodes, argument: typeset(arguments[0]).nodes)], level: Level.atom
+      )
+    case .log:
+      return Piece(nodes: [.function(name: "log", argument: typeset(arguments[0]).nodes)], level: Level.atom)
     default:
       var list: [MathNode] = []
       for (index, argument) in arguments.enumerated() {

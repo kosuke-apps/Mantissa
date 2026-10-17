@@ -194,11 +194,16 @@ enum Lexer {
     var end = index
     while end < characters.count, characters[end].isLetter { end += 1 }
     let run = String(characters[index..<end])
+    let opensCall = end < characters.count && characters[end] == "("
     var position = run.startIndex
     while position < run.endIndex {
       let offset = index + run.distance(from: run.startIndex, to: position)
       let rest = run[position...]
-      if let match = FunctionName.spellings.first(where: { rest.hasPrefix($0.text) }) {
+      let match = FunctionName.spellings.first { spelling in
+        guard rest.hasPrefix(spelling.text) else { return false }
+        return !spelling.function.needsParenthesis || (opensCall && rest.count == spelling.text.count)
+      }
+      if let match {
         tokens.append(PositionedToken(token: .function(match.function), offset: offset))
         position = run.index(position, offsetBy: match.text.count)
       } else if rest.hasPrefix("pi") {

@@ -17,7 +17,22 @@ struct ExprPropertyTests {
   /// printed form reads back as the same expression.
   @Test("Simplification never changes a value", arguments: [AngleUnit.radians, AngleUnit.degrees])
   func canonicalFormPreservesValue(angleUnit: AngleUnit) throws {
-    var generator = SyntaxGenerator(seed: (angleUnit == .radians ? 2026 : 4052) &+ seedOffset &* 7919)
+    try checkValuesArePreserved(
+      angleUnit: angleUnit, seed: (angleUnit == .radians ? 2026 : 4052) &+ seedOffset &* 7919, derived: false)
+  }
+
+  /// The same with `mod`, `min`, `max`, `sign` and the reciprocal functions in the mix.
+  @Test(
+    "Simplification never changes a value, with the derived functions",
+    arguments: [AngleUnit.radians, AngleUnit.degrees])
+  func derivedFunctionsPreserveValue(angleUnit: AngleUnit) throws {
+    try checkValuesArePreserved(
+      angleUnit: angleUnit, seed: (angleUnit == .radians ? 3131 : 6262) &+ seedOffset &* 7919, derived: true)
+  }
+
+  private func checkValuesArePreserved(angleUnit: AngleUnit, seed: UInt64, derived: Bool) throws {
+    var generator = SyntaxGenerator(seed: seed)
+    generator.includesDerivedFunctions = derived
     let evaluator = NaiveEvaluator(angleUnit: angleUnit)
     let builder = Builder(angleUnit: angleUnit)
     var compared = 0

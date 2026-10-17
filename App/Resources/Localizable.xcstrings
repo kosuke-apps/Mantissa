@@ -694,6 +694,17 @@
           }
         }
       }
+    },
+    "x-intercept": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "x 切片"
+          }
+        }
+      }
     }
   }
 }

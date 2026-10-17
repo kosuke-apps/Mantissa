@@ -19,6 +19,7 @@ extension MathNode {
     case .group(let content): return "(" + content.parserText + ")"
     case .function(let name, let argument): return name + "(" + argument.parserText + ")"
     case .absolute(let content): return "abs(" + content.parserText + ")"
+    case .logarithm(let base, let argument): return "log(" + argument.parserText + "," + base.parserText + ")"
     case .calculus(let kind, let slots):
       var arguments = [slots[0].parserText, slots[1].parserText]
       switch kind {
@@ -27,7 +28,16 @@ extension MathNode {
         // formula reads as unfinished.
         if !slots[2].isEmpty || !slots[3].isEmpty { arguments += [slots[2].parserText, slots[3].parserText] }
       case .sum: arguments += [slots[2].parserText, slots[3].parserText]
-      case .limit: arguments.append(slots[2].parserText)
+      case .limit:
+        // A small + or − after the point means from above or from below: `lim(f, x, 0, 1)`.
+        var point = slots[2]
+        var direction: String?
+        if case .symbol(let mark)? = point.last, mark == "⁺" || mark == "⁻" {
+          point.removeLast()
+          direction = mark == "⁺" ? "1" : "-1"
+        }
+        arguments.append(point.parserText)
+        if let direction { arguments.append(direction) }
       case .derivative: break
       }
       return kind.functionName + "(" + arguments.joined(separator: ",") + ")"
@@ -38,7 +48,7 @@ extension MathNode {
 
   fileprivate var isFunction: Bool {
     switch self {
-    case .function, .calculus: return true
+    case .function, .logarithm, .calculus: return true
     default: return false
     }
   }

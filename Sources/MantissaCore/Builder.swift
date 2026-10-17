@@ -14,8 +14,8 @@ public enum AngleUnit: Sendable, Equatable {
 struct Builder {
   var angleUnit: AngleUnit
 
-  private static let degreesToRadians = Expr.fraction(1, 180) * .pi
-  private static let radiansToDegrees = Expr.integer(180) * Expr.makePower(.pi, .minusOne)
+  static let degreesToRadians = Expr.fraction(1, 180) * .pi
+  static let radiansToDegrees = Expr.integer(180) * Expr.makePower(.pi, .minusOne)
 
   func build(_ syntax: Syntax) throws(MathError) -> Expr {
     switch syntax {
@@ -74,12 +74,15 @@ struct Builder {
       default: return try Expr.one.divided(by: sine)
       }
     case .asin, .acos, .atan:
-      let result = try Expr.apply(MathFunction(rawValue: function.rawValue)!, [x[0]])
-      return angleUnit == .degrees ? result * Builder.radiansToDegrees : result
+      if function == .atan && x.count == 2 { return inWorkingUnit(try Builder.angle(y: x[0], x: x[1])) }
+      return inWorkingUnit(try Expr.apply(MathFunction(rawValue: function.rawValue)!, [x[0]]))
     case .sinh, .cosh, .tanh, .asinh, .acosh, .atanh, .ln, .abs, .floor, .ceil, .round, .gcd, .lcm, .nCr, .nPr:
       return try Expr.apply(MathFunction(rawValue: function.rawValue)!, x)
     case .log:
       return try Expr.apply(.log, [x[0], x.count == 2 ? x[1] : 10])
+    case .acot, .asec, .acsc, .coth, .sech, .csch, .acoth, .asech, .acsch, .mod, .min, .max, .sign, .re, .im, .conj,
+      .arg:
+      return try derivedCall(function, x)
     case .diff, .int, .lim, .sum: throw .unsupported  // handled before the arguments are built
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))
     case .cbrt: return try x[0].raised(to: .fraction(1, 3))

@@ -136,6 +136,9 @@ public struct MathEditor: Equatable, Sendable {
   /// A function such as `sin`, `ln` or `log`, with the cursor in its argument.
   public mutating func insertFunction(_ name: String) { insertStructure(.function(name: name, argument: [])) }
 
+  /// `log` with a base written small below it; the cursor starts in the base.
+  public mutating func insertLogarithm() { insertStructure(.logarithm(base: [], argument: [])) }
+
   /// ∫, Σ, lim or d/dx, with the cursor in its expression; the variable (and, for a sum, its ends) are already filled in.
   public mutating func insertCalculus(_ kind: CalculusKind) {
     insertStructure(.calculus(kind, kind.initialSlots))
@@ -188,6 +191,9 @@ public struct MathEditor: Equatable, Sendable {
     guard let step = cursor.path.last, let node = container else { return }
     switch node {
     case .group, .function, .absolute:
+      cursor.path.removeLast()
+      cursor.offset = step.index + 1
+    case .logarithm where step.slot == 1:  // a closing parenthesis ends the argument, not the base
       cursor.path.removeLast()
       cursor.offset = step.index + 1
     default: break

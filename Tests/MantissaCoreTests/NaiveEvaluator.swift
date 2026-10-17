@@ -112,6 +112,21 @@ struct NaiveEvaluator {
       }
     case .asin, .acos, .atan:
       let result: BigDecimal
+      if function == .atan && x.count == 2 {
+        // The angle of the point (x, y): the arctangent of the slope, moved into the right half-plane.
+        let (y, abscissa) = (x[0], x[1])
+        if abscissa.isZero {
+          if y.isZero { throw .domain }
+          let quarter = try BigDecimal.pi(precision: p).divided(by: BigDecimal(2), precision: p)
+          return angleUnit == .degrees
+            ? try toDegrees(y.isNegative ? -quarter : quarter) : (y.isNegative ? -quarter : quarter)
+        }
+        let base = try y.divided(by: abscissa, precision: p).arctangent(precision: p)
+        let moved =
+          abscissa.isNegative
+          ? (y.isNegative ? base - BigDecimal.pi(precision: p) : base + BigDecimal.pi(precision: p)) : base
+        return angleUnit == .degrees ? try toDegrees(moved) : moved
+      }
       switch function {
       case .asin: result = try x[0].arcsine(precision: p)
       case .acos: result = try x[0].arccosine(precision: p)
@@ -148,6 +163,45 @@ struct NaiveEvaluator {
       let value = function == .nCr ? NumberTheory.combinations(n, r) : NumberTheory.permutations(n, r)
       guard let result = value else { throw .overflow }
       return BigDecimal(result)
+    case .acot:
+      let result =
+        try BigDecimal.pi(precision: p).divided(by: BigDecimal(2), precision: p) - x[0].arctangent(precision: p)
+      return angleUnit == .degrees ? try toDegrees(result) : result
+    case .asec, .acsc:
+      let reciprocal = try BigDecimal(1).divided(by: x[0], precision: p)
+      let result = function == .asec ? try reciprocal.arccosine(precision: p) : try reciprocal.arcsine(precision: p)
+      return angleUnit == .degrees ? try toDegrees(result) : result
+    case .coth, .sech, .csch:
+      try requireWellConditioned(x[0])
+      let sinh = try x[0].sinh(precision: p)
+      let cosh = try x[0].cosh(precision: p)
+      switch function {
+      case .coth: return try cosh.divided(by: sinh, precision: p)
+      case .sech: return try BigDecimal(1).divided(by: cosh, precision: p)
+      default: return try BigDecimal(1).divided(by: sinh, precision: p)
+      }
+    case .acoth, .asech, .acsch:
+      let reciprocal = try BigDecimal(1).divided(by: x[0], precision: p)
+      switch function {
+      case .acoth: return try reciprocal.atanh(precision: p)
+      case .asech: return try reciprocal.acosh(precision: p)
+      default: return try reciprocal.asinh(precision: p)
+      }
+    case .mod:
+      guard !x[1].isZero else { throw .divisionByZero }
+      let quotient = try x[0].divided(by: x[1], precision: p + 10)
+      // Near a multiple of the divisor the floor depends on rounding noise, which the exact engine does not have.
+      let fraction = quotient - BigDecimal(quotient.floor)
+      let tolerance = BigDecimal(BigInt(1), exponent: -30)
+      if fraction.magnitude < tolerance || (BigDecimal(1) - fraction).magnitude < tolerance { throw .domain }
+      return x[0] - x[1] * BigDecimal(quotient.floor)
+    case .min: return x.dropFirst().reduce(x[0]) { $0 < $1 ? $0 : $1 }
+    case .max: return x.dropFirst().reduce(x[0]) { $0 > $1 ? $0 : $1 }
+    case .sign:
+      // A value this small is rounding noise standing for an exact zero.
+      if let order = x[0].decimalOrder, order < -(p - 15) { throw .domain }
+      return BigDecimal(x[0].isZero ? 0 : (x[0].isNegative ? -1 : 1))
+    case .re, .im, .conj, .arg: throw .notNumeric  // complex values are the other evaluator's job
     case .gcd, .lcm:
       guard x[0].isInteger, x[1].isInteger else { throw .domain }
       let divisor = BigInt.gcd(x[0].floor, x[1].floor)

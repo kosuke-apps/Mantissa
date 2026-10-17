@@ -16,6 +16,8 @@ public indirect enum MathNode: Hashable, Sendable, Codable {
   case function(name: String, argument: [MathNode])
   /// Absolute-value bars.
   case absolute([MathNode])
+  /// A logarithm with its base written small below: `log₂(8)`. The base is the first slot and the argument the second.
+  case logarithm(base: [MathNode], argument: [MathNode])
   /// ∫, Σ, lim and d/dx, each with the slots listed under `CalculusKind`.
   case calculus(CalculusKind, [[MathNode]])
 }
@@ -61,6 +63,7 @@ extension MathNode {
     case .fraction: return 2
     case .radical(let index, _): return index == nil ? 1 : 2
     case .superscript, .group, .function, .absolute: return 1
+    case .logarithm: return 2
     case .calculus(let kind, _): return kind.slotCount
     }
   }
@@ -72,6 +75,7 @@ extension MathNode {
     case .radical(let rootIndex, let radicand): return rootIndex != nil && index == 0 ? rootIndex! : radicand
     case .superscript(let content), .group(let content), .absolute(let content): return content
     case .function(_, let argument): return argument
+    case .logarithm(let base, let argument): return index == 0 ? base : argument
     case .calculus(_, let slots): return slots[index]
     }
   }
@@ -90,6 +94,8 @@ extension MathNode {
     case .group: return .group(content)
     case .absolute: return .absolute(content)
     case .function(let name, _): return .function(name: name, argument: content)
+    case .logarithm(let base, let argument):
+      return index == 0 ? .logarithm(base: content, argument: argument) : .logarithm(base: base, argument: content)
     case .calculus(let kind, var slots):
       slots[index] = content
       return .calculus(kind, slots)

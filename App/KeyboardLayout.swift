@@ -8,6 +8,8 @@ enum Glyph: Hashable {
   case power
   case group
   case absolute
+  /// `log` with a small box for its base.
+  case logarithm
 }
 
 struct KeySpec: Identifiable {
@@ -74,7 +76,13 @@ enum KeyboardLayout {
 
   private static func digit(_ text: String) -> KeySpec { symbol(text, tone: .number) }
 
-  private static func function(_ name: String) -> KeySpec { KeySpec(name, [.function(name)]) }
+  private static func function(_ name: String, alternates: [String] = []) -> KeySpec {
+    KeySpec(name, [.function(name)], alternates: alternates.map(functionAlternate))
+  }
+
+  private static func functionAlternate(_ name: String) -> KeySpec.Alternate {
+    .init(title: name, actions: [.function(name)])
+  }
 
   private static func alternate(_ text: String) -> KeySpec.Alternate { .init(title: text, actions: [.symbol(text)]) }
 
@@ -113,24 +121,36 @@ enum KeyboardLayout {
     case .functions:
       return [
         [
-          function("ln"), function("log"), symbol("e"), KeySpec("eˣ", [.symbol("e"), .power]),
-          KeySpec("abs", .absolute, [.absolute]), symbol("!"),
+          function("ln"), function("log"), KeySpec("log□", .logarithm, [.logarithm]),
+          KeySpec("eˣ", [.symbol("e"), .power]), symbol("e"),
+          KeySpec("abs", .absolute, [.absolute], alternates: ["re", "im", "conj", "arg"].map(functionAlternate)),
         ],
-        [function("nCr"), function("nPr"), function("gcd"), function("lcm"), function("floor"), function("ceil")],
-        [function("round"), symbol(","), symbol("π"), symbol("%"), symbol("<"), symbol(">")],
+        [function("nCr"), function("nPr"), symbol("!"), function("mod"), function("gcd"), function("lcm")],
+        [function("floor"), function("ceil"), function("round"), function("sign"), function("min"), function("max")],
         [
-          symbol("≤"), symbol("≥"), symbol("≠"), symbol("="), KeySpec("(", [.symbol("(")]),
-          KeySpec(")", [.symbol(")")]),
+          symbol(","), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol("π"), symbol("i"),
+          symbol("="),
         ],
       ]
 
     case .trigonometry:
       return [
-        [function("sin"), function("cos"), function("tan"), function("asin"), function("acos"), function("atan")],
+        [
+          function("sin"), function("cos"), function("tan"), function("asin"), function("acos"),
+          KeySpec(
+            "atan", [.function("atan")],
+            alternates: [
+              .init(title: "atan(y, x)", actions: [.function("atan"), .symbol("y"), .symbol(","), .symbol("x")])
+            ]),
+        ],
         [
           function("sinh"), function("cosh"), function("tanh"), function("asinh"), function("acosh"), function("atanh"),
         ],
-        [function("cot"), function("sec"), function("csc"), symbol("°"), symbol("π"), symbol("=")],
+        [
+          function("cot", alternates: ["acot", "coth", "acoth"]),
+          function("sec", alternates: ["asec", "sech", "asech"]),
+          function("csc", alternates: ["acsc", "csch", "acsch"]), symbol("°"), symbol("π"), symbol("="),
+        ],
         [
           KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol(","), symbol("x"), symbol("y"),
           symbol("e"),
@@ -149,6 +169,11 @@ enum KeyboardLayout {
           KeySpec(")", [.symbol(")")]),
         ],
         [symbol("π"), symbol("e"), symbol("i"), symbol("−"), symbol("+"), symbol("=")],
+        [
+          // After the point of a limit: approaching it from above (x → a⁺) or from below (x → a⁻).
+          KeySpec("above", .text("a⁺"), [.symbol("⁺")]), KeySpec("below", .text("a⁻"), [.symbol("⁻")]),
+          digit("0"), digit("1"), digit("2"), KeySpec("power", .power, [.power]),
+        ],
       ]
     }
   }

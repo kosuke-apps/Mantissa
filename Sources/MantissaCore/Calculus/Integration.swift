@@ -480,9 +480,10 @@ private struct Integrator {
         parts.append(Expr.makeProduct([cosineCoefficient, x]))
         continue
       }
-      guard let multiple = try? Expr.integer(k) * angle, let cosK = try? Expr.apply(.cos, [multiple]),
-        let sinK = try? Expr.apply(.sin, [multiple])
-      else { return nil }
+      let multiple = Expr.integer(k) * angle
+      guard let cosK = try? Expr.apply(.cos, [multiple]), let sinK = try? Expr.apply(.sin, [multiple]) else {
+        return nil
+      }
       let scale = Expr.makePower(Expr.integer(k) * Expr.number(slope), .minusOne)
       parts.append(Expr.makeProduct([cosineCoefficient, sinK, scale]))
       parts.append(Expr.makeProduct([sineCoefficient, -cosK, scale]))

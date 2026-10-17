@@ -42,14 +42,25 @@ enum PostfixOperator: Equatable, Sendable {
 
 /// The functions a user can write, including the ones that are structural in `Expr` (roots and `exp`).
 enum FunctionName: String, CaseIterable, Sendable {
+  /// `atan(y, x)` with two arguments is the angle of the point (x, y), in (−π, π].
   case sin, cos, tan, asin, acos, atan
   /// Cotangent, secant and cosecant: `cos/sin`, `1/cos` and `1/sin`.
   case cot, sec, csc
+  /// Their inverses: `π/2 − atan(x)`, `acos(1/x)` and `asin(1/x)`.
+  case acot, asec, acsc
   case sinh, cosh, tanh, asinh, acosh, atanh
+  /// Hyperbolic cotangent, secant and cosecant, and their inverses (`acoth(x)` is `atanh(1/x)`).
+  case coth, sech, csch, acoth, asech, acsch
   case ln, log
   case sqrt, cbrt, root, exp
   case abs, floor, ceil, round
   case nCr, nPr, gcd, lcm
+  /// `mod(a, b)` is `a − b·floor(a/b)`, so it has the sign of `b`; `min` and `max` take two or more numbers.
+  case mod, min, max
+  /// −1, 0 or 1 for a real number, and `z/|z|` for a complex one.
+  case sign
+  /// The real part, imaginary part, complex conjugate and argument (the angle in (−π, π]) of a complex number.
+  case re, im, conj, arg
   /// Calculus: `diff(f, x, n)`, `int(f, x, a, b)`, `lim(f, x, a)`, `sum(f, k, a, b)`.
   case diff, int, lim, sum
 
@@ -75,15 +86,25 @@ enum FunctionName: String, CaseIterable, Sendable {
     return all.sorted { $0.0.count > $1.0.count }
   }()
 
+  /// Short names that are also letters people multiply (`re` is r·e, `max` is m·a·x): they are read as a function only
+  /// when an opening parenthesis follows, as the keyboard writes them.
+  var needsParenthesis: Bool {
+    switch self {
+    case .mod, .min, .max, .sign, .re, .im, .conj, .arg: return true
+    default: return false
+    }
+  }
+
   /// The numbers of arguments the function accepts.
   var arities: ClosedRange<Int> {
     switch self {
-    case .log: return 1...2
+    case .log, .atan: return 1...2
     case .diff: return 1...3
     case .int: return 1...4
     case .lim: return 3...4
     case .sum: return 4...4
-    case .root, .nCr, .nPr, .gcd, .lcm: return 2...2
+    case .min, .max: return 2...8
+    case .root, .nCr, .nPr, .gcd, .lcm, .mod: return 2...2
     default: return 1...1
     }
   }

@@ -9,6 +9,8 @@ enum KeyAction: Hashable {
   /// An exponent that is already filled in, as on the x² and x³ keys.
   case exponent(String)
   case fraction, power, squareRoot, nthRoot, group, absolute
+  /// `log` with a base written small below it.
+  case logarithm
   case function(String)
   /// ∫, Σ, lim or d/dx with its slots.
   case calculus(CalculusKind)
@@ -148,6 +150,7 @@ final class AppModel {
     case .nthRoot: editor.insertRadical(withIndex: true)
     case .group: editor.insertGroup()
     case .absolute: editor.insertAbsolute()
+    case .logarithm: editor.insertLogarithm()
     case .function(let name): editor.insertFunction(name)
     case .calculus(let kind): editor.insertCalculus(kind)
     case .left: editor.moveLeft()
@@ -171,7 +174,7 @@ final class AppModel {
     let digits = decimalDigits
     evaluation = Task {
       let result = await Task.detached(priority: .userInitiated) {
-        (AppModel.outcome(for: text, calculator: calculator, digits: digits), calculator.plotFunctions(text))
+        (AppModel.outcome(for: text, calculator: calculator, digits: digits), calculator.plotContent(text))
       }.value
       if !Task.isCancelled {
         var answer = result.0
@@ -192,12 +195,12 @@ final class AppModel {
     }
   }
 
-  /// Keeps the graph (and the window the user has moved it to) while the functions are the same.
-  private func updateGraph(_ functions: [PlotFunction]) {
-    if functions.isEmpty {
+  /// Keeps the graph (and the window the user has moved it to) while what it draws is the same.
+  private func updateGraph(_ content: PlotContent) {
+    if content.isEmpty {
       graph = nil
-    } else if graph?.functions.map(\.expression) != functions.map(\.expression) {
-      graph = GraphModel(functions: functions)
+    } else if !(graph?.content.draws(sameAs: content) ?? false) {
+      graph = GraphModel(content: content, size: graph?.drawingSize)
     }
   }
 
