@@ -5,7 +5,14 @@ roots, π), solves equations and keeps a history. No ads, no accounts, no networ
 
 > **Status: early development.** The calculator, history, graphs, equations, systems and inequalities work in the iOS
 > Simulator. Not released yet.
-> Not released yet.
+
+<p>
+  <img src="docs/screenshots/equation.png" width="240" alt="Solving x² − 5x + 6 = 0, with its graph">
+  <img src="docs/screenshots/factored-form.png" width="240" alt="The factored form of x² − 5x + 6">
+  <img src="docs/screenshots/integral.png" width="240" alt="An integral, with the graph of its answer">
+</p>
+
+Everything is worked out on the phone and nothing is sent anywhere; see [PRIVACY.md](PRIVACY.md).
 
 ## Features
 
