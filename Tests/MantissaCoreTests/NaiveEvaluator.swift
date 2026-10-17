@@ -100,6 +100,16 @@ struct NaiveEvaluator {
       case .cos: return cosine
       default: return try sine.divided(by: cosine, precision: p)
       }
+    case .cot, .sec, .csc:
+      let angle = angleUnit == .degrees && !mentionsPi ? try toRadians(x[0]) : x[0]
+      try requireWellConditioned(angle)
+      let sine = snapped(try angle.sin(precision: p))
+      let cosine = snapped(try angle.cos(precision: p))
+      switch function {
+      case .cot: return try cosine.divided(by: sine, precision: p)
+      case .sec: return try BigDecimal(1).divided(by: cosine, precision: p)
+      default: return try BigDecimal(1).divided(by: sine, precision: p)
+      }
     case .asin, .acos, .atan:
       let result: BigDecimal
       switch function {

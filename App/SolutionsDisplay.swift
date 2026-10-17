@@ -39,9 +39,9 @@ struct SolutionsDisplay: Equatable {
     case .values, .dependent, .periodic:
       return Array(lines.map(\.exact).joined(separator: [MathNode.symbol(","), .symbol(" ")]))
     case .intervals: return notation ?? []
-    case .none: return Self.text(String(localized: "No solution"))
-    case .everything: return Self.text(String(localized: "Every number"))
-    case .truth(let value): return Self.text(value ? String(localized: "True") : String(localized: "False"))
+    case .none: return Self.text(Localizer.string("No solution"))
+    case .everything: return Self.text(Localizer.string("Every number"))
+    case .truth(let value): return Self.text(Localizer.string(value ? "True" : "False"))
     }
   }
 

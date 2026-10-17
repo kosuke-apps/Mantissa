@@ -54,7 +54,7 @@ struct SyntaxGenerator {
     case 7: return .binary(.power, make(depth: child), exponent())
     case 8: return .radical(index: nil, radicand: make(depth: child))
     case 9: return .call(.sqrt, [make(depth: child)])
-    case 10: return .call([.sin, .cos, .tan][int(0...2)], [make(depth: child)])
+    case 10: return .call([.sin, .cos, .tan, .cot, .sec, .csc][int(0...5)], [make(depth: child)])
     case 11: return .call([.asin, .acos, .atan][int(0...2)], [unitInterval()])
     case 12: return .call([.ln, .abs, .exp][int(0...2)], [make(depth: child)])
     case 13: return .call(.log, [make(depth: child)])

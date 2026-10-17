@@ -34,7 +34,9 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     `Mantissa.xcodeproj` by XcodeGen from `project.yml` (the project file is not committed; Swift 5 mode for the app,
     Swift 6 for the package). `App/AppModel.swift` holds the editor and the latest answer (computed off the main
     thread); `MathView.swift` draws a `MathNode` tree; `GraphView.swift` the graph (canvas, pan, pinch, tap a point);
-    `History.swift` and `HistoryView.swift` the saved problems; `KeyboardLayout.swift` and `KeyboardView.swift` are the keys
+    `History.swift` and `HistoryView.swift` the saved problems; `Settings.swift` and `SettingsView.swift` the angle unit,
+    digits and in-app language (kept in `UserDefaults`; `Localizer` looks up strings that are not views);
+    `SolutionsDisplay.swift` an equation's answer typeset; `KeyboardLayout.swift` and `KeyboardView.swift` are the keys
     and pages; `CalculatorScreen.swift` the screen; strings in `Resources/Localizable.xcstrings` (English, Japanese).
   - `Sources/MantissaCore/BigInt.swift`: arbitrary-precision integer (sign and magnitude, 32-bit limbs, Knuth D
     division). Own implementation so there is no dependency.
@@ -65,7 +67,8 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   - `Sources/MantissaCore/Algebra/`: what the canonical form deliberately does not do on its own. `Expand` (multiply
     out, substitute, put a sum over a common denominator), `Polynomial` and `RationalPolynomial` (coefficients as `Expr`
     or `Rational`; rational roots, squarefree part), `PolynomialRoots` and `NumericRoots` (exact roots, then decimals),
-    `Solver` (one equation in one unknown), `SystemSolver` (linear by Gauss–Jordan, nonlinear by substitution),
+    `Factor` (a polynomial or fraction as a product of factors, and the other forms an answer is shown in), `Solver` (one
+    equation in one unknown), `SystemSolver` (linear by Gauss–Jordan, nonlinear by substitution),
     `InequalitySolver` (sign analysis between the real roots), `Calculator+Solve` (`Calculator.solve` routes the input),
     `TranscendentalSolver` and its strategies (`AbsoluteValueEquations`, `ExponentialEquations`, `LogarithmicEquations`,
     `RadicalEquations`, `TrigonometricEquations`, `NumericEquations`), `Atoms` (find and replace parts of an `Expr`).
@@ -99,7 +102,8 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
    trigonometric functions; the rest numerically), systems, inequalities in one unknown (done).
 6. Calculus: derivatives, indefinite and definite integrals (improper too), limits, sums and series, with the keyboard page
    (done, first version: arguments are typed separated by commas). To do: structured ∫, lim and Σ with their own slots.
-7. Polish: Japanese localization, accessibility, running on the author's iPhone.
+7. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
+   structured input for ∫, lim, Σ; accessibility; running on the author's iPhone.
 
 ## Commands
 

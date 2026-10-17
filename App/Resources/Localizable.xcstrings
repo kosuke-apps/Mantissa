@@ -496,6 +496,204 @@
           }
         }
       }
+    },
+    "Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        }
+      }
+    },
+    "Angle unit": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角度の単位"
+          }
+        }
+      }
+    },
+    "Angles": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角度"
+          }
+        }
+      }
+    },
+    "Radians": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ラジアン"
+          }
+        }
+      }
+    },
+    "Degrees": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "度"
+          }
+        }
+      }
+    },
+    "The degree sign always means degrees: cos(30°) is the same in both. Without it, cos(30) follows this setting.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "度の記号 ° はつねに度を表すので、cos(30°) はどちらでも同じです。記号がない cos(30) はこの設定に従います。"
+          }
+        }
+      }
+    },
+    "Decimals": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小数"
+          }
+        }
+      }
+    },
+    "Significant digits": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効数字"
+          }
+        }
+      }
+    },
+    "Language": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
+          }
+        }
+      }
+    },
+    "System default": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システムの設定に従う"
+          }
+        }
+      }
+    },
+    "About": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリについて"
+          }
+        }
+      }
+    },
+    "Version": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン"
+          }
+        }
+      }
+    },
+    "License": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライセンス"
+          }
+        }
+      }
+    },
+    "Everything is worked out on this phone. Nothing is sent anywhere, and there are no accounts, ads or tracking.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計算はすべてこの iPhone の中で行います。何も送信せず、アカウント・広告・トラッキングもありません。"
+          }
+        }
+      }
+    },
+    "Mantissa is free software under the MIT License. It uses no third-party code: the number types, the algebra and the graphing are written for it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantissa は MIT ライセンスのフリーソフトウェアです。第三者のコードは使っていません。数の型、代数、グラフ描画はすべてこのアプリのために書かれています。"
+          }
+        }
+      }
+    },
+    "Expanded form": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展開した形"
+          }
+        }
+      }
+    },
+    "Factored form": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "因数分解した形"
+          }
+        }
+      }
+    },
+    "Simplified form": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "約分した形"
+          }
+        }
+      }
     }
   }
 }

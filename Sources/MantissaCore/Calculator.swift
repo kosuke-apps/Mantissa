@@ -21,6 +21,8 @@ public struct Evaluation: Sendable, Equatable {
   public var approximationError: MathError?
   /// Whether the answer is an antiderivative, which is one of many that differ by a constant (`+ C`).
   public var isAntiderivative = false
+  /// Other ways of writing an answer that has an unknown in it: expanded, factored.
+  public var otherForms: [ExpressionForm] = []
 
   public init(
     exact: Expr, approximation: BigDecimal? = nil, complexApproximation: ComplexDecimal? = nil,
@@ -72,6 +74,7 @@ public struct Calculator: Sendable {
       }
       var result = evaluation(of: exact)
       if case .call(.int, let arguments) = syntax, arguments.count <= 2 { result.isAntiderivative = true }
+      result.otherForms = exact.otherForms()
       return result
     case .relation: throw .unsupported(.equation)
     case .system: throw .unsupported(.system)

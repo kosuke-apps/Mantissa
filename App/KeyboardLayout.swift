@@ -130,9 +130,10 @@ enum KeyboardLayout {
         [
           function("sinh"), function("cosh"), function("tanh"), function("asinh"), function("acosh"), function("atanh"),
         ],
+        [function("cot"), function("sec"), function("csc"), symbol("°"), symbol("π"), symbol("=")],
         [
-          symbol("°"), symbol("π"), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol(","),
-          symbol("="),
+          KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol(","), symbol("x"), symbol("y"),
+          symbol("e"),
         ],
       ]
 

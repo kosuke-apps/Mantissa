@@ -63,6 +63,16 @@ struct Builder {
     case .sin, .cos, .tan:
       let argument = angleUnit == .degrees && !argumentMentionsPi ? x[0] * Builder.degreesToRadians : x[0]
       return try Expr.apply(MathFunction(rawValue: function.rawValue)!, [argument])
+    case .cot, .sec, .csc:
+      // Written with sine and cosine, so that cot(π/2) is 0 and sec(π/2) is a division by zero, not a domain error of tan.
+      let argument = angleUnit == .degrees && !argumentMentionsPi ? x[0] * Builder.degreesToRadians : x[0]
+      let sine = try Expr.apply(.sin, [argument])
+      let cosine = try Expr.apply(.cos, [argument])
+      switch function {
+      case .cot: return try cosine.divided(by: sine)
+      case .sec: return try Expr.one.divided(by: cosine)
+      default: return try Expr.one.divided(by: sine)
+      }
     case .asin, .acos, .atan:
       let result = try Expr.apply(MathFunction(rawValue: function.rawValue)!, [x[0]])
       return angleUnit == .degrees ? result * Builder.radiansToDegrees : result

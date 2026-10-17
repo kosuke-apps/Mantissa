@@ -233,11 +233,11 @@ struct GraphCard: View {
 
   private static func name(of kind: PlotPoint.Kind) -> String {
     switch kind {
-    case .root: return String(localized: "Root")
-    case .yIntercept: return String(localized: "y-intercept")
-    case .minimum: return String(localized: "Minimum")
-    case .maximum: return String(localized: "Maximum")
-    case .intersection: return String(localized: "Intersection")
+    case .root: return Localizer.string("Root")
+    case .yIntercept: return Localizer.string("y-intercept")
+    case .minimum: return Localizer.string("Minimum")
+    case .maximum: return Localizer.string("Maximum")
+    case .intersection: return Localizer.string("Intersection")
     }
   }
 

@@ -6,7 +6,12 @@ import XCTest
 @MainActor
 final class AppModelTests: XCTestCase {
   /// Waits for the answer, which is computed off the main thread.
-  private func makeModel() -> AppModel { AppModel(history: HistoryStore(fileURL: nil)) }
+  /// A model whose settings are kept in a scratch suite, so tests neither read nor change the real ones.
+  private func makeModel() -> AppModel {
+    let defaults = UserDefaults(suiteName: "dev.kosuke.mantissa.tests")!
+    defaults.removePersistentDomain(forName: "dev.kosuke.mantissa.tests")
+    return AppModel(history: HistoryStore(fileURL: nil), defaults: defaults)
+  }
 
   private func answer(_ model: AppModel, timeout: TimeInterval = 5) async -> AppModel.Outcome {
     let deadline = Date().addingTimeInterval(timeout)
@@ -228,6 +233,45 @@ final class AppModelTests: XCTestCase {
     for key in ["k", ",", "k", ",", "1", ",", "∞"] { model.press(.symbol(key)) }
     let outcome = await answer(model)
     XCTAssertEqual(outcome, .failure(.doesNotExist))
+  }
+
+  func testSettingsAreKeptAndAppliedToTheNextAnswer() async {
+    let suite = "dev.kosuke.mantissa.tests.settings"
+    let defaults = UserDefaults(suiteName: suite)!
+    defaults.removePersistentDomain(forName: suite)
+    let model = AppModel(history: HistoryStore(fileURL: nil), defaults: defaults)
+    XCTAssertEqual(model.angleUnit, .radians)
+    XCTAssertEqual(model.decimalDigits, 12)
+
+    model.angleUnit = .degrees
+    model.decimalDigits = 20
+    model.language = .japanese
+    let again = AppModel(history: HistoryStore(fileURL: nil), defaults: defaults)
+    XCTAssertEqual(again.angleUnit, .degrees)
+    XCTAssertEqual(again.decimalDigits, 20)
+    XCTAssertEqual(again.language, .japanese)
+
+    // sin(30) is 1/2 in degrees.
+    again.press(.function("sin"))
+    for key in ["3", "0"] { again.press(.symbol(key)) }
+    again.press(.right)
+    guard case .answer(let answer) = await answer(again) else { return XCTFail("expected an answer") }
+    XCTAssertEqual(answer.exact.parserText, "((1)/(2))")
+    defaults.removePersistentDomain(forName: suite)
+  }
+
+  func testAnAnswerWithAnUnknownOffersTheFactoredForm() async {
+    let model = makeModel()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["−", "5", "x", "+", "6"] { model.press(.symbol(key)) }
+    // x² − 5x + 6 is its own expanded form, so only the factored form is offered.
+    let outcome = await answer(model)
+    guard case .answer(let answer) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(answer.forms.map(\.kind), [.factored])
+    XCTAssertEqual(answer.forms.first?.nodes.parserText, "(x−2)(x−3)")
   }
 
   func testAnUnfinishedFormulaIsIncomplete() async {

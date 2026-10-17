@@ -43,6 +43,8 @@ enum PostfixOperator: Equatable, Sendable {
 /// The functions a user can write, including the ones that are structural in `Expr` (roots and `exp`).
 enum FunctionName: String, CaseIterable, Sendable {
   case sin, cos, tan, asin, acos, atan
+  /// Cotangent, secant and cosecant: `cos/sin`, `1/cos` and `1/sin`.
+  case cot, sec, csc
   case sinh, cosh, tanh, asinh, acosh, atanh
   case ln, log
   case sqrt, cbrt, root, exp

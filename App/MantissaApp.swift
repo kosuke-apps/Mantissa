@@ -8,6 +8,7 @@ struct MantissaApp: App {
     WindowGroup {
       CalculatorScreen()
         .environment(model)
+        .environment(\.locale, model.language.locale ?? Locale.current)
     }
   }
 }

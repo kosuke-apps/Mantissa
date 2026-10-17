@@ -58,6 +58,28 @@ public enum Typesetter {
     return realNodes + [.symbol(imaginary.isNegative ? "−" : "+")] + imaginaryNodes
   }
 
+  /// A factored form: `2(x + 1)(x − 3)²`, or a fraction of two such products.
+  public static func nodes(for factorization: Factorization) -> [MathNode] {
+    func product(_ factors: [Factorization.Factor], leading: BigInt?) -> [MathNode] {
+      var nodes: [MathNode] = []
+      if let leading, !leading.isOne || factors.isEmpty { nodes += digits(leading) }
+      for factor in factors {
+        // A lone factor needs no brackets: x + 1, not (x + 1).
+        let alone = factors.count == 1 && factor.power == 1 && (leading?.isOne ?? true)
+        var piece = alone ? typeset(factor.base).nodes : typeset(factor.base).wrapped(minimum: Level.atom)
+        if factor.power > 1 { piece.append(.superscript(digits(BigInt(factor.power)))) }
+        nodes += piece
+      }
+      return nodes
+    }
+    let coefficient = factorization.coefficient
+    let sign: [MathNode] = coefficient.isNegative ? [.symbol("−")] : []
+    let top = product(factorization.numerator, leading: coefficient.numerator.magnitude)
+    if factorization.denominator.isEmpty && coefficient.denominator.isOne { return sign + top }
+    let bottom = product(factorization.denominator, leading: coefficient.denominator)
+    return sign + [.fraction(numerator: top, denominator: bottom)]
+  }
+
   // MARK: Pieces
 
   /// How tightly a piece binds; one that binds too loosely for where it is used is put in parentheses.

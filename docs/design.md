@@ -292,3 +292,20 @@ integral or series that diverges. `MathConstant.infinity` exists only as a resul
   `Σ rᵏ/k!` is `e^r`. A series whose terms do not tend to zero is `undefined`.
 - **Found while testing**: `BigDecimal.power` refused `(1 + 10⁻⁴⁸)^(10⁴⁸)` because it estimated the size of the result from the number of
   digits of the base and not from its logarithm; the integer power is now judged by `|exponent|·|log₁₀ base|`.
+
+## Settings and other forms of an answer
+
+- **Settings** are the angle unit, the number of significant digits for decimals (6 to 30) and the language (system, English, 日本語).
+  They live in `UserDefaults` of the app and nowhere else. A language chosen in the app is applied at once: SwiftUI text takes the
+  locale from the environment, and `Localizer` looks up the few words that are kept as data (the history) in that language's
+  bundle. The top bar's `RAD`/`DEG` switches the unit with a tap, because it changes what `sin(30)` means.
+- **A factored form is not an `Expr`**: the canonical form spreads a numeric coefficient over a sum, so `2(x + 1)` would be
+  `2x + 2` again. `Factorization` is a coefficient with factors and a denominator, and `Typesetter` draws it. Factors are the
+  linear ones with rational roots (`(2x − 1)`, with whole-number coefficients), what is left over after them, and the unknown
+  itself first; the nearest roots to zero come first (`(x + 1)(x + 2)`, `(x − 2)(x − 3)`, `x(x + 1)(x − 1)`). Factors common to a
+  numerator and denominator cancel, which is shown as a simplified form. Polynomials that need a factoring over the rationals
+  beyond roots (`x⁴ + 4`) keep the leftover as one factor.
+- **Which forms are shown**: expanded when multiplying out changes the answer and there is no fraction in it, factored when it
+  says something the answer does not (checked by comparing the typeset text, so `(x + 1)(x + 2)` is not shown again as itself).
+- **Cotangent, secant, cosecant** are `cos/sin`, `1/cos`, `1/sin` (so `cot(π/2)` is 0 and `sec(π/2)` a division by zero); they are not new
+  functions of `Expr`.

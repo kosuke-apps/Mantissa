@@ -244,3 +244,33 @@ struct CalculatorTests {
     #expect(ContinuousClock.now - start < .seconds(30))
   }
 }
+
+@Suite("Cotangent, secant and cosecant")
+struct ReciprocalTrigonometryTests {
+  private func exact(_ text: String, unit: AngleUnit = .radians) throws -> String {
+    var settings = CalculatorSettings()
+    settings.angleUnit = unit
+    return try Calculator(settings: settings).evaluate(text).exact.description
+  }
+
+  @Test(
+    "Exact values",
+    arguments: [
+      ("cot(π/4)", "1"), ("cot(π/2)", "0"), ("sec(π/3)", "2"), ("csc(π/6)", "2"), ("sec(0)", "1"), ("csc(π/2)", "1"),
+      ("cot(π/6)", "√3"), ("sec(π/4)", "√2"), ("csc(π/4)", "√2"), ("cot(x)", "cos(x)/sin(x)"), ("sec(x)", "1/cos(x)"),
+      ("csc(x)", "1/sin(x)"),
+    ])
+  func radians(input: String, expected: String) throws {
+    #expect(try exact(input) == expected, "\(input)")
+  }
+
+  @Test("In degrees, and where they are not defined")
+  func degreesAndPoles() throws {
+    #expect(try exact("cot(45)", unit: .degrees) == "1")
+    #expect(try exact("sec(60)", unit: .degrees) == "2")
+    #expect(try exact("csc(30)", unit: .degrees) == "2")
+    #expect(throws: CalculatorError.math(.divisionByZero)) { try Calculator().evaluate("cot(0)") }
+    #expect(throws: CalculatorError.math(.divisionByZero)) { try Calculator().evaluate("sec(π/2)") }
+    #expect(throws: CalculatorError.math(.divisionByZero)) { try Calculator().evaluate("csc(π)") }
+  }
+}

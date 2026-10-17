@@ -145,3 +145,73 @@ extension Expr {
   /// `self^exponent` for tests that do not care about error cases.
   fileprivate func raised(toUnchecked exponent: Expr) -> Expr { try! raised(to: exponent) }
 }
+
+@Suite("Factored forms")
+struct FactoredFormTests {
+  private func factored(_ text: String) throws -> String? {
+    let exact = try Calculator().evaluate(text).exact
+    return exact.factorization().map { Typesetter.nodes(for: $0).parserText }
+  }
+
+  @Test(
+    "Polynomials",
+    arguments: [
+      ("x^2-5x+6", "(x−2)(x−3)"), ("x^2-1", "(x+1)(x−1)"), ("2x+2", "2(x+1)"), ("x^3-x", "x(x+1)(x−1)"),
+      ("6x^2+x-2", "(2x−1)(3x+2)"), ("-x^2+4", "−(x+2)(x−2)"), ("4x^2-9", "(2x+3)(2x−3)"),
+      ("x^4-16", "(x+2)(x−2)(x^(2)+4)"), ("x^3-3x^2+3x-1", "(x−1)^(3)"), ("x^2+2x+1", "(x+1)^(2)"), ("3x^2", "3x^(2)"),
+      ("x^2+x+1", "x^(2)+x+1"), ("x^2/2-x/2", "((x(x−1))/(2))"),
+    ])
+  func polynomials(input: String, expected: String) throws {
+    #expect(try factored(input) == expected, "\(input)")
+  }
+
+  @Test(
+    "Fractions: common factors cancel",
+    arguments: [
+      ("(x^2-1)/(x-1)", "x+1"), ("(x+1)/(x^2-1)", "((1)/(x−1))"), ("x^2/(x^2+x)", "((x)/(x+1))"),
+      ("(x^2-4)/(x^2-x-2)", "((x+2)/(x+1))"), ("1/(x^2-1)", "((1)/((x+1)(x−1)))"),
+    ])
+  func fractions(input: String, expected: String) throws {
+    #expect(try factored(input) == expected, "\(input)")
+  }
+
+  @Test("A factored form multiplies back to the expression")
+  func multipliesBack() throws {
+    for text in ["x^2-5x+6", "6x^2+x-2", "x^3-x", "x^4-16", "-3x^3+12x", "(x^2-4)/(x^2-x-2)", "x^3-3x^2+3x-1"] {
+      let original = try Calculator().evaluate(text).exact
+      let factorization = try #require(original.factorization(), "\(text)")
+      var product: Expr = .number(factorization.coefficient)
+      for factor in factorization.numerator { product = product * Expr.makePower(factor.base, .integer(factor.power)) }
+      for factor in factorization.denominator {
+        product = product * Expr.makePower(factor.base, .integer(-factor.power))
+      }
+      for point in ["0.3", "1.7", "-2.4", "5.1"] {
+        let x = BigDecimal(point)!
+        let a = try original.approximation(precision: 40, values: ["x": x])
+        let b = try product.approximation(precision: 40, values: ["x": x])
+        #expect(
+          (a - b).magnitude <= BigDecimal(BigInt(1), exponent: -30) * max(BigDecimal(1), a.magnitude),
+          "\(text) at \(point)")
+      }
+    }
+  }
+
+  @Test("The other forms an answer is shown in")
+  func otherForms() throws {
+    func forms(_ text: String) throws -> [String] {
+      try Calculator().evaluate(text).otherForms.map { form in
+        switch form {
+        case .expanded(let e): return "expanded " + Typesetter.nodes(for: e).parserText
+        case .factored(let f): return (f.cancelled ? "simplified " : "factored ") + Typesetter.nodes(for: f).parserText
+        }
+      }
+    }
+    #expect(try forms("(x+1)(x+2)") == ["expanded x^(2)+3x+2"])
+    #expect(try forms("x^2-5x+6") == ["factored (x−2)(x−3)"])
+    #expect(try forms("(x+1)^2") == ["expanded x^(2)+2x+1"])
+    #expect(try forms("(x^2-1)/(x-1)") == ["simplified x+1"])
+    #expect(try forms("x+1").isEmpty)
+    #expect(try forms("x^2+x+1").isEmpty)
+    #expect(try forms("5").isEmpty)
+  }
+}

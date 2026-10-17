@@ -23,6 +23,14 @@ final class AppModel {
     var decimal: [MathNode]?
     /// The exact form is not a real number (the root of a negative number, for now).
     var hasNoRealValue: Bool
+    /// Other ways of writing the answer when it has an unknown in it.
+    var forms: [Form] = []
+
+    struct Form: Equatable, Codable {
+      enum Kind: String, Codable { case expanded, factored, simplified }
+      var kind: Kind
+      var nodes: [MathNode]
+    }
   }
 
   typealias Solutions = SolutionsDisplay
@@ -49,20 +57,53 @@ final class AppModel {
   private(set) var outcome = Outcome.empty
   let history: HistoryStore
   var showsHistory = false
+  var showsSettings = false
   /// The graph of what is typed, when it is a function of x.
   private(set) var graph: GraphModel?
   var settings = CalculatorSettings() {
-    didSet { refresh() }
+    didSet {
+      storage.angleUnit = settings.angleUnit
+      refresh()
+    }
   }
   /// Significant digits shown for decimals.
-  var decimalDigits = 12
+  var decimalDigits: Int {
+    didSet {
+      storage.decimalDigits = decimalDigits
+      refresh()
+    }
+  }
+  /// The language the app shows itself in.
+  var language: AppLanguage {
+    didSet {
+      storage.language = language
+      Localizer.bundle = language.bundle
+      refresh()
+    }
+  }
+
+  /// Radians or degrees, the unit of `sin(30)`.
+  var angleUnit: AngleUnit {
+    get { settings.angleUnit }
+    set { settings.angleUnit = newValue }
+  }
+
+  private let storage: SettingsStorage
 
   private var evaluation: Task<Void, Never>?
   private var recording: Task<Void, Never>?
   private let feedback = UIImpactFeedbackGenerator(style: .light)
 
-  init(history: HistoryStore) {
+  init(history: HistoryStore, defaults: UserDefaults = .standard) {
     self.history = history
+    let storage = SettingsStorage(defaults: defaults)
+    self.storage = storage
+    decimalDigits = storage.decimalDigits
+    language = storage.language
+    var calculator = CalculatorSettings()
+    calculator.angleUnit = storage.angleUnit
+    settings = calculator
+    Localizer.bundle = storage.language.bundle
   }
 
   convenience init() {
@@ -164,7 +205,7 @@ final class AppModel {
     let decimal: [MathNode]?
     switch outcome {
     case .answer(let answer):
-      exact = answer.exact
+      exact = answer.exact.isEmpty ? (answer.forms.first?.nodes ?? []) : answer.exact
       decimal = answer.decimal
     case .solutions(let solutions):
       exact = solutions.summary
@@ -185,17 +226,31 @@ final class AppModel {
     do {
       let evaluation = try calculator.evaluate(text)
       var exact = Typesetter.nodes(for: evaluation.exact)
-      // An answer that says what was typed (a lone number, `x²`) adds nothing.
-      if exact.parserText == text { return .empty }
+      // An answer that says what was typed (a lone number, `x²`) adds nothing, unless it has other forms to show.
+      let saysWhatWasTyped = exact.parserText == text
       // An antiderivative is one of many.
       if evaluation.isAntiderivative { exact += [.symbol("+"), .symbol("C")] }
       var decimal: [MathNode]?
-      if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
+      if saysWhatWasTyped {
+        decimal = nil
+      } else if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
       } else if let value = evaluation.complexApproximation, !evaluation.exact.isGaussianInteger {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
       }
-      return .answer(Answer(exact: exact, decimal: decimal, hasNoRealValue: evaluation.approximationError != nil))
+      let forms: [Answer.Form] = evaluation.otherForms.map { form in
+        switch form {
+        case .expanded(let expression): return .init(kind: .expanded, nodes: Typesetter.nodes(for: expression))
+        case .factored(let factorization):
+          return .init(
+            kind: factorization.cancelled ? .simplified : .factored, nodes: Typesetter.nodes(for: factorization))
+        }
+      }
+      if saysWhatWasTyped && forms.isEmpty { return .empty }
+      return .answer(
+        Answer(
+          exact: saysWhatWasTyped ? [] : exact, decimal: decimal, hasNoRealValue: evaluation.approximationError != nil,
+          forms: forms))
     } catch {
       switch error {
       case .parse: return .incomplete

@@ -25,13 +25,38 @@ struct CalculatorScreen: View {
     }
     .background(Color(.systemBackground))
     .sheet(isPresented: $model.showsHistory) { HistoryView() }
+    .sheet(isPresented: $model.showsSettings) { SettingsView() }
   }
 
+  /// The title, the angle unit (tap to switch) and Settings.
   private var topBar: some View {
-    Text("Calculator")
-      .font(.system(size: 17, weight: .semibold))
-      .frame(maxWidth: .infinity)
-      .frame(height: 48)
+    ZStack {
+      Text("Calculator").font(.system(size: 17, weight: .semibold))
+      HStack {
+        Button {
+          model.angleUnit = model.angleUnit == .radians ? .degrees : .radians
+        } label: {
+          Text(model.angleUnit == .radians ? "RAD" : "DEG")
+            .font(.system(size: 13, weight: .semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.accentColor.opacity(0.14), in: Capsule())
+            .foregroundStyle(Color.accentColor)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Angle unit")
+        Spacer()
+        Button {
+          model.showsSettings = true
+        } label: {
+          Image(systemName: "gearshape").font(.system(size: 18)).foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Settings")
+      }
+      .padding(.horizontal, 20)
+    }
+    .frame(height: 48)
   }
 }
 
@@ -103,8 +128,10 @@ private struct ResultView: View {
       HStack(alignment: .top, spacing: 12) {
         Rectangle().fill(Color.accentColor).frame(width: 4)
         VStack(alignment: .leading, spacing: 8) {
-          ScrollView(.horizontal, showsIndicators: false) {
-            MathLine(nodes: answer.exact, size: 34)
+          if !answer.exact.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+              MathLine(nodes: answer.exact, size: 34)
+            }
           }
           if let decimal = answer.decimal {
             HStack(spacing: 6) {
@@ -113,8 +140,23 @@ private struct ResultView: View {
             }
           }
           if answer.hasNoRealValue { Text("This has no real value.").font(.footnote).foregroundStyle(.secondary) }
+          ForEach(Array(answer.forms.enumerated()), id: \.offset) { _, form in
+            VStack(alignment: .leading, spacing: 2) {
+              Text(Self.title(of: form.kind)).font(.footnote).foregroundStyle(.secondary)
+              ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: form.nodes, size: 26) }
+            }
+            .padding(.top, 6)
+          }
         }
       }
+    }
+  }
+
+  private static func title(of kind: AppModel.Answer.Form.Kind) -> LocalizedStringKey {
+    switch kind {
+    case .expanded: return "Expanded form"
+    case .factored: return "Factored form"
+    case .simplified: return "Simplified form"
     }
   }
 
