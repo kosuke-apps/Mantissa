@@ -16,6 +16,40 @@ public indirect enum MathNode: Hashable, Sendable, Codable {
   case function(name: String, argument: [MathNode])
   /// Absolute-value bars.
   case absolute([MathNode])
+  /// ∫, Σ, lim and d/dx, each with the slots listed under `CalculusKind`.
+  case calculus(CalculusKind, [[MathNode]])
+}
+
+/// The operators of calculus the keyboard can place, and the slots each has, in the order the cursor visits them:
+///
+/// - `integral`: the integrand, the variable (`x`), the lower and the upper end (both empty for an indefinite integral);
+/// - `sum`: the summand, the index (`k`), where it starts and where it ends;
+/// - `limit`: the expression, the variable, the point it approaches;
+/// - `derivative`: the expression and the variable.
+public enum CalculusKind: String, Hashable, Sendable, Codable, CaseIterable {
+  case integral, sum, limit, derivative
+
+  /// The slots a new operator starts with: the variable is filled in, and a sum starts at 1 and runs to ∞.
+  var initialSlots: [[MathNode]] {
+    switch self {
+    case .integral: return [[], [.symbol("x")], [], []]
+    case .sum: return [[], [.symbol("k")], [.symbol("1")], [.symbol("∞")]]
+    case .limit: return [[], [.symbol("x")], []]
+    case .derivative: return [[], [.symbol("x")]]
+    }
+  }
+
+  var slotCount: Int { initialSlots.count }
+
+  /// The name of the function the parser knows it by.
+  var functionName: String {
+    switch self {
+    case .integral: return "int"
+    case .sum: return "sum"
+    case .limit: return "lim"
+    case .derivative: return "diff"
+    }
+  }
 }
 
 extension MathNode {
@@ -27,6 +61,7 @@ extension MathNode {
     case .fraction: return 2
     case .radical(let index, _): return index == nil ? 1 : 2
     case .superscript, .group, .function, .absolute: return 1
+    case .calculus(let kind, _): return kind.slotCount
     }
   }
 
@@ -37,6 +72,7 @@ extension MathNode {
     case .radical(let rootIndex, let radicand): return rootIndex != nil && index == 0 ? rootIndex! : radicand
     case .superscript(let content), .group(let content), .absolute(let content): return content
     case .function(_, let argument): return argument
+    case .calculus(_, let slots): return slots[index]
     }
   }
 
@@ -54,12 +90,17 @@ extension MathNode {
     case .group: return .group(content)
     case .absolute: return .absolute(content)
     case .function(let name, _): return .function(name: name, argument: content)
+    case .calculus(let kind, var slots):
+      slots[index] = content
+      return .calculus(kind, slots)
     }
   }
 
-  /// True for a structure all of whose slots are empty (an unfilled fraction, bare parentheses, …).
+  /// True for a structure all of whose slots are empty (an unfilled fraction, bare parentheses, …). A calculus operator is
+  /// empty when its expression is, whatever the variable and the ends say, so that backspace removes it.
   var isEmptyStructure: Bool {
-    slotCount > 0 && (0..<slotCount).allSatisfy { slot($0).isEmpty }
+    if case .calculus = self { return slot(0).isEmpty }
+    return slotCount > 0 && (0..<slotCount).allSatisfy { slot($0).isEmpty }
   }
 
   /// Whether the node is a structure with slots (as opposed to a single symbol).

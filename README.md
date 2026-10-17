@@ -33,7 +33,7 @@ Working today (in the `MantissaCore` package):
 - Calculus: derivatives (`d/dx`), integrals (indefinite, definite and improper), limits (including at ∞ and one-sided) and
   sums and series, with exact answers (`∫ x e^x dx`, `lim (1 + 1/x)^x = e`, `Σ 1/k² = π²/6`).
 
-Planned: structured input for ∫, lim and Σ, and a step back to the one-by-one entry of arguments.
+The keyboard places ∫, Σ, lim and d/dx with boxes for their expression, variable and ends, as in the app this one follows.
 
 ## Getting started
 

@@ -309,3 +309,14 @@ integral or series that diverges. `MathConstant.infinity` exists only as a resul
   says something the answer does not (checked by comparing the typeset text, so `(x + 1)(x + 2)` is not shown again as itself).
 - **Cotangent, secant, cosecant** are `cos/sin`, `1/cos`, `1/sin` (so `cot(π/2)` is 0 and `sec(π/2)` a division by zero); they are not new
   functions of `Expr`.
+
+## Calculus in the editor
+
+`MathNode.calculus(kind, slots)` holds ∫, Σ, lim and d/dx. Its slots, in the order the arrows visit them: the expression, the
+variable (`x`, or `k` for a sum, already filled in), then the ends (an integral's lower and upper; a sum's start and end, `1` and
+`∞` already filled in) or the point of a limit. A new operator puts the cursor in the expression; a short run of the right arrow goes
+on to the variable and the ends. It is empty, for backspace, when its expression is, so deleting the expression and one more key
+removes the operator. `parserText` writes the function the parser knows (`int(f,x)`, `int(f,x,a,b)` when either end is given,
+`sum(f,k,a,b)`, `lim(f,x,a)`, `diff(f,x)`); an empty slot gives an empty argument, which the parser reports as unfinished. The view
+draws ∫ with its ends beside it and `dx` after the integrand, Σ with the index below and the end above, lim with `x → a` below, and
+d/dx as a small fraction in front of the expression in brackets.

@@ -10,6 +10,8 @@ enum KeyAction: Hashable {
   case exponent(String)
   case fraction, power, squareRoot, nthRoot, group, absolute
   case function(String)
+  /// ∫, Σ, lim or d/dx with its slots.
+  case calculus(CalculusKind)
   case left, right, newLine, backspace
 }
 
@@ -147,6 +149,7 @@ final class AppModel {
     case .group: editor.insertGroup()
     case .absolute: editor.insertAbsolute()
     case .function(let name): editor.insertFunction(name)
+    case .calculus(let kind): editor.insertCalculus(kind)
     case .left: editor.moveLeft()
     case .right: editor.moveRight()
     case .newLine: editor.newLine()

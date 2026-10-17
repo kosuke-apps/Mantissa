@@ -101,9 +101,10 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 5. Solving: equations in one unknown (polynomial, rational, with roots, absolute values, exponentials, logarithms,
    trigonometric functions; the rest numerically), systems, inequalities in one unknown (done).
 6. Calculus: derivatives, indefinite and definite integrals (improper too), limits, sums and series, with the keyboard page
-   (done, first version: arguments are typed separated by commas). To do: structured ∫, lim and Σ with their own slots.
+   and structured ∫, Σ, lim and d/dx in the editor (`MathNode.calculus`, written as `int(…)`, `sum(…)`, `lim(…)`, `diff(…)`)
+   (done).
 7. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
-   structured input for ∫, lim, Σ; accessibility; running on the author's iPhone.
+   accessibility; running on the author's iPhone.
 
 ## Commands
 

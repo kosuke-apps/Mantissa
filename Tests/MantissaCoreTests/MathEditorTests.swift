@@ -419,3 +419,113 @@ struct MathEditorPropertyTests {
     }
   }
 }
+
+@Suite("Calculus operators in the editor")
+struct CalculusEditorTests {
+  private func evaluate(_ editor: MathEditor) throws -> String {
+    try Calculator().evaluate(editor.text).exact.description
+  }
+
+  @Test("An integral, a derivative, a limit and a sum are written as the functions the parser knows")
+  func text() {
+    var integral = MathEditor()
+    integral.insertCalculus(.integral)
+    integral.type("x")
+    integral.insertPower()
+    integral.type("2")
+    #expect(integral.isValid)
+    #expect(integral.text == "int(x^(2),x)")
+
+    var derivative = MathEditor()
+    derivative.insertCalculus(.derivative)
+    derivative.type("sin")  // three letters: s*i*n, not the function
+    #expect(derivative.text == "diff(s*i*n,x)")
+
+    var limit = MathEditor()
+    limit.insertCalculus(.limit)
+    limit.type("x")
+    #expect(limit.text == "lim(x,x,)")  // the point is still empty: unfinished
+
+    var sum = MathEditor()
+    sum.insertCalculus(.sum)
+    sum.type("k")
+    #expect(sum.text == "sum(k,k,1,∞)")
+  }
+
+  @Test("Moving through the slots, and the values that come out")
+  func slotsAndValues() throws {
+    var definite = MathEditor()
+    definite.insertCalculus(.integral)
+    definite.type("x")
+    definite.insertPower()
+    definite.type("2")
+    // The expression, then the variable x (two steps over it), then the lower end, then the upper end.
+    definite.moveRight()  // out of the exponent, to the end of the expression
+    definite.moveRight()  // into the variable
+    definite.moveRight()  // over x
+    definite.moveRight()  // into the lower end
+    definite.type("0")
+    definite.moveRight()  // into the upper end (typing already put the cursor after the 0)
+    definite.type("3")
+    #expect(definite.isValid)
+    #expect(definite.text == "int(x^(2),x,0,3)")
+    #expect(try evaluate(definite) == "9")
+
+    var limit = MathEditor()
+    limit.insertCalculus(.limit)
+    limit.type("x")
+    limit.insertPower()
+    limit.type("2")
+    limit.moveRight()
+    limit.moveRight()
+    limit.moveRight()
+    limit.moveRight()  // into the point
+    limit.type("3")
+    #expect(try evaluate(limit) == "9")
+
+    var sum = MathEditor()
+    sum.insertCalculus(.sum)
+    sum.type("k")
+    sum.moveRight()  // into the index
+    sum.moveRight()  // over k
+    sum.moveRight()  // into the start
+    sum.moveRight()  // over 1
+    sum.moveRight()  // into the end
+    // Replace the ∞ with 100: delete it, type the number.
+    sum.moveRight()
+    sum.backspace()
+    sum.type("100")
+    #expect(sum.text == "sum(k,k,1,100)")
+    #expect(try evaluate(sum) == "5050")
+
+    var derivative = MathEditor()
+    derivative.insertCalculus(.derivative)
+    derivative.type("x")
+    derivative.insertPower()
+    derivative.type("3")
+    #expect(try evaluate(derivative) == "3x^2")
+  }
+
+  @Test("Backspace in an empty expression removes the operator; the cursor stays valid on every key")
+  func backspaceAndCursor() {
+    var editor = MathEditor()
+    editor.type("2")
+    editor.insertCalculus(.integral)
+    #expect(editor.text == "2int(,x)")
+    editor.backspace()
+    #expect(editor.lines == [[.symbol("2")]])
+    #expect(editor.isValid)
+
+    var walk = MathEditor()
+    walk.insertCalculus(.sum)
+    walk.type("k")
+    for _ in 0..<12 {
+      walk.moveRight()
+      #expect(walk.isValid)
+    }
+    for _ in 0..<12 {
+      walk.moveLeft()
+      #expect(walk.isValid)
+    }
+  }
+}

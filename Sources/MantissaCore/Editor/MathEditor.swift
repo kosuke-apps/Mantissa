@@ -136,6 +136,11 @@ public struct MathEditor: Equatable, Sendable {
   /// A function such as `sin`, `ln` or `log`, with the cursor in its argument.
   public mutating func insertFunction(_ name: String) { insertStructure(.function(name: name, argument: [])) }
 
+  /// ∫, Σ, lim or d/dx, with the cursor in its expression; the variable (and, for a sum, its ends) are already filled in.
+  public mutating func insertCalculus(_ kind: CalculusKind) {
+    insertStructure(.calculus(kind, kind.initialSlots))
+  }
+
   /// A square root, or an n-th root when `withIndex` is true (the cursor then starts in the index).
   public mutating func insertRadical(withIndex: Bool = false) {
     insertStructure(.radical(index: withIndex ? [] : nil, radicand: []))

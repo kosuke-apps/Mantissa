@@ -93,6 +93,87 @@ private struct MathNodeView: View {
       nodes: nodes, size: size * scale, cursor: cursor?.slot == index ? cursor?.state : nil, placeholder: true)
   }
 
+  // MARK: Calculus operators
+
+  private func word(_ text: String, scale: CGFloat = 1) -> some View {
+    Text(text).font(.system(size: size * scale)).fixedSize()
+  }
+
+  private func parenthesised(_ nodes: [MathNode], _ index: Int) -> some View {
+    slot(nodes, index)
+      .padding(.horizontal, size * 0.3)
+      .overlay(alignment: .leading) {
+        ParenShape(opensRight: true).stroke(lineWidth: max(1, size * 0.05)).frame(width: size * 0.22)
+      }
+      .overlay(alignment: .trailing) {
+        ParenShape(opensRight: false).stroke(lineWidth: max(1, size * 0.05)).frame(width: size * 0.22)
+      }
+  }
+
+  /// ∫ with its ends beside it and `dx` after the integrand; Σ with the index below and the end above; lim with the variable and
+  /// the point below; d/dx stacked. The expression is slot 0 and the variable slot 1 in each.
+  @ViewBuilder
+  private func calculus(_ kind: CalculusKind, _ slots: [[MathNode]]) -> some View {
+    switch kind {
+    case .integral:
+      HStack(alignment: .mathAxis, spacing: size * 0.1) {
+        VStack(spacing: size * 0.1) {
+          slot(slots[3], 3, scale: 0.6)
+          word("∫", scale: 1.5)
+          slot(slots[2], 2, scale: 0.6)
+        }
+        .alignmentGuide(.mathAxis) { $0[VerticalAlignment.center] }
+        slot(slots[0], 0)
+        HStack(spacing: size * 0.05) {
+          word("d")
+          slot(slots[1], 1)
+        }
+      }
+    case .sum:
+      HStack(alignment: .mathAxis, spacing: size * 0.1) {
+        VStack(spacing: size * 0.06) {
+          slot(slots[3], 3, scale: 0.6)
+          word("Σ", scale: 1.35)
+          HStack(spacing: size * 0.02) {
+            slot(slots[1], 1, scale: 0.6)
+            word("=", scale: 0.6)
+            slot(slots[2], 2, scale: 0.6)
+          }
+        }
+        .alignmentGuide(.mathAxis) { $0[VerticalAlignment.center] }
+        slot(slots[0], 0)
+      }
+    case .limit:
+      HStack(alignment: .mathAxis, spacing: size * 0.12) {
+        VStack(spacing: size * 0.02) {
+          word("lim")
+          HStack(spacing: size * 0.02) {
+            slot(slots[1], 1, scale: 0.6)
+            word("→", scale: 0.6)
+            slot(slots[2], 2, scale: 0.6)
+          }
+        }
+        .alignmentGuide(.mathAxis) { _ in size * 0.6 }
+        slot(slots[0], 0)
+      }
+    case .derivative:
+      HStack(alignment: .mathAxis, spacing: size * 0.05) {
+        VStack(spacing: size * 0.06) {
+          word("d", scale: 0.85)
+          Rectangle()
+            .frame(width: size * 1.15, height: max(1, size * 0.055))
+            .alignmentGuide(.mathAxis) { $0[VerticalAlignment.center] }
+          HStack(spacing: size * 0.02) {
+            word("d", scale: 0.85)
+            slot(slots[1], 1, scale: 0.85)
+          }
+        }
+        .padding(.horizontal, size * 0.03)
+        parenthesised(slots[0], 0)
+      }
+    }
+  }
+
   var body: some View {
     switch node {
     case .symbol(let text):
@@ -148,6 +229,9 @@ private struct MathNodeView: View {
             ParenShape(opensRight: false).stroke(lineWidth: max(1, size * 0.05)).frame(width: size * 0.22)
           }
       }
+
+    case .calculus(let kind, let slots):
+      calculus(kind, slots)
 
     case .absolute(let content):
       slot(content, 0)

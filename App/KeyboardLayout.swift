@@ -138,11 +138,11 @@ enum KeyboardLayout {
       ]
 
     case .calculus:
-      // Each takes its arguments separated by commas: ∫(f, x) or ∫(f, x, a, b), lim(f, x, a), Σ(f, k, a, b), d/dx(f, x).
+      // Each key places the operator with its slots; the arrow keys move from one slot to the next.
       return [
         [
-          function("lim"), KeySpec("d/dx", [.function("diff")]), KeySpec("∫", [.function("int")]),
-          KeySpec("Σ", [.function("sum")]), symbol("∞"), symbol(","),
+          KeySpec("lim", [.calculus(.limit)]), KeySpec("d/dx", [.calculus(.derivative)]),
+          KeySpec("∫", [.calculus(.integral)]), KeySpec("Σ", [.calculus(.sum)]), symbol("∞"), symbol(","),
         ],
         [
           symbol("x"), symbol("y"), symbol("k"), symbol("n"), KeySpec("(", [.symbol("(")]),
