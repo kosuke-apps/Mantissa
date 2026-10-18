@@ -177,6 +177,9 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
   the curves are there (the 3rd to 97th percentile of their values); curves with nothing to mark get x from −10 to 10.
 - **Gestures**: drag pans, pinch zooms about the fingers, tapping a point shows it with its coordinates, the corner button
   resets. The points are looked for again, for twice the window's width, when a gesture ends.
+- **Reading a curve**: a tap that is not on a marked point but within 40 points of a curve puts a marker on the curve at that x, with
+  its coordinates (`GraphModel.traced`: of all the functions, the one whose value is nearest the finger). Holding and then dragging
+  follows the curve; the marker stays after the finger lifts, until a tap or a drag elsewhere. The graph can be shown full screen.
 - **Curves and regions in x and y** (`PlotRelation`, `Calculator.plotContent`): an equation that is not a function of x (a circle,
   `x = y²`) and an inequality (`y > x²`, `x² + y² ≤ 4`, or `x² ≥ 4`, which shades whole columns) are drawn from `left − right`
   compiled to a function of two variables (`DoubleCompiler.compilePlane`). The curve is found by **marching squares** over a

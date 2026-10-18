@@ -50,6 +50,7 @@ or from below.
   is 1), the Gaussian integral (`∫ e^(−x²) dx` over the line is √π) and the integrals of sec and csc.
 - Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
   it as text or to use it as the next input; hold the delete or arrow key to repeat it.
+- Graphs: tap a curve to read its coordinates, hold and drag to follow it, and open it full screen.
 - Graphs of circles and other curves in x and y (`x² + y² = 25`, with the intercepts marked) and shaded regions for inequalities
   (`y > x²`, dashed where the edge is not included); a line and a circle show where they cross.
 

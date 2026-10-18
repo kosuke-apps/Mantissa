@@ -1145,6 +1145,28 @@
           }
         }
       }
+    },
+    "Show the graph larger": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフを大きく表示"
+          }
+        }
+      }
+    },
+    "Close the large graph": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大きなグラフを閉じる"
+          }
+        }
+      }
     }
   }
 }

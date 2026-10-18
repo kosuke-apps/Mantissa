@@ -4,6 +4,7 @@ import SwiftUI
 /// The calculator: what you type, what it comes to, and the keyboard.
 struct CalculatorScreen: View {
   @Environment(AppModel.self) private var model
+  @State private var showsFullGraph = false
 
   var body: some View {
     @Bindable var model = model
@@ -14,7 +15,13 @@ struct CalculatorScreen: View {
           InputView()
           Divider().padding(.vertical, 10)
           ResultView(outcome: model.outcome)
-          if let graph = model.graph { GraphCard(graph: graph).padding(.top, 16) }
+          if let graph = model.graph {
+            GraphCard(
+              graph: graph,
+              expand: ("arrow.up.left.and.arrow.down.right", "Show the graph larger", { showsFullGraph = true })
+            )
+            .padding(.top, 16)
+          }
         }
         .padding(.horizontal, 20)
         .padding(.top, 14)
@@ -24,6 +31,16 @@ struct CalculatorScreen: View {
       KeyboardView()
     }
     .background(Color(.systemBackground))
+    .fullScreenCover(isPresented: $showsFullGraph) {
+      if let graph = model.graph {
+        GraphCard(
+          graph: graph, height: nil,
+          expand: ("arrow.down.right.and.arrow.up.left", "Close the large graph", { showsFullGraph = false })
+        )
+        .padding(12)
+        .background(Color(.systemBackground))
+      }
+    }
     .sheet(isPresented: $model.showsHistory) { HistoryView() }
     .sheet(isPresented: $model.showsSettings) { SettingsView() }
   }

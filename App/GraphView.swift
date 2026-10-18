@@ -9,6 +9,15 @@ final class GraphModel {
   var viewport: PlotViewport
   private(set) var points: [PlotPoint] = []
   var selected: PlotPoint?
+  /// The point on a curve that a finger held on the graph is following.
+  var trace: TracePoint?
+
+  struct TracePoint: Equatable {
+    var x: Double
+    var y: Double
+    var index: Int
+  }
+
   /// The size of the drawing, once it is known, so that a window with curves of both unknowns can have equal scales.
   private(set) var drawingSize: CGSize?
 
@@ -53,6 +62,18 @@ final class GraphModel {
     if let selected, !points.contains(selected) { self.selected = nil }
   }
 
+  /// The curve that passes nearest the given height at `x` (graph units, with the height a distance in the same units), and
+  /// its value there; `nil` when no function is defined at `x`.
+  func traced(atX x: Double, nearY y: Double) -> TracePoint? {
+    var best: TracePoint?
+    for (index, function) in functions.enumerated() {
+      let value = function.evaluate(x)
+      guard value.isFinite else { continue }
+      if best == nil || abs(value - y) < abs(best!.y - y) { best = TracePoint(x: x, y: value, index: index) }
+    }
+    return best
+  }
+
   func reset() {
     viewport = PlotViewport.fit(content)
     if let drawingSize, !content.relations.isEmpty {
@@ -69,11 +90,15 @@ private let curveColors: [Color] = [.accentColor, .blue, .green, .orange]
 /// is.
 struct GraphCard: View {
   @Bindable var graph: GraphModel
+  /// The height of the card, or `nil` to fill the space it is given.
+  var height: CGFloat? = 320
+  /// What the button in the corner does to show the graph larger (or to close it again), when there is one.
+  var expand: (symbol: String, label: LocalizedStringKey, action: () -> Void)?
 
   @State private var panStart: PlotViewport?
   @State private var zoomStart: PlotViewport?
-
-  private let height: CGFloat = 320
+  /// A finger is down on the graph following a curve, so the drag is not a pan.
+  @State private var isTracing = false
 
   var body: some View {
     GeometryReader { proxy in
@@ -84,23 +109,32 @@ struct GraphCard: View {
         .gesture(pan(in: size))
         .simultaneousGesture(zoom(in: size))
         .simultaneousGesture(SpatialTapGesture().onEnded { select(near: $0.location, in: size) })
+        .simultaneousGesture(tracing(in: size))
     }
+    .frame(maxHeight: height == nil ? .infinity : nil)
     .frame(height: height)
     .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
     .clipShape(RoundedRectangle(cornerRadius: 14))
     .overlay(alignment: .topTrailing) {
-      Button {
-        graph.reset()
-      } label: {
-        Image(systemName: "arrow.counterclockwise")
-          .font(.system(size: 15, weight: .medium))
-          .frame(width: 34, height: 34)
-          .background(.thinMaterial, in: Circle())
+      HStack(spacing: 8) {
+        if let expand {
+          button(systemImage: expand.symbol, label: expand.label, action: expand.action)
+        }
+        button(systemImage: "arrow.counterclockwise", label: "Reset the graph") { graph.reset() }
       }
-      .buttonStyle(.plain)
       .padding(8)
-      .accessibilityLabel("Reset the graph")
     }
+  }
+
+  private func button(systemImage: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Image(systemName: systemImage)
+        .font(.system(size: 15, weight: .medium))
+        .frame(width: 34, height: 34)
+        .background(.thinMaterial, in: Circle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(label)
   }
 
   // MARK: Coordinates
@@ -119,7 +153,8 @@ struct GraphCard: View {
   private func pan(in size: CGSize) -> some Gesture {
     DragGesture(minimumDistance: 4)
       .onChanged { value in
-        guard zoomStart == nil else { return }
+        guard zoomStart == nil, !isTracing else { return }
+        if panStart == nil { graph.trace = nil }
         let start = panStart ?? graph.viewport
         panStart = start
         graph.viewport = start.panned(
@@ -130,6 +165,20 @@ struct GraphCard: View {
         panStart = nil
         graph.findPoints()
       }
+  }
+
+  /// Holding a finger on the graph and then moving it follows the nearest curve, showing the point under the finger.
+  private func tracing(in size: CGSize) -> some Gesture {
+    LongPressGesture(minimumDuration: 0.3)
+      .sequenced(before: DragGesture(minimumDistance: 0))
+      .onChanged { value in
+        guard case .second(true, let drag?) = value, !graph.functions.isEmpty else { return }
+        isTracing = true
+        let point = graphPoint(drag.location, in: size, of: graph.viewport)
+        graph.trace = graph.traced(atX: point.x, nearY: point.y)
+      }
+      // The point stays after the finger is lifted, to be read; a tap or a drag elsewhere clears it.
+      .onEnded { _ in isTracing = false }
   }
 
   private func zoom(in size: CGSize) -> some Gesture {
@@ -159,6 +208,15 @@ struct GraphCard: View {
       .filter { $0.distance < reach }
       .min { $0.distance < $1.distance }
     graph.selected = nearest?.point
+    graph.trace = nil
+    // A tap that is not on a marked point but close to a curve reads the curve at that place.
+    if nearest == nil {
+      let tapped = graphPoint(location, in: size, of: graph.viewport)
+      if let spot = graph.traced(atX: tapped.x, nearY: tapped.y) {
+        let onScreen = screen(spot.x, spot.y, in: size)
+        if abs(onScreen.y - location.y) < 40 { graph.trace = spot }
+      }
+    }
   }
 
   // MARK: Drawing
@@ -184,6 +242,32 @@ struct GraphCard: View {
       drawBoundary(of: relation, color: curveColors[(first + index) % curveColors.count], in: &context, size: size)
     }
     drawPoints(in: &context, size: size)
+    drawTrace(in: &context, size: size)
+  }
+
+  /// The point a held finger follows: a vertical line, a dot on the curve and the coordinates.
+  private func drawTrace(in context: inout GraphicsContext, size: CGSize) {
+    guard let trace = graph.trace else { return }
+    let color = curveColors[trace.index % curveColors.count]
+    let spot = screen(trace.x, trace.y, in: size)
+    var line = Path()
+    line.move(to: CGPoint(x: spot.x, y: 0))
+    line.addLine(to: CGPoint(x: spot.x, y: size.height))
+    context.stroke(line, with: .color(color.opacity(0.5)), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+    let dot = Path(ellipseIn: CGRect(x: spot.x - 6, y: spot.y - 6, width: 12, height: 12))
+    context.fill(dot, with: .color(color))
+    context.stroke(dot, with: .color(Color(.systemBackground)), lineWidth: 2)
+    let text = context.resolve(
+      Text("(\(format(trace.x)), \(format(trace.y)))").font(.system(size: 13, weight: .medium)))
+    let measured = text.measure(in: size)
+    let box = CGSize(width: measured.width + 16, height: measured.height + 10)
+    var origin = CGPoint(x: spot.x - box.width / 2, y: spot.y - box.height - 20)
+    if origin.y < 4 { origin.y = spot.y + 20 }
+    origin.x = min(max(origin.x, 4), size.width - box.width - 4)
+    let rect = CGRect(origin: origin, size: box)
+    context.fill(Path(roundedRect: rect, cornerRadius: 8), with: .color(Color(.systemBackground)))
+    context.stroke(Path(roundedRect: rect, cornerRadius: 8), with: .color(color.opacity(0.6)), lineWidth: 1)
+    context.draw(text, at: CGPoint(x: rect.midX, y: rect.midY), anchor: .center)
   }
 
   /// The cell size, in points, of the grids a relation is sampled on.

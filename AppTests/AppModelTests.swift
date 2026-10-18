@@ -467,4 +467,31 @@ final class AppModelTests: XCTestCase {
     guard case .answer(let answer) = await answer(model) else { return XCTFail("expected an answer") }
     XCTAssertEqual(answer.exact.parserText, "1500")
   }
+
+  func testTracingFollowsTheNearestCurve() async throws {
+    let model = makeModel()
+    for key in ["y", "=", "x"] { model.press(.symbol(key)) }
+    model.press(.symbol("="))
+    // A system whose lines are y = x and y = x²: typed as two lines.
+    model.clearAll()
+    model.press(.symbol("y"))
+    model.press(.symbol("="))
+    model.press(.symbol("x"))
+    model.press(.newLine)
+    model.press(.symbol("y"))
+    model.press(.symbol("="))
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    _ = await answer(model)
+    try await Task.sleep(for: .milliseconds(400))
+    let graph = try XCTUnwrap(model.graph)
+    XCTAssertEqual(graph.functions.count, 2)
+    let upper = try XCTUnwrap(graph.traced(atX: 2, nearY: 3.9))
+    XCTAssertEqual(upper.index, 1)
+    XCTAssertEqual(upper.y, 4, accuracy: 1e-9)
+    let lower = try XCTUnwrap(graph.traced(atX: 2, nearY: 2.2))
+    XCTAssertEqual(lower.index, 0)
+    XCTAssertEqual(lower.y, 2, accuracy: 1e-9)
+  }
 }
