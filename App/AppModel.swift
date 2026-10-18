@@ -134,6 +134,11 @@ final class AppModel {
     refresh()
   }
 
+  /// Puts the cursor where the user tapped the formula.
+  func moveCursor(to cursor: MathCursor) {
+    if editor.moveCursor(to: cursor) { refresh() }
+  }
+
   func clearAll() {
     editor.clear()
     refresh()

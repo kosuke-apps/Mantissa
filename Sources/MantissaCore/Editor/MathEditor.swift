@@ -202,6 +202,17 @@ public struct MathEditor: Equatable, Sendable {
 
   // MARK: Moving
 
+  /// Puts the cursor at `target`, if that is a place in the formula (a line, a chain of slots and an offset that all exist).
+  /// Returns false and changes nothing otherwise.
+  @discardableResult
+  public mutating func moveCursor(to target: MathCursor) -> Bool {
+    let before = cursor
+    cursor = target
+    if isValid { return true }
+    cursor = before
+    return false
+  }
+
   /// One step to the right. Through a structure the cursor visits every slot in turn (numerator, then denominator),
   /// and at the end of a line it goes on to the next line.
   public mutating func moveRight() {

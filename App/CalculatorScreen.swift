@@ -81,6 +81,7 @@ private struct InputView: View {
   @Environment(AppModel.self) private var model
 
   private let size: CGFloat = 30
+  @State private var spots: [CaretSpot] = []
 
   var body: some View {
     let editor = model.editor
@@ -89,12 +90,17 @@ private struct InputView: View {
         ForEach(Array(editor.lines.enumerated()), id: \.offset) { index, line in
           // Short formulas sit at the left; a long one scrolls sideways and stays scrolled to its end.
           ViewThatFits(in: .horizontal) {
-            MathLine(nodes: line, size: size, cursor: cursorState(in: editor, line: index))
-              .frame(minHeight: size * 1.4)
-              .frame(maxWidth: .infinity, alignment: .leading)
+            MathLine(
+              nodes: line, size: size, cursor: cursorState(in: editor, line: index), address: LineAddress(line: index)
+            )
+            .frame(minHeight: size * 1.4)
+            .frame(maxWidth: .infinity, alignment: .leading)
             ScrollView(.horizontal, showsIndicators: false) {
-              MathLine(nodes: line, size: size, cursor: cursorState(in: editor, line: index))
-                .frame(minHeight: size * 1.4)
+              MathLine(
+                nodes: line, size: size, cursor: cursorState(in: editor, line: index),
+                address: LineAddress(line: index)
+              )
+              .frame(minHeight: size * 1.4)
             }
             .defaultScrollAnchor(.trailing)
           }
@@ -105,6 +111,15 @@ private struct InputView: View {
           }
         }
       }
+      .coordinateSpace(name: formulaSpace)
+      .onPreferenceChange(CaretSpotsKey.self) { spots = $0 }
+      // A tap puts the cursor in the nearest place between two parts of the formula.
+      .gesture(
+        SpatialTapGesture(coordinateSpace: .named(formulaSpace)).onEnded { tap in
+          guard let nearest = spots.min(by: { distance($0.point, tap.location) < distance($1.point, tap.location) })
+          else { return }
+          model.moveCursor(to: nearest.cursor)
+        })
       if !editor.isEmpty {
         Button {
           model.clearAll()
@@ -120,6 +135,8 @@ private struct InputView: View {
       if !editor.isEmpty { Button("Copy", systemImage: "doc.on.doc") { model.copyInput() } }
     }
   }
+
+  private func distance(_ a: CGPoint, _ b: CGPoint) -> CGFloat { hypot(a.x - b.x, (a.y - b.y) * 1.5) }
 
   private func cursorState(in editor: MathEditor, line: Int) -> CursorState? {
     guard editor.cursor.line == line else { return nil }

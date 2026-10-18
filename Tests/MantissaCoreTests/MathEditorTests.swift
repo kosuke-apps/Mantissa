@@ -618,3 +618,47 @@ struct LogarithmAndSideTests {
     #expect(throws: CalculatorError.self) { try Calculator().evaluate("lim(x,x,,1)") }
   }
 }
+
+@Suite("Putting the cursor somewhere by position")
+struct CursorPlacementTests {
+  @Test("A cursor that points at a real place is taken, and one that does not is refused")
+  func moving() {
+    var editor = MathEditor()
+    editor.type("12+3")
+    // Between the 1 and the 2.
+    let taken = editor.moveCursor(to: MathCursor(line: 0, path: [], offset: 1))
+    #expect(taken)
+    editor.type("9")
+    #expect(editor.text == "192+3")
+    #expect(editor.isValid)
+
+    // Past the end, a line that is not there, and a structure that is not there.
+    let before = editor
+    let pastEnd = editor.moveCursor(to: MathCursor(line: 0, path: [], offset: 99))
+    let noLine = editor.moveCursor(to: MathCursor(line: 3, path: [], offset: 0))
+    let noStructure = editor.moveCursor(to: MathCursor(line: 0, path: [.init(index: 1, slot: 0)], offset: 0))
+    #expect(!pastEnd && !noLine && !noStructure)
+    #expect(editor == before)
+  }
+
+  @Test("Into the slots of a structure: the numerator and the denominator of a fraction")
+  func intoStructures() {
+    var editor = MathEditor()
+    editor.type("1")
+    editor.insertFraction()
+    editor.type("2")
+    editor.moveRight()
+    editor.type("+3")
+    #expect(editor.text == "((1)/(2))+3")
+    // The numerator, at its start: a 5 goes in front of the 1.
+    let numerator = editor.moveCursor(to: MathCursor(line: 0, path: [.init(index: 0, slot: 0)], offset: 0))
+    #expect(numerator)
+    editor.type("5")
+    #expect(editor.text == "((51)/(2))+3")
+    let denominator = editor.moveCursor(to: MathCursor(line: 0, path: [.init(index: 0, slot: 1)], offset: 1))
+    #expect(denominator)
+    editor.type("0")
+    #expect(editor.text == "((51)/(20))+3")
+    #expect(editor.isValid)
+  }
+}

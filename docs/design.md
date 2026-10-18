@@ -348,6 +348,15 @@ A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 
 - **One fraction**: a sum of fractions in several unknowns is also shown as one fraction over the product of its denominators
   (`ExpressionForm.combined`); with one unknown the factored form already cancels.
 
+## Tapping the formula
+
+Every sequence of nodes that is part of the formula being edited reports where the gaps between its nodes are on screen (a
+`PreferenceKey` of `CaretSpot`s, measured in one named coordinate space), each with the `MathCursor` that puts the cursor there:
+a node's left edge, the last node's right edge, the middle of an empty slot's box. A slot knows its place because each node
+passes its sequence's `LineAddress` (the line and the chain of slots) down with its own index. A tap goes to the nearest spot,
+with vertical distance counting 1.5 times, so a tap on a numerator digit picks a gap in the numerator. `MathEditor.moveCursor(to:)`
+refuses a cursor that does not point at a real place.
+
 ## Pasting and copying
 
 `SyntaxLayout` lays the parser's syntax tree out as editor nodes (fractions stacked, exponents raised, roots with their bar, ∫ Σ lim

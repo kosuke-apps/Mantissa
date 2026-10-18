@@ -40,6 +40,31 @@ extension View {
   }
 }
 
+/// Where in the formula a sequence of nodes is: its line, and the chain of structure slots that lead to it.
+struct LineAddress: Hashable {
+  var line: Int
+  var path: [MathCursor.Step] = []
+
+  /// The address of slot `slot` of the node at `index` of this sequence.
+  func entering(index: Int, slot: Int) -> LineAddress {
+    LineAddress(line: line, path: path + [MathCursor.Step(index: index, slot: slot)])
+  }
+}
+
+/// A place the cursor can be put, and where it is on screen: tapping the formula goes to the nearest one.
+struct CaretSpot: Equatable {
+  var cursor: MathCursor
+  var point: CGPoint
+}
+
+struct CaretSpotsKey: PreferenceKey {
+  static let defaultValue: [CaretSpot] = []
+  static func reduce(value: inout [CaretSpot], nextValue: () -> [CaretSpot]) { value += nextValue() }
+}
+
+/// The coordinate space the caret spots are measured in.
+let formulaSpace = "formula"
+
 /// A sequence of nodes in a row.
 struct MathLine: View {
   let nodes: [MathNode]
@@ -54,10 +79,14 @@ struct MathLine: View {
   /// The size of the characters, in points.
   var size: CGFloat { baseSize * (scalesWithTextSize ? scale : 1) }
 
+  /// Where this sequence is in the formula being edited; `nil` for a formula that is only shown.
+  let address: LineAddress?
+
   init(
     nodes: [MathNode], size: CGFloat, cursor: CursorState? = nil, placeholder: Bool = false,
-    scalesWithTextSize: Bool = true
+    scalesWithTextSize: Bool = true, address: LineAddress? = nil
   ) {
+    self.address = address
     self.nodes = nodes
     baseSize = size
     self.cursor = cursor
@@ -95,14 +124,38 @@ struct MathLine: View {
     return (step.slot, CursorState(path: cursor.path.dropFirst(), offset: cursor.offset))
   }
 
+  /// The cursor position before the node at `offset`, drawn at (`x`, `y`).
+  private func spot(at offset: Int, x: CGFloat, y: CGFloat) -> CaretSpot {
+    let place = address ?? LineAddress(line: 0)
+    return CaretSpot(cursor: MathCursor(line: place.line, path: place.path, offset: offset), point: CGPoint(x: x, y: y))
+  }
+
+  /// Reports where the view is, as caret spots, when the sequence is part of a formula being edited.
+  private func spotReader(_ spots: @escaping (CGRect) -> [CaretSpot]) -> some View {
+    GeometryReader { proxy in
+      Color.clear.preference(
+        key: CaretSpotsKey.self, value: address == nil ? [] : spots(proxy.frame(in: .named(formulaSpace))))
+    }
+  }
+
   var body: some View {
     HStack(alignment: .mathAxis, spacing: 0) {
       ForEach(Array(items.enumerated()), id: \.offset) { _, item in
         switch item {
         case .caret: Caret(size: size)
-        case .box: PlaceholderBox(size: size)
+        case .box:
+          PlaceholderBox(size: size).background(spotReader { [spot(at: 0, x: $0.midX, y: $0.midY)] })
         case .node(let index):
-          MathNodeView(node: nodes[index], size: size, cursor: childCursor(index), isSign: isSign(index))
+          MathNodeView(
+            node: nodes[index], size: size, cursor: childCursor(index), isSign: isSign(index), address: address,
+            index: index
+          )
+          .background(
+            spotReader { frame in
+              var spots = [spot(at: index, x: frame.minX, y: frame.midY)]
+              if index == nodes.count - 1 { spots.append(spot(at: nodes.count, x: frame.maxX, y: frame.midY)) }
+              return spots
+            })
         }
       }
     }
@@ -117,6 +170,9 @@ private struct MathNodeView: View {
   let size: CGFloat
   let cursor: (slot: Int, state: CursorState)?
   var isSign = false
+  /// Where the sequence this node is in sits, and the node's index in it, so that its slots can say where they are.
+  var address: LineAddress?
+  var index = 0
 
   /// The calculus functions are written the way they are read: d/dx, ∫ and Σ.
   private static func displayName(of name: String) -> String {
@@ -128,10 +184,10 @@ private struct MathNodeView: View {
     }
   }
 
-  private func slot(_ nodes: [MathNode], _ index: Int, scale: CGFloat = 1) -> MathLine {
+  private func slot(_ nodes: [MathNode], _ slotIndex: Int, scale: CGFloat = 1) -> MathLine {
     MathLine(
-      nodes: nodes, size: size * scale, cursor: cursor?.slot == index ? cursor?.state : nil, placeholder: true,
-      scalesWithTextSize: false)
+      nodes: nodes, size: size * scale, cursor: cursor?.slot == slotIndex ? cursor?.state : nil, placeholder: true,
+      scalesWithTextSize: false, address: address?.entering(index: self.index, slot: slotIndex))
   }
 
   // MARK: Calculus operators

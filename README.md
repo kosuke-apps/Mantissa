@@ -48,6 +48,7 @@ or from below.
   the reciprocal trigonometric and hyperbolic functions with their inverses.
 - Trigonometric inequalities (`sin x > 1/2` is `π/6 + 2πn < x < 5π/6 + 2πn`), trigonometric identities in answers (`sin²x + cos²x`
   is 1), the Gaussian integral (`∫ e^(−x²) dx` over the line is √π) and the integrals of sec and csc.
+- Tap the formula to put the cursor there, also inside a fraction or an exponent.
 - Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
   it as text or to use it as the next input; hold the delete or arrow key to repeat it.
 - Systems such as `x² + y² = 10, xy = 3`, logarithms of powers of a prime (`ln 8` is `3 ln 2`, so `log₂x + log₄x = 3` gives 4), and a
