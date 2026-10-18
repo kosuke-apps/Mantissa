@@ -63,7 +63,10 @@ extension Expr {
       return -(try trigonometric(function, positive))  // sin and tan are odd
     }
     if function == .cos, let positive = negatedIfNegative(x) { return try trigonometric(function, positive) }
-    guard let k = twelfthsOfPi(x) else { return .function(function, [x]) }
+    guard let k = twelfthsOfPi(x) else {
+      if let moved = try movedByTurns(function, x) { return moved }
+      return .function(function, [x])
+    }
     switch function {
     case .sin: return ExactTrigonometry.sine(ofTwelfths: k)
     case .cos: return ExactTrigonometry.sine(ofTwelfths: k + 6)
@@ -71,6 +74,55 @@ extension Expr {
       guard let tangent = ExactTrigonometry.tangent(ofTwelfths: k) else { throw .noValue }  // tan(π/2) is undefined
       return tangent
     }
+  }
+
+  /// `sin(y + rπ)`, `cos(y + rπ)` or `tan(y + rπ)` with an unknown part `y`, rewritten when `r` can be taken out: a multiple of
+  /// π/2 turns sine into cosine and back (`sin(y + π/2)` is `cos y`, `cos(y + π)` is `−cos y`), and any other `r` is brought
+  /// into (−1, 1] by whole turns (`sin(y + 7π/3)` is `sin(y + π/3)`; for tangent, into (−½, ½]). Returns the work to do, or `nil` when
+  /// the argument has no such term or already has it in range.
+  private static func movedByTurns(_ function: MathFunction, _ x: Expr) throws(MathError) -> Expr? {
+    guard case .sum(let terms) = x else { return nil }
+    var multiple: Rational?
+    var rest: [Expr] = []
+    for term in terms {
+      if multiple == nil, let r = piMultiple(term), !r.isZero { multiple = r } else { rest.append(term) }
+    }
+    guard let r = multiple else { return nil }
+    let remainder = makeSum(rest)
+    let halves = r * Rational(2)
+
+    if halves.isInteger {
+      // A multiple of π/2: sine and cosine swap with a sign by quarter turns, and tangent has period π.
+      let quarter = (((halves.numerator % BigInt(4)).asInt ?? 0) + 4) % 4
+      switch function {
+      case .sin:
+        let value = [(MathFunction.sin, 1), (.cos, 1), (.sin, -1), (.cos, -1)][quarter]
+        let inner = try trigonometric(value.0, remainder)
+        return value.1 < 0 ? -inner : inner
+      case .cos:
+        let value = [(MathFunction.cos, 1), (.sin, -1), (.cos, -1), (.sin, 1)][quarter]
+        let inner = try trigonometric(value.0, remainder)
+        return value.1 < 0 ? -inner : inner
+      default:
+        if quarter % 2 == 0 { return try trigonometric(.tan, remainder) }
+        // tan(y + π/2) is −cot y.
+        let cosine = try trigonometric(.cos, remainder)
+        let sine = try trigonometric(.sin, remainder)
+        return -(try cosine.divided(by: sine))
+      }
+    }
+
+    // Any other multiple: whole turns out of it (a turn is 2π for sine and cosine, π for tangent).
+    let period = function == .tan ? Rational(1) : Rational(2)
+    let low = -period / Rational(2)
+    var reduced = r
+    // Into (low, low + period].
+    let shift = ((reduced - low) / period)
+    let whole = shift.numerator.floorDivided(by: shift.denominator)
+    let adjusted = shift.isInteger ? whole - BigInt(1) : whole  // a value on the lower edge goes to the upper edge
+    reduced = reduced - Rational(adjusted) * period
+    guard reduced != r else { return nil }
+    return try trigonometric(function, makeSum([remainder, makeProduct([.number(reduced), .pi])]))
   }
 
   private static func inverseTrigonometric(_ function: MathFunction, _ x: Expr) throws(MathError) -> Expr {

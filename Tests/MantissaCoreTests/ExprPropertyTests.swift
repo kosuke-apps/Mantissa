@@ -146,4 +146,48 @@ struct ExprPropertyTests {
     #expect(compared >= sampleCount * 6 / 10, "only \(compared) expressions were comparable (\(skipped) skipped)")
     #expect(failures.isEmpty, "\(failures.count) failures; first: \(failures.prefix(6))")
   }
+
+  /// Rules that act on an unknown (`sin(x + π)` is `−sin x`, `√(x²)` is `|x|`) change a value if they are wrong, which the
+  /// numeric tests above cannot see because they have no unknown: put numbers in for `x` and compare with the naive value.
+  @Test("Rules that act on an unknown keep the value", arguments: [AngleUnit.radians, AngleUnit.degrees])
+  func rulesWithUnknownsKeepTheValue(angleUnit: AngleUnit) throws {
+    var generator = SyntaxGenerator(seed: (angleUnit == .radians ? 5150 : 1999) &+ seedOffset &* 7919)
+    generator.includesUnknown = true
+    generator.includesPiWithUnknown = true
+    generator.includesDerivedFunctions = true
+    let evaluator = NaiveEvaluator(angleUnit: angleUnit)
+    let builder = Builder(angleUnit: angleUnit)
+    var compared = 0
+    var failures: [String] = []
+    for _ in 0..<sampleCount {
+      let syntax = generator.make(depth: 3)
+      guard let expression = try? builder.build(syntax) else { continue }
+      for point in [Rational(13, 10), Rational(-7, 10), Rational(2)] {
+        guard let naive = try? evaluator.evaluate(Self.substituted(syntax, point)),
+          let value = try? expression.approximation(precision: 40, values: ["x": BigDecimal(point, precision: 40)])
+        else { continue }
+        compared += 1
+        // A wrong rule is wrong by an amount of order 1; a looser tolerance lets acos(1 − ε) and its like pass.
+        let tolerance = max(BigDecimal(1), value.magnitude, naive.magnitude) * BigDecimal(BigInt(1), exponent: -18)
+        if (value - naive).magnitude > tolerance {
+          failures.append("at x = \(point): \(value) but naive \(naive) for \(expression)")
+        }
+      }
+    }
+    #expect(compared >= sampleCount / 2, "only \(compared) comparisons")
+    #expect(failures.isEmpty, "\(failures.count) failures; first: \(failures.prefix(4))")
+  }
+
+  private static func substituted(_ syntax: Syntax, _ value: Rational) -> Syntax {
+    func go(_ s: Syntax) -> Syntax { substituted(s, value) }
+    switch syntax {
+    case .symbol: return .number(value)
+    case .number, .constant, .infinity: return syntax
+    case .negate(let operand): return .negate(go(operand))
+    case .binary(let op, let left, let right): return .binary(op, go(left), go(right))
+    case .postfix(let op, let operand): return .postfix(op, go(operand))
+    case .call(let function, let arguments): return .call(function, arguments.map(go))
+    case .radical(let index, let radicand): return .radical(index: index.map(go), radicand: go(radicand))
+    }
+  }
 }

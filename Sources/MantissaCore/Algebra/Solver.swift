@@ -96,6 +96,9 @@ public enum Solved: Sendable, Equatable {
   case intervals(variable: String, [SolvedInterval])
   /// The solutions of an equation that repeat, such as `sin x = 1/2`: each family is `offset + period·n`, `n` any whole number.
   case periodic(variable: String, [PeriodicSolution])
+  /// The solutions of an inequality that repeat, such as `sin x > 1/2`: each interval is `lower + period·n < x < upper + period·n`,
+  /// `n` any whole number. The period is `period.period`.
+  case periodicIntervals(variable: String, [SolvedInterval], period: PeriodicSolution)
   /// The solutions of a system: each is a value for every unknown, in the order of `variables`.
   case tuples(variables: [String], [[SolvedValue]])
   /// A system with infinitely many solutions: the unknowns that are determined, given in terms of the `free` ones, which

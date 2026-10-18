@@ -72,9 +72,10 @@ public struct Calculator: Sendable {
       } catch {
         throw .math(error)
       }
-      var result = evaluation(of: exact)
+      // sin²x + cos²x is 1: an identity that makes the answer smaller is applied to it.
+      var result = evaluation(of: exact.trigonometricallySimplified() ?? exact)
       if case .call(.int, let arguments) = syntax, arguments.count <= 2 { result.isAntiderivative = true }
-      result.otherForms = exact.otherForms()
+      result.otherForms = result.exact.otherForms()
       return result
     case .relation: throw .unsupported(.equation)
     case .system: throw .unsupported(.system)

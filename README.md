@@ -46,6 +46,8 @@ or from below.
 
 - Also: `mod`, `min`, `max`, `sign`, the real and imaginary parts, conjugate and argument of a complex number, `atan(y, x)`, and
   the reciprocal trigonometric and hyperbolic functions with their inverses.
+- Trigonometric inequalities (`sin x > 1/2` is `π/6 + 2πn < x < 5π/6 + 2πn`), trigonometric identities in answers (`sin²x + cos²x`
+  is 1), the Gaussian integral (`∫ e^(−x²) dx` over the line is √π) and the integrals of sec and csc.
 - Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
   it as text or to use it as the next input; hold the delete or arrow key to repeat it.
 - Graphs of circles and other curves in x and y (`x² + y² = 25`, with the intercepts marked) and shaded regions for inequalities

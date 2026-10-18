@@ -76,10 +76,11 @@ extension Calculator {
       }
       return .truth(true)
     }
-    guard letters.count == 1, let variable = letters.first,
-      let solved = InequalitySolver.solve(constraints, variable: variable)
-    else { throw .unsupported(.equation) }
-    return solved
+    guard letters.count == 1, let variable = letters.first else { throw .unsupported(.equation) }
+    if let solved = InequalitySolver.solve(constraints, variable: variable) { return solved }
+    // sin x > 1/2: the same stretches in every period.
+    if constraints.count == 1, let solved = PeriodicInequalities.solve(constraints[0], variable) { return solved }
+    throw .unsupported(.equation)
   }
 
   // MARK: Systems

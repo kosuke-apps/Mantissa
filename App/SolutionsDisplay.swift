@@ -80,6 +80,12 @@ struct SolutionsDisplay: Equatable {
       self.init(
         kind: .periodic(integer: integer),
         lines: families.map { Self.line($0, variable: variable, integer: integer, digits: digits) })
+    case .periodicIntervals(let variable, let intervals, let period):
+      let integer = variable == "n" ? "k" : "n"
+      let lines = intervals.map {
+        Line(exact: Self.periodicInequality($0, variable: variable, period: period, integer: integer))
+      }
+      self.init(kind: .periodic(integer: integer), lines: lines)
     case .intervals(let variable, let intervals):
       let lines = intervals.map { Line(exact: Self.inequality($0, variable: variable, digits: digits)) }
       self.init(kind: .intervals, lines: lines, notation: Self.notation(intervals, digits: digits))
@@ -147,6 +153,22 @@ struct SolutionsDisplay: Equatable {
         + Typesetter.nodes(for: period, significantDigits: shown) + [n]
     }
     return Line(exact: exact, decimal: decimal)
+  }
+
+  /// `π/6 + 2πn < x < 5π/6 + 2πn`: an interval that repeats.
+  private static func periodicInequality(
+    _ interval: SolvedInterval, variable: String, period: PeriodicSolution, integer: String
+  ) -> [MathNode] {
+    func shifted(_ bound: SolvedBound) -> [MathNode] {
+      var nodes = bound.value.exact.map { $0.isZero ? [] : Typesetter.nodes(for: $0) + [MathNode.symbol("+")] } ?? []
+      nodes += Typesetter.nodes(for: period.period) + [.symbol(integer)]
+      return nodes
+    }
+    guard let lower = interval.lower, let upper = interval.upper else { return [] }
+    return shifted(lower) + [
+      .symbol(lower.isClosed ? "≤" : "<"), .symbol(variable), .symbol(upper.isClosed ? "≤" : "<"),
+    ]
+      + shifted(upper)
   }
 
   // MARK: Inequalities

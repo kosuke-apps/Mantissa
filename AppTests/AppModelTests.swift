@@ -439,4 +439,20 @@ final class AppModelTests: XCTestCase {
     let logarithm = await answer(model)
     XCTAssertEqual(logarithm, .failure(.undefinedHere))
   }
+
+  func testATrigonometricInequalityGivesRepeatingIntervals() async throws {
+    let model = makeModel()
+    model.press(.function("sin"))
+    model.press(.symbol("x"))
+    model.press(.right)
+    model.press(.symbol(">"))
+    model.press(.symbol("1"))
+    model.press(.fraction)
+    model.press(.symbol("2"))
+    let outcome = await answer(model)
+    guard case .solutions(let solutions) = outcome else { return XCTFail("expected solutions, got \(outcome)") }
+    XCTAssertEqual(solutions.kind, .periodic(integer: "n"))
+    XCTAssertEqual(solutions.lines.map { $0.exact.plainText }, ["π/6 + 2πn < x < 5π/6 + 2πn"])
+    XCTAssertEqual(model.copyable?.exact, "π/6 + 2πn < x < 5π/6 + 2πn")
+  }
 }

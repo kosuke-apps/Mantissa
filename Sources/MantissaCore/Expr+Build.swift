@@ -60,7 +60,7 @@ extension Expr {
   }
 
   /// `(c, rest)` with `self == c × rest` and `rest` free of a leading number.
-  private func splitCoefficient() -> (Rational, Expr) {
+  func splitCoefficient() -> (Rational, Expr) {
     if case .product(let factors) = self, case .number(let coefficient) = factors[0] {
       let rest = Array(factors.dropFirst())
       return (coefficient, rest.count == 1 ? rest[0] : .product(rest))
@@ -196,6 +196,12 @@ extension Expr {
       if exponent.isInteger || inner.isKnownPositive {
         return makePower(inner, makeProduct([innerExponent, exponent]))
       }
+      // An even power is not negative for a real base, so (x²)^(1/2) is |x|, and (x⁴)^(1/2) is |x|² = x².
+      if let n = innerExponent.rational, n.isInteger, n.numerator.isEven, !inner.containsImaginaryUnit,
+        let magnitude = try? Expr.apply(.abs, [inner])
+      {
+        return makePower(magnitude, makeProduct([innerExponent, exponent]))
+      }
       return .power(base, exponent)
 
     case .product(let factors):
@@ -224,6 +230,11 @@ extension Expr {
           return makeProduct([makePower(.number(content), exponent), makePower(primitive, exponent)])
         }
       }
+      return .power(base, exponent)
+
+    case .function(.abs, let arguments):
+      // |u|^(2m) is u^(2m): the even power makes the bars unnecessary.
+      if let n = exponent.rational, n.isInteger, n.numerator.isEven { return makePower(arguments[0], exponent) }
       return .power(base, exponent)
 
     case .symbol, .function:

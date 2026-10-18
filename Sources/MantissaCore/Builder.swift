@@ -15,6 +15,13 @@ struct Builder {
   var angleUnit: AngleUnit
 
   static let degreesToRadians = Expr.fraction(1, 180) * .pi
+
+  /// An angle in degrees as radians. A sum is converted term by term (`x + 90` is `πx/180 + π/2`), so that a quarter turn
+  /// in it is seen by the trigonometric functions.
+  static func radians(fromDegrees angle: Expr) -> Expr {
+    guard case .sum(let terms) = angle else { return angle * degreesToRadians }
+    return Expr.makeSum(terms.map { $0 * degreesToRadians })
+  }
   static let radiansToDegrees = Expr.integer(180) * Expr.makePower(.pi, .minusOne)
 
   func build(_ syntax: Syntax) throws(MathError) -> Expr {
@@ -61,11 +68,11 @@ struct Builder {
   private func call(_ function: FunctionName, _ x: [Expr], argumentMentionsPi: Bool) throws(MathError) -> Expr {
     switch function {
     case .sin, .cos, .tan:
-      let argument = angleUnit == .degrees && !argumentMentionsPi ? x[0] * Builder.degreesToRadians : x[0]
+      let argument = angleUnit == .degrees && !argumentMentionsPi ? Builder.radians(fromDegrees: x[0]) : x[0]
       return try Expr.apply(MathFunction(rawValue: function.rawValue)!, [argument])
     case .cot, .sec, .csc:
       // Written with sine and cosine, so that cot(π/2) is 0 and sec(π/2) is a division by zero, not a domain error of tan.
-      let argument = angleUnit == .degrees && !argumentMentionsPi ? x[0] * Builder.degreesToRadians : x[0]
+      let argument = angleUnit == .degrees && !argumentMentionsPi ? Builder.radians(fromDegrees: x[0]) : x[0]
       let sine = try Expr.apply(.sin, [argument])
       let cosine = try Expr.apply(.cos, [argument])
       switch function {

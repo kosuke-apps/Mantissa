@@ -33,7 +33,17 @@ struct Calculus {
   private func integrate(_ arguments: [Syntax]) throws(MathError) -> Expr {
     let expression = try builder.build(arguments[0])
     let variable = try unknown(arguments, at: 1, in: expression)
-    guard let antiderivative = expression.antiderivative(variable) else { throw .unsupported }
+    let antiderivative = expression.antiderivative(variable)
+    if antiderivative == nil || (arguments.count == 4 && Self.isGaussianLimits(arguments)) {
+      // e^(−x²) has no elementary antiderivative, but its integral over the whole line is √π.
+      if arguments.count == 4, let lower = try? point(arguments[2]), let upper = try? point(arguments[3]),
+        let value = expression.gaussianIntegral(variable, from: lower, to: upper)
+      {
+        return value
+      }
+      guard antiderivative != nil else { throw .unsupported }
+    }
+    guard let antiderivative else { throw .unsupported }
     guard arguments.count > 2 else { return antiderivative }
     guard arguments.count == 4 else { throw .domain }
 
@@ -44,6 +54,16 @@ struct Calculus {
     let bottom = try Self.value(of: antiderivative, variable, at: lower, side: .right)
     guard !top.containsInfinity, !bottom.containsInfinity else { throw .undefined }  // the integral diverges
     return top - bottom
+  }
+
+  /// Whether an end of the integral is infinite, where a Gaussian integral may apply even when there is an antiderivative.
+  private static func isGaussianLimits(_ arguments: [Syntax]) -> Bool {
+    func infinite(_ syntax: Syntax) -> Bool {
+      if case .infinity = syntax { return true }
+      if case .negate(.infinity) = syntax { return true }
+      return false
+    }
+    return infinite(arguments[2]) || infinite(arguments[3])
   }
 
   /// A bound: a number (or expression) or ±∞.

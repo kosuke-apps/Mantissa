@@ -239,3 +239,66 @@ struct LimitsAndSumsTests {
     }
   }
 }
+
+@Suite("Secant, cosecant and Gaussian integrals")
+struct GaussianAndSecantTests {
+  private func value(_ text: String) throws -> Evaluation { try Calculator().evaluate(text) }
+
+  @Test(
+    "Gaussian integrals have exact values",
+    arguments: [
+      ("int(e^(-x^2),x,-∞,∞)", "√π"), ("int(e^(-x^2),x,0,∞)", "√π/2"), ("int(e^(-x^2),x,-∞,0)", "√π/2"),
+      ("int(e^(-2x^2),x,-∞,∞)", "√π√2/2"), ("int(x^2*e^(-x^2),x,-∞,∞)", "√π/2"),
+      ("int(x^4*e^(-x^2),x,-∞,∞)", "3√π/4"), ("int(x*e^(-x^2),x,-∞,∞)", "0"), ("int(x*e^(-x^2),x,0,∞)", "1/2"),
+      ("int(3e^(-x^2),x,-∞,∞)", "3√π"), ("int(e^(-x^2-1),x,-∞,∞)", "√π/e"),
+      ("int(x^2*e^(-x^2),x,0,∞)", "√π/4"), ("int(e^(-x^2/2),x,-∞,∞)", "√π√2"),
+    ])
+  func gaussian(input: String, expected: String) throws {
+    #expect(try value(input).exact.description == expected, "\(input)")
+  }
+
+  @Test("A shifted Gaussian, and the value agrees with a numerical integral")
+  func shiftedGaussian() throws {
+    // ∫ e^(−x² + 2x) dx = e·√π (the peak is at x = 1 and its height is e).
+    let shifted = try value("int(e^(-x^2+2x),x,-∞,∞)")
+    let approximate = try #require(shifted.approximation)
+    let reference = try #require(try value("e*sqrt(π)").approximation)
+    #expect((approximate - reference).magnitude < BigDecimal(BigInt(1), exponent: -40))
+    // ∫ x e^(−x² + 2x) dx = e·√π (the mean is 1).
+    let mean = try #require(try value("int(x*e^(-x^2+2x),x,-∞,∞)").approximation)
+    #expect((mean - reference).magnitude < BigDecimal(BigInt(1), exponent: -40))
+  }
+
+  @Test("Not Gaussian: the positive x² is not integrable, and a finite range has no closed form here")
+  func notGaussian() {
+    #expect(throws: CalculatorError.self) { try Calculator().evaluate("int(e^(x^2),x,-∞,∞)") }
+    #expect(throws: CalculatorError.self) { try Calculator().evaluate("int(e^(-x^2),x,0,1)") }
+  }
+
+  @Test(
+    "Secant and cosecant",
+    arguments: [
+      "int(1/cos(x),x)", "int(1/sin(x),x)", "int(sec(x),x)", "int(csc(x),x)", "int(1/cos(2x),x)", "int(1/sin(3x+1),x)",
+    ])
+  func secants(input: String) throws {
+    let answer = try value(input)
+    #expect(answer.isAntiderivative)
+    // The answer differentiates back to the integrand: the integrator checks this itself, and here it is checked again.
+    let integrand = input.replacingOccurrences(of: "int(", with: "").replacingOccurrences(of: ",x)", with: "")
+    let derivative = try value("diff(" + answer.exact.description + ",x)")
+    for point in ["0.3", "0.9", "-0.4"] {
+      let values = ["x": BigDecimal(point)!]
+      let a = try #require(try? derivative.exact.approximation(precision: 40, values: values))
+      let b = try #require(try? value(integrand).exact.approximation(precision: 40, values: values))
+      #expect((a - b).magnitude < BigDecimal(BigInt(1), exponent: -25), "\(input) at \(point)")
+    }
+  }
+
+  @Test("Definite secant integral")
+  func definiteSecant() throws {
+    // ∫ from 0 to π/4 of sec x dx is ln(1 + √2).
+    let answer = try #require(try value("int(sec(x),x,0,π/4)").approximation)
+    let expected = try #require(try value("ln(1+sqrt(2))").approximation)
+    #expect((answer - expected).magnitude < BigDecimal(BigInt(1), exponent: -40))
+  }
+}

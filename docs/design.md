@@ -316,6 +316,26 @@ each axis it lies, so `atan(y, x)` with unknowns in it is not supported. `re`, `
 `sign` are read as functions only when a parenthesis follows (`re` alone is r times e), as the keyboard writes them.
 A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 2)`.
 
+## Identities, turns and special integrals
+
+- **Turns in trigonometric arguments** are taken out by the canonical form: for an argument `y + rπ`, a multiple of π/2 swaps sine
+  and cosine by quarter turns (`sin(x + π/2)` is `cos x`, `cos(x + π)` is `−cos x`; tangent has period π, and `tan(x + π/2)` is
+  `−cos x/sin x`), and any other `r` is brought into (−1, 1] by whole turns (`sin(x + 7π/3)` is `sin(x + π/3)`). A sum in degrees is
+  converted term by term (`Builder.radians(fromDegrees:)`) so that `sin(x + 90)` is seen as a quarter turn. `(x²)^(1/2)` is `|x|`
+  and `|x|^(2m)` is `x^(2m)`, since an even power of a real number is not negative.
+- **Identities that make an answer smaller** are not in the canonical form but applied to the finished answer
+  (`Expr.trigonometricallySimplified`), bottom up, and used when the result is no larger: `sin² + cos² = 1`, `1 − sin² = cos²`,
+  `cos² − sin² = cos 2u`, `1 − 2 sin² = cos 2u`, `2 sin u cos u = sin 2u`, with the same product beside both terms.
+- **Gaussian integrals** (`GaussianIntegrals`): `∫ x^m e^(−a x² + b x + c) dx` over the line, or over a half line when `b = 0`, by
+  completing the square and the moments of `e^(−a t²)`; the antiderivative route cannot do these (erf is not elementary).
+  `∫ sec` and `∫ csc` are `ln|1 + sin| − ln|cos|` and `ln|1 − cos| − ln|sin|`.
+- **Periodic inequalities** (`PeriodicInequalities`): `sin x > 1/2`, `tan x ≥ 1`, `cos 2x < 0`. The roots come from the numerator and
+  the poles from the denominators (with `tan u` written as `sin u/cos u`), both through the trigonometric equation solver, over
+  *two* periods of the roots, since an expression can take twice as long to repeat as its roots do (`cos 2x` has roots every π/2
+  and period π). The sign between neighbours is read at the middle, the stretches that hold are joined across a root when it
+  belongs to the solution (≤, ≥) and never across a pole, and the result is cut to one period if it repeats after half. The answer
+  is `lower + period·n < x < upper + period·n`. Tests sweep points across three periods and compare with the expression itself.
+
 ## Pasting and copying
 
 `SyntaxLayout` lays the parser's syntax tree out as editor nodes (fractions stacked, exponents raised, roots with their bar, ∫ Σ lim

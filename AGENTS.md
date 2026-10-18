@@ -68,14 +68,15 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   - `Sources/MantissaCore/Algebra/`: what the canonical form deliberately does not do on its own. `Expand` (multiply
     out, substitute, put a sum over a common denominator), `Polynomial` and `RationalPolynomial` (coefficients as `Expr`
     or `Rational`; rational roots, squarefree part), `PolynomialRoots` and `NumericRoots` (exact roots, then decimals),
-    `Factor` (a polynomial or fraction as a product of factors, and the other forms an answer is shown in), `Solver` (one
+    `Factor` (a polynomial or fraction as a product of factors, and the other forms an answer is shown in),
+    `TrigonometricSimplify` (identities applied to a finished answer), `PeriodicInequalities` (`sin x > 1/2`), `Solver` (one
     equation in one unknown), `SystemSolver` (linear by Gauss–Jordan, nonlinear by substitution),
     `InequalitySolver` (sign analysis between the real roots), `Calculator+Solve` (`Calculator.solve` routes the input),
     `TranscendentalSolver` and its strategies (`AbsoluteValueEquations`, `ExponentialEquations`, `LogarithmicEquations`,
     `RadicalEquations`, `TrigonometricEquations`, `NumericEquations`), `Atoms` (find and replace parts of an `Expr`).
   - `Sources/MantissaCore/Calculus/`: `Differentiation` (rules on the canonical form), `Integration` (a toolbox that checks
     every answer by differentiating it), `Limits` (substitution, then sequences at high precision and recognising the value),
-    `Series` (sums), `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
+    `Series` (sums), `GaussianIntegrals`, `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
     the builder works out while it turns the syntax into an `Expr`).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit; `Builder+Functions.swift`: the functions that

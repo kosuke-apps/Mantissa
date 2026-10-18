@@ -324,3 +324,101 @@ struct GeneralInequalityTests {
     #expect(try set(input) == expected, "\(input)")
   }
 }
+
+@Suite("Periodic inequalities")
+struct PeriodicInequalityTests {
+  /// `lower, upper` with `[` or `(` and `]` or `)`, then the period.
+  private func describe(_ text: String, unit: AngleUnit = .radians) throws -> String {
+    var settings = CalculatorSettings()
+    settings.angleUnit = unit
+    let solved = try Calculator(settings: settings).solve(text)
+    guard case .periodicIntervals(_, let intervals, let period) = solved else { return "\(solved)" }
+    let parts = intervals.map { interval -> String in
+      let low = interval.lower!
+      let high = interval.upper!
+      return (low.isClosed ? "[" : "(") + "\(low.value.exact!), \(high.value.exact!)" + (high.isClosed ? "]" : ")")
+    }
+    return parts.joined(separator: " ") + " period \(period.period)"
+  }
+
+  @Test(
+    "Each stretch where the inequality holds, within one period",
+    arguments: [
+      ("sin(x)>1/2", "(π/6, 5π/6) period 2π"), ("sin(x)>=1/2", "[π/6, 5π/6] period 2π"),
+      ("cos(x)<0", "(π/2, 3π/2) period 2π"), ("sin(x)<=-1/2", "[7π/6, 11π/6] period 2π"),
+      ("tan(x)>1", "(π/4, π/2) period π"), ("tan(x)<0", "(π/2, π) period π"),
+      ("sin(x)^2<1/4", "(5π/6, 7π/6) period π"), ("cos(2x)>0", "(3π/4, 5π/4) period π"),
+      ("cos(2x)>=0", "[3π/4, 5π/4] period π"), ("sin(x)<1", "(π/2, 5π/2) period 2π"),
+      ("sin(x)cos(x)>0", "(0, π/2) period π"), ("1/sin(x)>0", "(0, π) period 2π"),
+      ("sin(x)>cos(x)", "(π/4, 5π/4) period 2π"), ("cos(x)>=1/2", "[5π/3, 7π/3] period 2π"),
+    ])
+  func intervals(input: String, expected: String) throws {
+    #expect(try describe(input) == expected, "\(input)")
+  }
+
+  @Test("In degrees the period is 360")
+  func degrees() throws {
+    #expect(try describe("sin(x)>1/2", unit: .degrees) == "(30, 150) period 360")
+    #expect(try describe("tan(x)>1", unit: .degrees) == "(45, 90) period 180")
+  }
+
+  @Test("Always true, never true, and true only at the roots")
+  func degenerate() throws {
+    #expect(try Calculator().solve("sin(x)>2") == .none(variable: "x"))
+    #expect(try Calculator().solve("sin(x)>=-1") == .everything(variable: "x", excluding: []))
+    #expect(try Calculator().solve("sin(x)<-1") == .none(variable: "x"))
+    guard case .periodic(_, let families) = try Calculator().solve("sin(x)>=1") else {
+      Issue.record("expected the points where sin x = 1")
+      return
+    }
+    #expect(families.map { "\($0.offset) + \($0.period)n" } == ["π/2 + 2πn"])
+  }
+
+  @Test("The solutions satisfy the inequality, and the points just outside do not")
+  func checkedNumerically() throws {
+    for text in ["sin(x)>1/3", "cos(x)<=1/4", "tan(x)>=2", "sin(2x)<1/2", "sin(x)^2>=1/2", "cos(x)-sin(x)>0"] {
+      guard case .periodicIntervals(_, let intervals, let period) = try Calculator().solve(text) else {
+        Issue.record("\(text) was not solved as periodic intervals")
+        continue
+      }
+      let length = try #require(period.periodApproximation)
+      guard case .relation(let chain)? = try? Parser.parse(text) else { continue }
+      let builder = Builder(angleUnit: .radians)
+      let expression = try builder.build(chain.first) - builder.build(chain.links[0].operand)
+      func holds(_ x: BigDecimal) -> Bool {
+        guard let value = try? expression.approximation(precision: 40, values: ["x": x]) else { return false }
+        switch chain.links[0].op {
+        case .greater: return value.signum > 0
+        case .greaterOrEqual: return value.signum >= 0
+        case .less: return value.signum < 0
+        default: return value.signum <= 0
+        }
+      }
+      // A sweep of points across three periods: a point satisfies the inequality exactly when it is in an interval.
+      for step in stride(from: -300, through: 300, by: 7) {
+        let x = BigDecimal(BigInt(step), exponent: -2) * length * BigDecimal(BigInt(5), exponent: -1)
+        var inside = false
+        for interval in intervals {
+          let low = interval.lower!.value.approximation!.real
+          let high = interval.upper!.value.approximation!.real
+          for turn in -4...4 {
+            let shift = length * BigDecimal(BigInt(turn))
+            if x > low + shift && x < high + shift { inside = true }
+          }
+        }
+        // Skip points within a hair of a boundary, where rounding decides.
+        let nearBoundary = intervals.contains { interval in
+          let low = interval.lower!.value.approximation!.real
+          let high = interval.upper!.value.approximation!.real
+          return (-4...4).contains { turn in
+            let shift = length * BigDecimal(BigInt(turn))
+            return (x - low - shift).magnitude < BigDecimal(BigInt(1), exponent: -3)
+              || (x - high - shift).magnitude < BigDecimal(BigInt(1), exponent: -3)
+          }
+        }
+        if nearBoundary { continue }
+        #expect(holds(x) == inside, "\(text) at x = \(x)")
+      }
+    }
+  }
+}

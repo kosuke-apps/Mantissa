@@ -150,6 +150,22 @@ private struct Integrator {
           return -(cosine * Expr.makePower(sine, .minusOne))
         }
       }
+      // sec and csc: ∫ 1/cos = ln|1 + sin| − ln|cos|, ∫ 1/sin = ln|1 − cos| − ln|sin| (that is, ln|sec + tan| and ln|tan(u/2)|).
+      if exponent == .minusOne, case .function(let function, let arguments) = base, arguments == [u],
+        function == .cos || function == .sin,
+        let sine = try? Expr.apply(.sin, [u]), let cosine = try? Expr.apply(.cos, [u])
+      {
+        func logarithm(_ value: Expr) -> Expr? {
+          guard let magnitude = try? Expr.apply(.abs, [value]) else { return nil }
+          return try? Expr.apply(.ln, [magnitude])
+        }
+        if function == .cos, let top = logarithm(Expr.one + sine), let bottom = logarithm(cosine) {
+          return top - bottom
+        }
+        if function == .sin, let top = logarithm(Expr.one - cosine), let bottom = logarithm(sine) {
+          return top - bottom
+        }
+      }
       return nil
 
     case .function(let function, let arguments):

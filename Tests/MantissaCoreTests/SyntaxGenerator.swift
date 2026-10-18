@@ -9,6 +9,8 @@ struct SyntaxGenerator {
   /// Whether `mod`, `min`, `max`, `sign`, the inverse reciprocals and the hyperbolic reciprocals may appear. Off by default,
   /// so that the random sequences of the older tests stay as they were.
   var includesDerivedFunctions = false
+  /// Whether π may appear next to `x`, so that sums such as `x + π/2` occur inside the trigonometric functions.
+  var includesPiWithUnknown = false
 
   init(seed: UInt64) { random = SplitMix64(seed: seed) }
 
@@ -20,7 +22,9 @@ struct SyntaxGenerator {
     switch int(0...9) {
     case 0...3: return .number(Rational(int(0...12)))
     case 4: return .number(Rational(decimal: ["0.5", "2.25", "0.1", "1.5", "3.75", "0.125"][int(0...5)])!)
-    case 5: return includesUnknown ? .symbol("x") : .constant(.pi)
+    case 5:
+      if includesUnknown && includesPiWithUnknown && int(0...1) == 0 { return .constant(.pi) }
+      return includesUnknown ? .symbol("x") : .constant(.pi)
     case 6: return .constant(.e)
     case 7: return .number(Rational(int(1...5), int(2...7)))
     default: return includesUnknown && int(0...1) == 0 ? .symbol("x") : .number(Rational(int(1...30)))
