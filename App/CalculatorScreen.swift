@@ -31,13 +31,13 @@ struct CalculatorScreen: View {
   /// The title, the angle unit (tap to switch) and Settings.
   private var topBar: some View {
     ZStack {
-      Text("Calculator").font(.system(size: 17, weight: .semibold))
+      Text("Calculator").scaledFont(size: 17, weight: .semibold)
       HStack {
         Button {
           model.angleUnit = model.angleUnit == .radians ? .degrees : .radians
         } label: {
           Text(model.angleUnit == .radians ? "RAD" : "DEG")
-            .font(.system(size: 13, weight: .semibold))
+            .scaledFont(size: 13, weight: .semibold)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(Color.accentColor.opacity(0.14), in: Capsule())
@@ -49,7 +49,7 @@ struct CalculatorScreen: View {
         Button {
           model.showsSettings = true
         } label: {
-          Image(systemName: "gearshape").font(.system(size: 18)).foregroundStyle(.primary)
+          Image(systemName: "gearshape").scaledFont(size: 18).foregroundStyle(.primary)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Settings")
@@ -83,7 +83,7 @@ private struct InputView: View {
           }
           .overlay(alignment: .leading) {
             if editor.isEmpty && index == 0 {
-              Text("Type a math problem…").font(.system(size: 24)).foregroundStyle(.tertiary).allowsHitTesting(false)
+              Text("Type a math problem…").scaledFont(size: 24).foregroundStyle(.tertiary).allowsHitTesting(false)
             }
           }
         }
@@ -92,7 +92,7 @@ private struct InputView: View {
         Button {
           model.clearAll()
         } label: {
-          Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(.secondary)
+          Image(systemName: "xmark.circle.fill").scaledFont(size: 22).foregroundStyle(.secondary)
         }
         .accessibilityLabel("Clear")
       }
@@ -155,7 +155,7 @@ private struct ResultView: View {
           }
           if let decimal = answer.decimal {
             HStack(spacing: 6) {
-              Text("≈").font(.system(size: 22)).foregroundStyle(.secondary)
+              Text("≈").scaledFont(size: 22).foregroundStyle(.secondary)
               ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 24) }
             }
           }
@@ -182,7 +182,7 @@ private struct ResultView: View {
 
   private func warning(_ message: LocalizedStringKey) -> some View {
     Label {
-      Text(message).font(.system(size: 14)).foregroundStyle(.secondary)
+      Text(message).scaledFont(size: 14).foregroundStyle(.secondary)
     } icon: {
       Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.accentColor)
     }
@@ -201,22 +201,22 @@ private struct SolutionsView: View {
         case .values:
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .none:
-          Text("No solution").font(.system(size: 28))
+          Text("No solution").scaledFont(size: 28)
         case .everything:
           Text(solutions.lines.isEmpty ? "Every number is a solution." : "Every number is a solution, except:")
-            .font(.system(size: 20))
+            .scaledFont(size: 20)
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .truth(let value):
-          Text(value ? "True" : "False").font(.system(size: 28))
+          Text(value ? "True" : "False").scaledFont(size: 28)
         case .periodic(let integer):
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
-          Text("\(integer) is any integer").font(.system(size: 18)).foregroundStyle(.secondary)
+          Text("\(integer) is any integer").scaledFont(size: 18).foregroundStyle(.secondary)
         case .dependent(let free):
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
-          Text("\(free.joined(separator: ", ")) can be any number").font(.system(size: 18)).foregroundStyle(.secondary)
+          Text("\(free.joined(separator: ", ")) can be any number").scaledFont(size: 18).foregroundStyle(.secondary)
         case .intervals:
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { index, line in
-            if index > 0 { Text("or").font(.system(size: 18)).foregroundStyle(.secondary) }
+            if index > 0 { Text("or").scaledFont(size: 18).foregroundStyle(.secondary) }
             row(line)
           }
           if let notation = solutions.notation {
@@ -233,7 +233,7 @@ private struct SolutionsView: View {
       ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: 32) }
       if let decimal = line.decimal {
         HStack(spacing: 6) {
-          if !line.decimalIsLabelled { Text("≈").font(.system(size: 20)).foregroundStyle(.secondary) }
+          if !line.decimalIsLabelled { Text("≈").scaledFont(size: 20).foregroundStyle(.secondary) }
           ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22) }
         }
       }

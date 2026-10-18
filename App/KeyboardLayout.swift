@@ -55,6 +55,16 @@ enum KeyboardPage: CaseIterable, Identifiable {
 
   var id: Self { self }
 
+  /// What VoiceOver says for the chip.
+  var spokenName: LocalizedStringKey {
+    switch self {
+    case .basic: return "Basic keys"
+    case .functions: return "Functions and logarithms"
+    case .trigonometry: return "Trigonometry"
+    case .calculus: return "Calculus"
+    }
+  }
+
   /// The two lines written on the chip.
   var chip: (String, String) {
     switch self {
@@ -102,7 +112,12 @@ enum KeyboardLayout {
             alternates: [
               .init(title: "ⁿ√□", actions: [.nthRoot]), .init(title: "∛□", actions: [.nthRoot, .symbol("3"), .right]),
             ]),
-          digit("4"), digit("5"), digit("6"), symbol("×"),
+          digit("4"), digit("5"), digit("6"),
+          symbol(
+            "×",
+            alternates: [
+              .init(title: "×10ⁿ", actions: [.symbol("×"), .symbol("1"), .symbol("0"), .power])
+            ]),
         ],
         [
           KeySpec(
@@ -175,6 +190,45 @@ enum KeyboardLayout {
           digit("0"), digit("1"), digit("2"), KeySpec("power", .power, [.power]),
         ],
       ]
+    }
+  }
+
+  /// What VoiceOver says for a key that is not plain text (or whose symbol is not read well).
+  static func spokenName(for id: String) -> LocalizedStringKey? {
+    switch id {
+    case "group": return "Parentheses"
+    case "fraction": return "Fraction"
+    case "root": return "Square root"
+    case "power": return "Power"
+    case "abs": return "Absolute value"
+    case "log□": return "Logarithm with a base"
+    case "eˣ": return "e to the power"
+    case "÷": return "Divide"
+    case "×": return "Times"
+    case "−": return "Minus"
+    case "+": return "Plus"
+    case "=": return "Equals"
+    case ">": return "Greater than"
+    case "<": return "Less than"
+    case "≤": return "Less than or equal to"
+    case "≥": return "Greater than or equal to"
+    case "≠": return "Not equal to"
+    case ".": return "Decimal point"
+    case ",": return "Comma"
+    case "(": return "Open parenthesis"
+    case ")": return "Close parenthesis"
+    case "%": return "Percent"
+    case "!": return "Factorial"
+    case "°": return "Degrees"
+    case "π": return "Pi"
+    case "∞": return "Infinity"
+    case "above": return "Approaching from above"
+    case "below": return "Approaching from below"
+    case "lim": return "Limit"
+    case "d/dx": return "Derivative"
+    case "∫": return "Integral"
+    case "Σ": return "Sum"
+    default: return nil
     }
   }
 

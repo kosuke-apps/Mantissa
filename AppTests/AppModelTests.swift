@@ -455,4 +455,16 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(solutions.lines.map { $0.exact.plainText }, ["π/6 + 2πn < x < 5π/6 + 2πn"])
     XCTAssertEqual(model.copyable?.exact, "π/6 + 2πn < x < 5π/6 + 2πn")
   }
+
+  func testTheTimesTenToTheNKeyWritesScientificNotation() async throws {
+    let model = makeModel()
+    for key in ["1", ".", "5"] { model.press(.symbol(key)) }
+    // The alternative of the times key: ×10 with an exponent to fill in.
+    let alternate = try XCTUnwrap(
+      KeyboardLayout.rows(for: .basic).flatMap { $0 }.first { $0.id == "×" }?.alternates.first { $0.title == "×10ⁿ" })
+    model.press(alternate.actions)
+    model.press(.symbol("3"))
+    guard case .answer(let answer) = await answer(model) else { return XCTFail("expected an answer") }
+    XCTAssertEqual(answer.exact.parserText, "1500")
+  }
 }

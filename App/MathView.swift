@@ -20,13 +20,50 @@ struct CursorState: Equatable {
   var offset: Int
 }
 
+/// A font of a fixed point size that follows the user's text size setting.
+private struct ScaledFont: ViewModifier {
+  @ScaledMetric private var size: CGFloat
+  private let weight: Font.Weight
+
+  init(size: CGFloat, weight: Font.Weight) {
+    _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    self.weight = weight
+  }
+
+  func body(content: Content) -> some View { content.font(.system(size: size, weight: weight)) }
+}
+
+extension View {
+  /// `font(.system(size:))` that grows and shrinks with Dynamic Type.
+  func scaledFont(size: CGFloat, weight: Font.Weight = .regular) -> some View {
+    modifier(ScaledFont(size: size, weight: weight))
+  }
+}
+
 /// A sequence of nodes in a row.
 struct MathLine: View {
   let nodes: [MathNode]
-  let size: CGFloat
+  @ScaledMetric(relativeTo: .title) private var scale: CGFloat = 1
+  private let baseSize: CGFloat
   var cursor: CursorState?
   /// Draw a dotted box when the sequence is empty, so an unfilled slot can be seen.
   var placeholder = false
+  /// Whether the size follows the text size setting. A formula inside another (a numerator, an exponent) is sized from the one
+  /// around it, which has already been scaled.
+  private let scalesWithTextSize: Bool
+  /// The size of the characters, in points.
+  var size: CGFloat { baseSize * (scalesWithTextSize ? scale : 1) }
+
+  init(
+    nodes: [MathNode], size: CGFloat, cursor: CursorState? = nil, placeholder: Bool = false,
+    scalesWithTextSize: Bool = true
+  ) {
+    self.nodes = nodes
+    baseSize = size
+    self.cursor = cursor
+    self.placeholder = placeholder
+    self.scalesWithTextSize = scalesWithTextSize
+  }
 
   private enum Item {
     case caret
@@ -69,6 +106,9 @@ struct MathLine: View {
         }
       }
     }
+    // Read as one piece of text (`(√6 − √2)/4`) rather than a glyph at a time.
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(nodes.plainText)
   }
 }
 
@@ -90,7 +130,8 @@ private struct MathNodeView: View {
 
   private func slot(_ nodes: [MathNode], _ index: Int, scale: CGFloat = 1) -> MathLine {
     MathLine(
-      nodes: nodes, size: size * scale, cursor: cursor?.slot == index ? cursor?.state : nil, placeholder: true)
+      nodes: nodes, size: size * scale, cursor: cursor?.slot == index ? cursor?.state : nil, placeholder: true,
+      scalesWithTextSize: false)
   }
 
   // MARK: Calculus operators

@@ -31,7 +31,7 @@ struct HistoryView: View {
           list
         }
       }
-      .navigationTitle("History")
+      .navigationTitle(Localizer.string("History"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {
@@ -115,7 +115,7 @@ private struct HistoryRow: View {
         if entry.exact.isEmpty, let decimal = entry.decimal {
           // What was typed was already exact (√2, 1/3), so only its value was added.
           HStack(spacing: 6) {
-            Text("≈").font(.system(size: 17)).foregroundStyle(.secondary)
+            Text("≈").scaledFont(size: 17).foregroundStyle(.secondary)
             ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22) }
           }
           .foregroundStyle(Color.accentColor)
@@ -123,7 +123,7 @@ private struct HistoryRow: View {
           Label("Graph", systemImage: "chart.xyaxis.line").font(.footnote).foregroundStyle(Color.accentColor)
         } else {
           HStack(spacing: 6) {
-            Text("=").font(.system(size: 17)).foregroundStyle(.secondary)
+            Text("=").scaledFont(size: 17).foregroundStyle(.secondary)
             ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: entry.exact, size: 22) }
           }
           .foregroundStyle(Color.accentColor)

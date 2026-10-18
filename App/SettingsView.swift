@@ -51,7 +51,7 @@ struct SettingsView: View {
           )
         }
       }
-      .navigationTitle("Settings")
+      .navigationTitle(Localizer.string("Settings"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
@@ -81,7 +81,7 @@ private struct LicenseView: View {
       .padding()
       .frame(maxWidth: .infinity, alignment: .leading)
     }
-    .navigationTitle("License")
+    .navigationTitle(Localizer.string("License"))
     .navigationBarTitleDisplayMode(.inline)
   }
 

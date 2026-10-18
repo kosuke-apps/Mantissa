@@ -83,6 +83,8 @@ struct KeyboardView: View {
           .overlay(Capsule().strokeBorder(Color(.separator), lineWidth: page == candidate ? 0 : 1))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(candidate.spokenName)
+        .accessibilityAddTraits(page == candidate ? .isSelected : [])
       }
     }
     .padding(.horizontal, 10)
@@ -161,6 +163,7 @@ private struct KeyView: View {
         }
       }
       .contentShape(Rectangle())
+      .accessibilityLabel(KeyboardLayout.spokenName(for: spec.id) ?? LocalizedStringKey(spec.id))
   }
 
   var body: some View {
