@@ -74,7 +74,7 @@ struct MoreFunctionTests {
   func twoArgumentArctangentEdges() throws {
     #expect(try exact("atan(1,-1)", unit: .degrees) == "135")
     #expect(try exact("atan(-1,-1)", unit: .degrees) == "-135")
-    #expect(throws: CalculatorError.math(.domain)) { try Calculator().evaluate("atan(0,0)") }
+    #expect(throws: CalculatorError.math(.noValue)) { try Calculator().evaluate("atan(0,0)") }
     #expect(throws: CalculatorError.math(.unsupported)) { try Calculator().evaluate("atan(y,x)") }
   }
 
@@ -94,7 +94,7 @@ struct MoreFunctionTests {
   func argumentEdges() throws {
     #expect(try exact("arg(1+i)", unit: .degrees) == "45")
     #expect(try exact("arg(-1)", unit: .degrees) == "180")
-    #expect(throws: CalculatorError.math(.domain)) { try Calculator().evaluate("arg(0)") }
+    #expect(throws: CalculatorError.math(.noValue)) { try Calculator().evaluate("arg(0)") }
   }
 
   @Test(

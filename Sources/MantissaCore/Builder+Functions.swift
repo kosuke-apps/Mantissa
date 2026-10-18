@@ -59,7 +59,7 @@ extension Builder {
   static func angle(y: Expr, x: Expr) throws(MathError) -> Expr {
     guard let signOfX = x.numericSign, let signOfY = y.numericSign else { throw .unsupported }
     if signOfX == 0 {
-      if signOfY == 0 { throw .domain }  // the origin has no direction
+      if signOfY == 0 { throw .noValue }  // the origin has no direction
       return (signOfY > 0 ? Expr.one : Expr.minusOne) * .pi * .fraction(1, 2)
     }
     let base = try Expr.apply(.atan, [y.divided(by: x)])

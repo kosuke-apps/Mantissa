@@ -31,10 +31,10 @@ struct KeyboardView: View {
     HStack(spacing: 0) {
       controlButton("abc", accessibility: "Letters") { showsLetters.toggle() }
       controlButton(systemImage: "clock", accessibility: "History") { model.showsHistory = true }
-      controlButton(systemImage: "arrow.left", accessibility: "Move left") { model.press(.left) }
-      controlButton(systemImage: "arrow.right", accessibility: "Move right") { model.press(.right) }
+      controlButton(systemImage: "arrow.left", accessibility: "Move left", repeats: true) { model.press(.left) }
+      controlButton(systemImage: "arrow.right", accessibility: "Move right", repeats: true) { model.press(.right) }
       controlButton(systemImage: "return", accessibility: "New line") { model.press(.newLine) }
-      controlButton(systemImage: "delete.left", accessibility: "Delete") { model.press(.backspace) }
+      controlButton(systemImage: "delete.left", accessibility: "Delete", repeats: true) { model.press(.backspace) }
     }
     .frame(height: 44)
     .padding(.horizontal, 6)
@@ -51,8 +51,9 @@ struct KeyboardView: View {
       .accessibilityLabel(accessibility)
   }
 
+  /// A control with an icon. One that `repeats` goes on acting while it is held (delete, the arrows).
   private func controlButton(
-    systemImage: String, accessibility: LocalizedStringKey, action: @escaping () -> Void
+    systemImage: String, accessibility: LocalizedStringKey, repeats: Bool = false, action: @escaping () -> Void
   )
     -> some View
   {
@@ -60,6 +61,7 @@ struct KeyboardView: View {
       Image(systemName: systemImage).font(.system(size: 18)).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     .buttonStyle(.plain)
+    .buttonRepeatBehavior(repeats ? .enabled : .disabled)
     .accessibilityLabel(accessibility)
   }
 

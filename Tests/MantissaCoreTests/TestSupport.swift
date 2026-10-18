@@ -10,6 +10,10 @@ func loadVectors<T: Decodable>(_ name: String, as type: T.Type = T.self) throws 
   return try JSONDecoder().decode(T.self, from: Data(contentsOf: url))
 }
 
+/// `MANTISSA_SEED=n` changes the random sequences of the property tests that read it, for wider searches than the fixed seeds
+/// that run in every build.
+let propertySeedOffset = UInt64(ProcessInfo.processInfo.environment["MANTISSA_SEED"] ?? "") ?? 0
+
 /// A small deterministic generator, so a failing random test fails the same way every time.
 struct SplitMix64: RandomNumberGenerator {
   var state: UInt64

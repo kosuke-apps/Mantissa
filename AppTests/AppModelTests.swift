@@ -364,4 +364,79 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(outcome, .empty)
     XCTAssertEqual(model.graph?.content.relations.map(\.isRegion), [true])
   }
+
+  func testAnAnswerCanBeCopiedAndUsedAsInput() async throws {
+    let model = makeModel()
+    for key in ["1", "5", "°"] { model.press(.symbol(key)) }
+    // sin(15°) in radians
+    model.clearAll()
+    model.press(.function("sin"))
+    for key in ["1", "5", "°"] { model.press(.symbol(key)) }
+    _ = await answer(model)
+    let copyable = try XCTUnwrap(model.copyable)
+    XCTAssertEqual(copyable.exact, "(√6 − √2)/4")
+    XCTAssertEqual(copyable.decimal?.hasPrefix("0.2588190451"), true)
+
+    model.useAnswerAsInput()
+    XCTAssertEqual(model.inputText, "(√6 − √2)/4")
+    // The answer is now the input, and its value is the same.
+    let again = await answer(model)
+    guard case .answer(let answer) = again else { return XCTFail("expected an answer") }
+    XCTAssertEqual(answer.decimal?.plainText.hasPrefix("0.2588190451"), true)
+  }
+
+  func testSolutionsCanBeCopiedAsText() async throws {
+    let model = makeModel()
+    model.press(.symbol("x"))
+    model.press(.power)
+    model.press(.symbol("2"))
+    model.press(.right)
+    for key in ["=", "4"] { model.press(.symbol(key)) }
+    _ = await answer(model)
+    XCTAssertEqual(model.copyable?.exact, "x = −2, x = 2")
+    XCTAssertNil(model.copyable?.decimal)
+    // Solutions are not an expression to go on from.
+    model.useAnswerAsInput()
+    XCTAssertEqual(model.inputText, "x^2 = 4")
+  }
+
+  func testPastingAFormulaFromTheClipboard() async throws {
+    let model = makeModel()
+    UIPasteboard.general.string = "sqrt(2)/2 + x^2"
+    XCTAssertTrue(model.canPaste)
+    model.paste()
+    XCTAssertEqual(model.inputText, "√2/2 + x^2")
+    // A second paste adds at the cursor, and something that is not a formula changes nothing.
+    UIPasteboard.general.string = "not a formula ("
+    model.paste()
+    XCTAssertEqual(model.inputText, "√2/2 + x^2")
+  }
+
+  func testAnExactNumberTypedInIsCopiedAsTyped() async throws {
+    let model = makeModel()
+    model.press(.squareRoot)
+    model.press(.symbol("2"))
+    guard case .answer(let answer) = await answer(model) else { return XCTFail("expected a decimal") }
+    XCTAssertTrue(answer.exact.isEmpty)  // what was typed already says it
+    XCTAssertEqual(answer.decimal?.plainText, "1.41421356237")
+    let copyable = try XCTUnwrap(model.copyable)
+    XCTAssertEqual(copyable.exact, "√2")
+    XCTAssertFalse(copyable.canBeInput)
+  }
+
+  func testValuesThatAreUndefinedSaySo() async {
+    let model = makeModel()
+    model.press(.function("tan"))
+    model.press(.symbol("π"))
+    model.press(.fraction)
+    model.press(.symbol("2"))
+    XCTAssertEqual(model.editor.text, "tan(((π)/(2)))")
+    let tangent = await answer(model)
+    XCTAssertEqual(tangent, .failure(.undefinedHere))
+    model.clearAll()
+    model.press(.function("ln"))
+    model.press(.symbol("0"))
+    let logarithm = await answer(model)
+    XCTAssertEqual(logarithm, .failure(.undefinedHere))
+  }
 }

@@ -68,7 +68,7 @@ extension Expr {
     case .sin: return ExactTrigonometry.sine(ofTwelfths: k)
     case .cos: return ExactTrigonometry.sine(ofTwelfths: k + 6)
     default:
-      guard let tangent = ExactTrigonometry.tangent(ofTwelfths: k) else { throw .domain }  // tan(π/2) is undefined
+      guard let tangent = ExactTrigonometry.tangent(ofTwelfths: k) else { throw .noValue }  // tan(π/2) is undefined
       return tangent
     }
   }
@@ -101,7 +101,8 @@ extension Expr {
     if let number = x.rational {
       switch function {
       case .acosh where number < Rational(1): throw .domain
-      case .atanh where number.magnitude >= Rational(1): throw .domain
+      case .atanh where number.magnitude == Rational(1): throw .noValue
+      case .atanh where number.magnitude > Rational(1): throw .domain
       case .acosh where number == Rational(1): return .zero
       default: break
       }
@@ -114,7 +115,8 @@ extension Expr {
 
   private static func naturalLogarithm(_ x: Expr) throws(MathError) -> Expr {
     if let number = x.rational {
-      if number.signum <= 0 { throw .domain }
+      if number.isZero { throw .noValue }
+      if number.signum < 0 { throw .domain }
       if number == Rational(1) { return .zero }
       return .function(.ln, [x])
     }
@@ -129,7 +131,10 @@ extension Expr {
 
   private static func logarithm(_ x: Expr, base: Expr) throws(MathError) -> Expr {
     if let number = base.rational, number.signum <= 0 || number == Rational(1) { throw .domain }
-    if let number = x.rational, number.signum <= 0 { throw .domain }
+    if let number = x.rational {
+      if number.signum < 0 { throw .domain }
+      if number.isZero { throw .noValue }
+    }
     if base == .e { return try naturalLogarithm(x) }
     if let value = x.rational, let radix = base.rational {
       if let exact = NumberTheory.exactLogarithm(of: value, base: radix) { return .number(exact) }

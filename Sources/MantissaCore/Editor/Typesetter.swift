@@ -205,7 +205,9 @@ public enum Typesetter {
       }
     }
     // The imaginary unit is written last, after any radical: 2√3 i.
-    for factor in others where factor != .i { pieces.append(typeset(factor).wrapped(minimum: Level.factor)) }
+    for factor in displayOrder(others) where factor != .i {
+      pieces.append(typeset(factor).wrapped(minimum: Level.factor))
+    }
     if hasRadical { pieces.append([.radical(index: nil, radicand: digits(radicand))]) }
     if others.contains(.i) { pieces.append([.symbol("i")]) }
 
@@ -216,6 +218,24 @@ public enum Typesetter {
       nodes += piece
     }
     return nodes
+  }
+
+  /// The factors in the order they are read: powers of the unknown first (x³e^x, not e^x x³), then sums in brackets, then
+  /// other powers such as e^x and 2^x, then functions. The order within each kind is the canonical one.
+  private static func displayOrder(_ factors: [Expr]) -> [Expr] {
+    func rank(_ factor: Expr) -> Int {
+      switch factor {
+      case .number, .constant: return 0
+      case .symbol: return 1
+      case .power(let base, _):
+        if case .symbol = base { return 1 }
+        if case .sum = base { return 2 }
+        return 3
+      case .sum, .product: return 2
+      case .function: return 4
+      }
+    }
+    return factors.enumerated().sorted { (rank($0.element), $0.offset) < (rank($1.element), $1.offset) }.map(\.element)
   }
 
   private static func power(_ base: Expr, _ exponent: Expr) -> Piece {

@@ -30,7 +30,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "計算できるよう、式を最後まで入力してください。"
+            "value": "計算できるよう，式を最後まで入力してください．"
           }
         }
       }
@@ -41,7 +41,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "0 で割ることはできません。"
+            "value": "0 で割ることはできません．"
           }
         }
       }
@@ -52,7 +52,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この式には実数の答えがありません。"
+            "value": "この式には実数の答えがありません．"
           }
         }
       }
@@ -63,7 +63,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "大きすぎて計算できません。"
+            "value": "大きすぎて計算できません．"
           }
         }
       }
@@ -74,7 +74,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "実数の値はありません。"
+            "value": "実数の値はありません．"
           }
         }
       }
@@ -184,7 +184,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "問題の星印をタップすると、ここに残せます。"
+            "value": "問題の星印をタップすると，ここに残せます．"
           }
         }
       }
@@ -195,7 +195,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "解いた問題がここに表示されます。"
+            "value": "解いた問題がここに表示されます．"
           }
         }
       }
@@ -250,7 +250,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存した問題は残ります。"
+            "value": "保存した問題は残ります．"
           }
         }
       }
@@ -404,7 +404,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべての数が解です。"
+            "value": "すべての数が解です．"
           }
         }
       }
@@ -481,7 +481,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この計算にはまだ対応していません。"
+            "value": "この計算にはまだ対応していません．"
           }
         }
       }
@@ -492,7 +492,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "存在しません(発散する、または極限の左右が一致しません)。"
+            "value": "存在しません(発散する，または極限の左右が一致しません)．"
           }
         }
       }
@@ -558,7 +558,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "度の記号 ° はつねに度を表すので、cos(30°) はどちらでも同じです。記号がない cos(30) はこの設定に従います。"
+            "value": "度の記号 ° はつねに度を表すので，cos(30°) はどちらでも同じです．記号がない cos(30) はこの設定に従います．"
           }
         }
       }
@@ -646,7 +646,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "計算はすべてこの iPhone の中で行います。何も送信せず、アカウント・広告・トラッキングもありません。"
+            "value": "計算はすべてこの iPhone の中で行います．何も送信せず，アカウント・広告・トラッキングもありません．"
           }
         }
       }
@@ -657,7 +657,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mantissa は MIT ライセンスのフリーソフトウェアです。第三者のコードは使っていません。数の型、代数、グラフ描画はすべてこのアプリのために書かれています。"
+            "value": "Mantissa は MIT ライセンスのフリーソフトウェアです．第三者のコードは使っていません．数の型，代数，グラフ描画はすべてこのアプリのために書かれています．"
           }
         }
       }
@@ -702,6 +702,61 @@
           "stringUnit": {
             "state": "translated",
             "value": "x 切片"
+          }
+        }
+      }
+    },
+    "Copy": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピー"
+          }
+        }
+      }
+    },
+    "Copy decimal": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小数をコピー"
+          }
+        }
+      }
+    },
+    "Use as input": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入力に使う"
+          }
+        }
+      }
+    },
+    "Paste": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貼り付け"
+          }
+        }
+      }
+    },
+    "This is undefined.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これは定義されません．"
           }
         }
       }

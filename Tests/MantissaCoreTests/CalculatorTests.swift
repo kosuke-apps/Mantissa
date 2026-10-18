@@ -182,14 +182,14 @@ struct CalculatorTests {
       }
     }
     #expect(fails("1/0") == .math(.divisionByZero))
-    #expect(fails("0^0") == .math(.domain))
+    #expect(fails("0^0") == .math(.noValue))
     #expect(fails("0^-1") == .math(.divisionByZero))
-    #expect(fails("ln(0)") == .math(.domain))
+    #expect(fails("ln(0)") == .math(.noValue))
     #expect(fails("ln(-1)") == .math(.domain))
     #expect(fails("asin(2)") == .math(.domain))
     #expect(fails("acos(-1.5)") == .math(.domain))
-    #expect(fails("tan(90°)") == .math(.domain))
-    #expect(fails("tan(π/2)") == .math(.domain))
+    #expect(fails("tan(90°)") == .math(.noValue))
+    #expect(fails("tan(π/2)") == .math(.noValue))
     #expect(fails("(-3)!") == .math(.domain))
     #expect(fails("2.5!") == .math(.domain))
     #expect(fails("nCr(3,5)") == .math(.domain))

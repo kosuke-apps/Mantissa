@@ -78,7 +78,7 @@ struct ExprTests {
     #expect(try Expr.one.raised(to: x) == .one)
     #expect(try x.raised(to: 0) == .one)
     #expect(try x.raised(to: 1) == x)
-    #expect(throws: MathError.domain) { try Expr.zero.raised(to: 0) }
+    #expect(throws: MathError.noValue) { try Expr.zero.raised(to: 0) }
     #expect(throws: MathError.divisionByZero) { try Expr.zero.raised(to: -1) }
     #expect(throws: MathError.divisionByZero) { try Expr.one.divided(by: .zero) }
     #expect(throws: MathError.divisionByZero) { try x.divided(by: x - x) }
@@ -112,7 +112,7 @@ struct ExprTests {
     #expect(try Expr.apply(.cosh, [.zero]) == .one)
     #expect(try Expr.apply(.acosh, [.one]) == .zero)
     #expect(try Expr.apply(.factorial, [x]) == .function(.factorial, [x]))
-    #expect(throws: MathError.domain) { try Expr.apply(.atanh, [.one]) }
+    #expect(throws: MathError.noValue) { try Expr.apply(.atanh, [.one]) }
     #expect(throws: MathError.domain) { try Expr.apply(.acosh, [half]) }
     #expect(throws: MathError.domain) { try Expr.apply(.log, [4, 1]) }
     #expect(throws: MathError.domain) { try Expr.apply(.log, [-4, 2]) }

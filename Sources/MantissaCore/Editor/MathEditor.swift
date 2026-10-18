@@ -89,7 +89,7 @@ public struct MathEditor: Equatable, Sendable {
 
   /// Runs `body` on the sequence at the cursor, with the cursor's offset, and keeps whatever `body` changes.
   @discardableResult
-  private mutating func edit<T>(_ body: (inout [MathNode], inout Int) -> T) -> T {
+  mutating func edit<T>(_ body: (inout [MathNode], inout Int) -> T) -> T {
     var offset = cursor.offset
     let result = Self.update(&lines[cursor.line], path: cursor.path[...]) { sequence in body(&sequence, &offset) }
     cursor.offset = offset

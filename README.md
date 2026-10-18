@@ -46,6 +46,8 @@ or from below.
 
 - Also: `mod`, `min`, `max`, `sign`, the real and imaginary parts, conjugate and argument of a complex number, `atan(y, x)`, and
   the reciprocal trigonometric and hyperbolic functions with their inverses.
+- Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
+  it as text or to use it as the next input; hold the delete or arrow key to repeat it.
 - Graphs of circles and other curves in x and y (`x² + y² = 25`, with the intercepts marked) and shaded regions for inequalities
   (`y > x²`, dashed where the edge is not included); a line and a circle show where they cross.
 

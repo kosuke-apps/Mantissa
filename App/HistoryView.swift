@@ -112,7 +112,14 @@ private struct HistoryRow: View {
         ForEach(Array(entry.lines.enumerated()), id: \.offset) { _, line in
           ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line, size: 20) }
         }
-        if entry.exact.isEmpty {
+        if entry.exact.isEmpty, let decimal = entry.decimal {
+          // What was typed was already exact (√2, 1/3), so only its value was added.
+          HStack(spacing: 6) {
+            Text("≈").font(.system(size: 17)).foregroundStyle(.secondary)
+            ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22) }
+          }
+          .foregroundStyle(Color.accentColor)
+        } else if entry.exact.isEmpty {
           Label("Graph", systemImage: "chart.xyaxis.line").font(.footnote).foregroundStyle(Color.accentColor)
         } else {
           HStack(spacing: 6) {

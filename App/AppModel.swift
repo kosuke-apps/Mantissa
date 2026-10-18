@@ -45,6 +45,8 @@ final class AppModel {
     case tooLarge
     case notSupportedYet
     /// A limit whose sides disagree, an integral or a series that diverges.
+    /// A value that is undefined, such as `tan(π/2)` or `ln(0)`.
+    case undefinedHere
     case doesNotExist
   }
 
@@ -134,6 +136,61 @@ final class AppModel {
 
   func clearAll() {
     editor.clear()
+    refresh()
+  }
+
+  // MARK: Pasteboard and answers
+
+  /// Whether the pasteboard holds text (asking does not show the system's paste prompt; reading it does).
+  var canPaste: Bool { UIPasteboard.general.hasStrings }
+
+  /// Puts the formula on the pasteboard at the cursor, typeset, when it reads as one.
+  func paste() {
+    guard let text = UIPasteboard.general.string, editor.paste(text) else { return }
+    feedback.impactOccurred()
+    refresh()
+  }
+
+  /// What is typed, as text, one line for each equation.
+  var inputText: String { editor.lines.map(\.plainText).filter { !$0.isEmpty }.joined(separator: "\n") }
+
+  func copyInput() { UIPasteboard.general.string = inputText }
+
+  /// The texts the answer can be copied as: the exact one, and the decimal when there is one.
+  struct Copyable: Equatable {
+    var exact: String
+    var decimal: String?
+    /// Whether the answer is a formula that can replace the input.
+    var canBeInput = false
+  }
+
+  var copyable: Copyable? {
+    switch outcome {
+    case .answer(let answer):
+      let nodes = answer.exact.isEmpty ? (answer.forms.first?.nodes ?? []) : answer.exact
+      // When what was typed is already the exact answer (√2), that is what there is to copy.
+      return Copyable(
+        exact: nodes.isEmpty ? inputText : nodes.plainText, decimal: answer.decimal?.plainText,
+        canBeInput: !nodes.isEmpty)
+    case .solutions(let solutions):
+      return Copyable(exact: solutions.summary.plainText)
+    default:
+      return nil
+    }
+  }
+
+  func copy(_ text: String) {
+    UIPasteboard.general.string = text
+    feedback.impactOccurred()
+  }
+
+  /// Replaces what is typed with the answer, to go on from it.
+  func useAnswerAsInput() {
+    guard case .answer(let answer) = outcome else { return }
+    let nodes = answer.exact.isEmpty ? (answer.forms.first?.nodes ?? []) : answer.exact
+    guard !nodes.isEmpty else { return }
+    editor = MathEditor(lines: [nodes])
+    feedback.impactOccurred()
     refresh()
   }
 
@@ -228,7 +285,7 @@ final class AppModel {
     }
   }
 
-  nonisolated private static func outcome(for text: String, calculator: Calculator, digits: Int) -> Outcome {
+  nonisolated static func outcome(for text: String, calculator: Calculator, digits: Int) -> Outcome {
     do {
       let evaluation = try calculator.evaluate(text)
       var exact = Typesetter.nodes(for: evaluation.exact)
@@ -236,10 +293,9 @@ final class AppModel {
       let saysWhatWasTyped = exact.parserText == text
       // An antiderivative is one of many.
       if evaluation.isAntiderivative { exact += [.symbol("+"), .symbol("C")] }
+      // The decimal is shown even when the exact form is what was typed: √2 and 1/3 still have a value to read.
       var decimal: [MathNode]?
-      if saysWhatWasTyped {
-        decimal = nil
-      } else if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
+      if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
       } else if let value = evaluation.complexApproximation, !evaluation.exact.isGaussianInteger {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
@@ -252,7 +308,7 @@ final class AppModel {
             kind: factorization.cancelled ? .simplified : .factored, nodes: Typesetter.nodes(for: factorization))
         }
       }
-      if saysWhatWasTyped && forms.isEmpty { return .empty }
+      if saysWhatWasTyped && forms.isEmpty && decimal == nil { return .empty }
       return .answer(
         Answer(
           exact: saysWhatWasTyped ? [] : exact, decimal: decimal, hasNoRealValue: evaluation.approximationError != nil,
@@ -270,6 +326,7 @@ final class AppModel {
     switch error {
     case .divisionByZero: return .failure(.divisionByZero)
     case .domain, .notNumeric: return .failure(.noRealAnswer)
+    case .noValue: return .failure(.undefinedHere)
     case .overflow: return .failure(.tooLarge)
     case .unsupported: return .failure(.notSupportedYet)
     case .undefined: return .failure(.doesNotExist)

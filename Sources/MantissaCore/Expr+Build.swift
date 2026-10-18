@@ -14,10 +14,10 @@ extension Expr {
     return Expr.makeProduct([self, Expr.makePower(divisor, .minusOne)])
   }
 
-  /// `self ^ exponent`. `0^0` is a domain error and a negative power of zero is a division by zero.
+  /// `self ^ exponent`. `0^0` has no value and a negative power of zero is a division by zero.
   public func raised(to exponent: Expr) throws(MathError) -> Expr {
     if isZero, let power = exponent.rational {
-      if power.isZero { throw .domain }
+      if power.isZero { throw .noValue }
       if power.isNegative { throw .divisionByZero }
     }
     return Expr.makePower(self, exponent)

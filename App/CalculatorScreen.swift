@@ -97,6 +97,11 @@ private struct InputView: View {
         .accessibilityLabel("Clear")
       }
     }
+    .contentShape(Rectangle())
+    .contextMenu {
+      if model.canPaste { Button("Paste", systemImage: "doc.on.clipboard") { model.paste() } }
+      if !editor.isEmpty { Button("Copy", systemImage: "doc.on.doc") { model.copyInput() } }
+    }
   }
 
   private func cursorState(in editor: MathEditor, line: Int) -> CursorState? {
@@ -106,9 +111,23 @@ private struct InputView: View {
 }
 
 private struct ResultView: View {
+  @Environment(AppModel.self) private var model
   let outcome: AppModel.Outcome
 
   var body: some View {
+    content.contextMenu {
+      if let copyable = model.copyable {
+        Button("Copy", systemImage: "doc.on.doc") { model.copy(copyable.exact) }
+        if let decimal = copyable.decimal {
+          Button("Copy decimal", systemImage: "doc.on.doc") { model.copy(decimal) }
+        }
+        if copyable.canBeInput { Button("Use as input", systemImage: "arrow.up.left") { model.useAnswerAsInput() } }
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var content: some View {
     switch outcome {
     case .empty:
       EmptyView()
@@ -118,6 +137,7 @@ private struct ResultView: View {
       switch failure {
       case .divisionByZero: warning("Dividing by zero has no answer.")
       case .noRealAnswer: warning("This has no real answer.")
+      case .undefinedHere: warning("This is undefined.")
       case .tooLarge: warning("This is too large to work out.")
       case .notSupportedYet: warning("This isn't supported yet.")
       case .doesNotExist: warning("This does not exist: it diverges, or the two sides of a limit disagree.")

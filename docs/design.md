@@ -316,6 +316,19 @@ each axis it lies, so `atan(y, x)` with unknowns in it is not supported. `re`, `
 `sign` are read as functions only when a parenthesis follows (`re` alone is r times e), as the keyboard writes them.
 A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 2)`.
 
+## Pasting and copying
+
+`SyntaxLayout` lays the parser's syntax tree out as editor nodes (fractions stacked, exponents raised, roots with their bar, ∫ Σ lim
+in their boxes), so a pasted formula is edited like a typed one. A product is written side by side when that reads back the same
+(`2x`, `3(x + 1)`) and with × otherwise; parentheses are added where the precedence needs them. A property test sends random
+formulas through nodes and text and checks the value. `[MathNode].plainText` is the other direction, for copying an answer out:
+`(√6 − √2)/4`, `x = −2, x = 2`, `e^3·e^x`. A power, a root or a denominator is in brackets unless it is a number, one letter or a
+function call (`e^2x` would read as (e²)x), and a dot separates a product after a power or a root (`e^3e^x` would read as
+e^(3e^x)). Another property test checks that copied text reads back as the same value.
+
+An error that is not about a domain has its own case: `MathError.noValue` is `tan(π/2)`, `ln(0)` and `0^0`, which the app
+says are undefined, where `asin(2)` has no *real* answer.
+
 ## Settings and other forms of an answer
 
 - **Settings** are the angle unit, the number of significant digits for decimals (6 to 30) and the language (system, English, 日本語).
