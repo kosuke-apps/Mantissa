@@ -1167,6 +1167,17 @@
           }
         }
       }
+    },
+    "As one fraction": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 つの分数にまとめる"
+          }
+        }
+      }
     }
   }
 }

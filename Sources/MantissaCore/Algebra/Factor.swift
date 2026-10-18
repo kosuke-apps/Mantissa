@@ -140,9 +140,22 @@ public enum ExpressionForm: Sendable, Equatable {
   case expanded(Expr)
   /// As a product of factors, or a fraction of them with common factors cancelled.
   case factored(Factorization)
+  /// A sum of fractions in several unknowns written as one fraction (`1/x + 1/y` is `(x + y)/(xy)`).
+  case combined(Expr)
 }
 
 extension Expr {
+  /// A sum with fractions in it as one fraction over the product of its denominators, for any number of unknowns; `nil` when there
+  /// is no fraction, or when the one fraction is not smaller.
+  func combinedOverAllDenominators() -> Expr? {
+    guard case .sum = self, let (numerator, denominators) = together(variables: freeSymbols), !denominators.isEmpty
+    else { return nil }
+    var factors = [numerator]
+    for (base, power) in denominators { factors.append(Expr.makePower(base, .integer(-power))) }
+    let combined = Expr.makeProduct(factors)
+    return combined.nodeCount <= nodeCount + 4 ? combined : nil
+  }
+
   /// The expanded and the factored form of an expression with an unknown, for those that say something the expression does not.
   public func otherForms() -> [ExpressionForm] {
     guard !freeSymbols.isEmpty, nodeCount <= 200 else { return [] }
@@ -162,6 +175,10 @@ extension Expr {
     {
       // Where it is the same as the expanded form there is nothing to add.
       forms.append(.factored(factorization))
+    } else if freeSymbols.count > 1, let combined = combinedOverAllDenominators(), combined != self,
+      Typesetter.nodes(for: combined).parserText != shown
+    {
+      forms.append(.combined(combined))
     }
     return forms
   }

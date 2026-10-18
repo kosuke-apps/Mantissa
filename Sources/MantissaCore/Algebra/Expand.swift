@@ -82,13 +82,18 @@ extension Expr {
   /// denominator that does not contain the variable stays in the numerator as a coefficient. `numerator` is multiplied
   /// out. `nil` when a term has the variable in a denominator that is not a whole power (a square root, say).
   func together(variable: String) -> (numerator: Expr, denominators: [(base: Expr, power: Int)])? {
+    together(variables: [variable])
+  }
+
+  /// The same for several unknowns at once: every denominator that contains any of them is cleared.
+  func together(variables: Set<String>) -> (numerator: Expr, denominators: [(base: Expr, power: Int)])? {
     let source = expanded()
     let terms: [Expr]
     if case .sum(let inner) = source { terms = inner } else { terms = [source] }
 
     var parts: [(numerator: Expr, denominators: [Expr: Int])] = []
     for term in terms {
-      guard let part = term.fractionParts(variable: variable) else { return nil }
+      guard let part = term.fractionParts(variables: variables) else { return nil }
       parts.append(part)
     }
     var common: [Expr: Int] = [:]
@@ -114,14 +119,14 @@ extension Expr {
   }
 
   /// A term split into a numerator and the denominators that contain `variable`.
-  private func fractionParts(variable: String) -> (numerator: Expr, denominators: [Expr: Int])? {
-    if !freeSymbols.contains(variable) { return (self, [:]) }
+  private func fractionParts(variables: Set<String>) -> (numerator: Expr, denominators: [Expr: Int])? {
+    if freeSymbols.isDisjoint(with: variables) { return (self, [:]) }
     var numerator: [Expr] = []
     var denominators: [Expr: Int] = [:]
     let factors: [Expr]
     if case .product(let inner) = self { factors = inner } else { factors = [self] }
     for factor in factors {
-      guard factor.freeSymbols.contains(variable) else {
+      guard !factor.freeSymbols.isDisjoint(with: variables) else {
         numerator.append(factor)
         continue
       }

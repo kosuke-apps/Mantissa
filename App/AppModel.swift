@@ -31,7 +31,7 @@ final class AppModel {
     var forms: [Form] = []
 
     struct Form: Equatable, Codable {
-      enum Kind: String, Codable { case expanded, factored, simplified }
+      enum Kind: String, Codable { case expanded, factored, simplified, combined }
       var kind: Kind
       var nodes: [MathNode]
     }
@@ -303,6 +303,7 @@ final class AppModel {
       let forms: [Answer.Form] = evaluation.otherForms.map { form in
         switch form {
         case .expanded(let expression): return .init(kind: .expanded, nodes: Typesetter.nodes(for: expression))
+        case .combined(let expression): return .init(kind: .combined, nodes: Typesetter.nodes(for: expression))
         case .factored(let factorization):
           return .init(
             kind: factorization.cancelled ? .simplified : .factored, nodes: Typesetter.nodes(for: factorization))

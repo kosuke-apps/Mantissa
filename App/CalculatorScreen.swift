@@ -194,6 +194,7 @@ private struct ResultView: View {
     case .expanded: return "Expanded form"
     case .factored: return "Factored form"
     case .simplified: return "Simplified form"
+    case .combined: return "As one fraction"
     }
   }
 

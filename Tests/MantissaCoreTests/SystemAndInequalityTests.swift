@@ -37,6 +37,19 @@ struct SystemAndInequalityTests {
     #expect(try tuples(input) == expected, "\(input)")
   }
 
+  @Test(
+    "A product of the unknowns as the coefficient: xy = 3 gives y = 3/x, and the case x = 0 is looked at too",
+    arguments: [
+      ("x^2+y^2=10, xy=3", ["x=-3, y=-1", "x=-1, y=-3", "x=1, y=3", "x=3, y=1"]),
+      ("xy=2, x^2+y^2=5", ["x=-2, y=-1", "x=-1, y=-2", "x=1, y=2", "x=2, y=1"]),
+      ("x^2+y^2=25, xy=12", ["x=-4, y=-3", "x=-3, y=-4", "x=3, y=4", "x=4, y=3"]),
+      ("xy=-6, x-y=5", ["x=2, y=-3", "x=3, y=-2"]), ("xy=0, x+y=3", ["x=0, y=3", "x=3, y=0"]),
+      ("xy=1, x+y=2", ["x=1, y=1"]), ("xy=z, x=2, y=3", ["x=2, y=3, z=6"]),
+    ])
+  func productCoefficient(input: String, expected: [String]) throws {
+    #expect(try tuples(input) == expected, "\(input)")
+  }
+
   @Test("Systems with no solution, and with infinitely many")
   func degenerate() throws {
     #expect(try Calculator().solve("x+y=1, x+y=2") == .none(variable: "x"))

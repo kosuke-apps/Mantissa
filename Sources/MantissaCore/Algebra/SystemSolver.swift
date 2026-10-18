@@ -137,13 +137,21 @@ enum SystemSolver {
     if equations.isEmpty { return unknowns.isEmpty ? [[:]] : nil }
     if unknowns.isEmpty { return nil }
 
-    // Eliminate an unknown through an equation that is linear in it with a constant coefficient.
+    // Eliminate an unknown through an equation that is linear in it. The coefficient is a constant, or a product of the other
+    // unknowns (`xy = 3` gives y = 3/x): then the solutions with one of those unknowns zero are looked for separately.
     for equation in equations.sorted(by: { $0.nodeCount < $1.nodeCount }) {
       for unknown in unknowns {
-        guard let polynomial = equation.polynomial(in: unknown), polynomial.degree == 1,
-          polynomial.coefficients[1].freeSymbols.isDisjoint(with: unknowns),
-          let value = try? (-polynomial.coefficients[0]).divided(by: polynomial.coefficients[1])
-        else { continue }
+        guard let polynomial = equation.polynomial(in: unknown), polynomial.degree == 1 else { continue }
+        let coefficient = polynomial.coefficients[1]
+        let zeroable: [String]
+        if coefficient.freeSymbols.isDisjoint(with: unknowns) {
+          zeroable = []
+        } else if let symbols = monomialSymbols(of: coefficient), !symbols.contains(unknown) {
+          zeroable = symbols
+        } else {
+          continue
+        }
+        guard let value = try? (-polynomial.coefficients[0]).divided(by: coefficient) else { continue }
         var others: [Expr] = []
         for other in equations where other != equation {
           guard let replaced = other.substituting(unknown, with: value) else { return nil }
@@ -158,6 +166,20 @@ enum SystemSolver {
           var full = solution
           full[unknown] = final
           results.append(full)
+        }
+        // Where the coefficient is zero the division above was not allowed: try each unknown in it set to zero.
+        for zeroed in zeroable {
+          var atZero: [Expr] = []
+          for other in equations {
+            guard let replaced = other.substituting(zeroed, with: .zero) else { return nil }
+            atZero.append(replaced)
+          }
+          guard let more = substitute(atZero, unknowns: unknowns.filter { $0 != zeroed }) else { return nil }
+          for solution in more {
+            var full = solution
+            full[zeroed] = .zero
+            if !results.contains(where: { $0 == full }) { results.append(full) }
+          }
         }
         return results
       }
@@ -179,6 +201,25 @@ enum SystemSolver {
       return results
     default:
       return nil
+    }
+  }
+
+  /// The unknowns in a product of unknowns with a number (`xy`, `2x²y`), or `nil` if the expression is anything else.
+  private static func monomialSymbols(of expression: Expr) -> [String]? {
+    switch expression {
+    case .symbol(let name): return [name]
+    case .power(.symbol(let name), let exponent):
+      guard let n = exponent.rational, n.isInteger, n.signum > 0 else { return nil }
+      return [name]
+    case .product(let factors):
+      var names: [String] = []
+      for factor in factors {
+        if case .number = factor { continue }
+        guard let part = monomialSymbols(of: factor) else { return nil }
+        names += part
+      }
+      return names.isEmpty ? nil : Array(Set(names)).sorted()
+    default: return nil
     }
   }
 

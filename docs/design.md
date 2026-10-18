@@ -339,6 +339,15 @@ A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 
   belongs to the solution (≤, ≥) and never across a pole, and the result is cut to one period if it repeats after half. The answer
   is `lower + period·n < x < upper + period·n`. Tests sweep points across three periods and compare with the expression itself.
 
+## Smaller things worth knowing
+
+- **Substitution in a system** also eliminates through a coefficient that is a product of the other unknowns (`xy = 3` gives
+  `y = 3/x`); the solutions with one of those unknowns zero are looked for separately, since the division excluded them.
+- **`ln` of a prime power** is the exponent times `ln` of the prime (`ln 8 = 3 ln 2`, `ln(1/9) = −2 ln 3`), so that logarithms of
+  powers of one prime are multiples of one expression and combine.
+- **One fraction**: a sum of fractions in several unknowns is also shown as one fraction over the product of its denominators
+  (`ExpressionForm.combined`); with one unknown the factored form already cancels.
+
 ## Pasting and copying
 
 `SyntaxLayout` lays the parser's syntax tree out as editor nodes (fractions stacked, exponents raised, roots with their bar, ∫ Σ lim

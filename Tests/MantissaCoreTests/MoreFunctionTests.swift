@@ -298,3 +298,84 @@ struct TrigonometricSimplificationTests {
     #expect(changed > 8, "only \(changed) sums were simplified")
   }
 }
+
+@Suite("Logarithms of prime powers")
+struct PrimePowerLogarithmTests {
+  private func exact(_ text: String) throws -> String { try Calculator().evaluate(text).exact.description }
+
+  @Test(
+    "ln of a power of a prime is the exponent times ln of the prime",
+    arguments: [
+      ("ln(8)", "3ln(2)"), ("ln(9)", "2ln(3)"), ("ln(1/8)", "-3ln(2)"), ("ln(1/2)", "-ln(2)"), ("ln(2)", "ln(2)"),
+      ("ln(6)", "ln(6)"), ("ln(12)", "ln(12)"), ("ln(4/9)", "ln(4/9)"), ("ln(4)+ln(2)", "3ln(2)"),
+      ("ln(81)-ln(9)", "2ln(3)"), ("ln(1)", "0"), ("ln(125)", "3ln(5)"), ("ln(2^10)", "10ln(2)"),
+    ])
+  func logarithms(input: String, expected: String) throws {
+    #expect(try exact(input) == expected, "\(input)")
+  }
+
+  @Test("Equations that combine logarithms of powers of one prime have exact solutions")
+  func equations() throws {
+    guard case .values(_, let values) = try Calculator().solve("log(x,2)+log(x,4)=3") else {
+      Issue.record("expected values")
+      return
+    }
+    #expect(values.map { $0.exact?.description } == ["4"])
+    guard case .values(_, let others) = try Calculator().solve("ln(x)+ln(x+2)=ln(8)") else {
+      Issue.record("expected values")
+      return
+    }
+    #expect(others.map { $0.exact?.description } == ["2"])
+  }
+}
+
+@Suite("Sums of fractions in several unknowns")
+struct CombinedFractionTests {
+  private func combined(_ text: String) throws -> Expr? {
+    for form in try Calculator().evaluate(text).otherForms {
+      if case .combined(let expression) = form { return expression }
+    }
+    return nil
+  }
+
+  @Test(
+    "A sum of fractions is also given as one fraction",
+    arguments: [
+      ("1/x+1/y", "(x + y)/(xy)"), ("a/b+c/d", "(ad + bc)/(bd)"), ("1/x-1/y", "(y - x)/(xy)"),
+      ("x/y+y/x", "(x^2 + y^2)/(xy)"), ("1/(x+y)+1/(x-y)", "2x/((x + y)(x - y))"),
+    ])
+  func shapes(input: String, expected: String) throws {
+    let form = try #require(try combined(input), "\(input) has no combined form")
+    // The shape is one numerator over a product of powers.
+    #expect(
+      form.description.replacingOccurrences(of: " ", with: "") == expected.replacingOccurrences(of: " ", with: ""))
+  }
+
+  @Test("The combined form has the value of the sum")
+  func sameValue() throws {
+    for input in ["1/x+1/y", "a/b+c/d", "1/x-1/y", "x/y+y/x", "1/(x+y)+1/(x-y)", "1/x+2/(y*z)+3/z"] {
+      let original = try Calculator().evaluate(input).exact
+      let form = try #require(try combined(input), "\(input)")
+      for point in [
+        (Rational(13, 10), Rational(-7, 10), Rational(5, 3)), (Rational(2), Rational(3, 7), Rational(-1, 2)),
+      ] {
+        var values: [String: BigDecimal] = [:]
+        for (name, value) in zip(
+          ["a", "b", "c", "d", "x", "y", "z"], Array(repeating: [point.0, point.1, point.2], count: 3).flatMap { $0 })
+        {
+          values[name] = BigDecimal(value, precision: 40)
+        }
+        let a = try original.approximation(precision: 40, values: values)
+        let b = try form.approximation(precision: 40, values: values)
+        #expect((a - b).magnitude < BigDecimal(BigInt(1), exponent: -30) * max(BigDecimal(1), a.magnitude), "\(input)")
+      }
+    }
+  }
+
+  @Test("No combined form for a single fraction, a sum with no fraction, or one unknown (the factored form does that)")
+  func none() throws {
+    #expect(try combined("1/x") == nil)
+    #expect(try combined("x+y") == nil)
+    #expect(try combined("1/x+1/(x+1)") == nil)
+  }
+}

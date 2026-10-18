@@ -203,6 +203,7 @@ struct FactoredFormTests {
         switch form {
         case .expanded(let e): return "expanded " + Typesetter.nodes(for: e).parserText
         case .factored(let f): return (f.cancelled ? "simplified " : "factored ") + Typesetter.nodes(for: f).parserText
+        case .combined(let e): return "combined " + Typesetter.nodes(for: e).parserText
         }
       }
     }

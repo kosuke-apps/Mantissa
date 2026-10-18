@@ -170,6 +170,11 @@ extension Expr {
       if number.isZero { throw .noValue }
       if number.signum < 0 { throw .domain }
       if number == Rational(1) { return .zero }
+      // ln(8) is 3 ln 2 and ln(1/9) is −2 ln 3: a power of a prime is its exponent times the logarithm of the prime, so that
+      // ln 4 + ln 2 and 3 ln 2 are one expression.
+      if let (prime, exponent) = primePower(number), exponent != 1 {
+        return makeProduct([.integer(exponent), .function(.ln, [.number(Rational(prime))])])
+      }
       return .function(.ln, [x])
     }
     if x == .e { return .one }
@@ -179,6 +184,25 @@ extension Expr {
       if base.isKnownPositive, exponent.rational != nil { return exponent * (try naturalLogarithm(base)) }
     }
     return .function(.ln, [x])
+  }
+
+  /// `(p, k)` when the number is `p^k` for a prime `p` (a negative `k` for 1/p^|k|), and `nil` for any other number.
+  private static func primePower(_ number: Rational) -> (BigInt, Int)? {
+    let integer: BigInt
+    let sign: Int
+    if number.numerator.isOne {
+      integer = number.denominator
+      sign = -1
+    } else if number.denominator.isOne {
+      integer = number.numerator
+      sign = 1
+    } else {
+      return nil
+    }
+    guard integer.bitWidth <= 48 else { return nil }
+    let factored = NumberTheory.factor(integer)
+    guard factored.cofactor.isOne, factored.primes.count == 1 else { return nil }
+    return (factored.primes[0].prime, sign * factored.primes[0].exponent)
   }
 
   private static func logarithm(_ x: Expr, base: Expr) throws(MathError) -> Expr {
