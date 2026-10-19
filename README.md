@@ -3,8 +3,9 @@
 A free scientific and graphing calculator for iPhone. It works entirely offline, shows exact results (fractions,
 roots, π), solves equations and keeps a history. No ads, no accounts, no network access.
 
-> **Status: early development.** The calculator, history, graphs, equations, systems and inequalities work in the iOS
-> Simulator. Not released yet.
+> **Status: early release (0.22).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
+> is not on the App Store: install it as described under [Installing](#installing). Expect rough edges and answers the
+> solver cannot give yet (it says so rather than guessing).
 
 <p>
   <img src="docs/screenshots/equation.png" width="240" alt="Solving x² − 5x + 6 = 0, with its graph">
@@ -16,7 +17,7 @@ Everything is worked out on the phone and nothing is sent anywhere; see [PRIVACY
 
 ## Features
 
-Working today (in the `MantissaCore` package):
+What it does (the maths is in the `MantissaCore` package, which has no dependencies; the app is a thin screen on top):
 
 - Arbitrary-precision integers (`BigInt`).
 - Exact fractions (`Rational`), including exact parsing of decimals such as `0.1` and `2.5e-3`.
@@ -62,9 +63,76 @@ or from below.
 - Graphs of circles and other curves in x and y (`x² + y² = 25`, with the intercepts marked) and shaded regions for inequalities
   (`y > x²`, dashed where the edge is not included); a line and a circle show where they cross.
 
-## Getting started
+## Installing
 
-Needs Xcode (Swift 6) on macOS.
+There is no App Store build and no signed build. Each [release](https://github.com/kosuke-apps/Mantissa/releases) has an
+unsigned `Mantissa-<version>-unsigned.ipa` and its SHA-256 (`.sha256`). iOS only runs apps that are signed, so you sign it yourself with your
+own Apple ID, using a sideloading tool such as [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io). Their
+instructions apply; this project does not run or endorse either.
+
+A free Apple ID is widely reported (blog posts and forums, not an official statement from Apple) to give apps that expire
+after 7 days, which a sideloading tool can renew, and to allow only three such apps at a time. A paid Apple Developer
+Program membership is not needed for either way to work.
+
+Check the download against the published checksum before installing it:
+
+```bash
+shasum -a 256 -c Mantissa-<version>-unsigned.ipa.sha256
+```
+
+### Building from source
+
+Needs a Mac with a recent Xcode (Swift 6; it was built with Xcode 27.1) and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+The app targets iOS 17 or later.
+
+```bash
+git clone https://github.com/kosuke-apps/Mantissa.git && cd Mantissa
+cp Config/Local.xcconfig.example Config/Local.xcconfig   # put your Apple team ID in it
+xcodegen generate
+open Mantissa.xcodeproj                                  # run on a device or a simulator
+```
+
+The engine alone builds and tests without Xcode projects: `swift build` and `swift test`.
+
+### Where it has been run
+
+Checked by the author on the iOS 27.0 simulator (Xcode 27.1, macOS 26.6), which is where the automated app tests run, and
+installed and started on one iPhone 12 Pro with iOS 18.6.2. Nothing else has been tried: other devices and iOS versions
+should work (the deployment target is iOS 17) but are not verified. It is for iPhone, in portrait.
+
+## Accuracy
+
+Mantissa is for studying and everyday sums, not for work where a wrong digit costs something; the MIT licence gives no
+warranty (see [LICENSE](LICENSE)). What is checked:
+
+- **Exact answers** (`3√3`, `π/6 + 2πn`, `ln 2`) are built from whole-number arithmetic and are exact. An antiderivative is
+  differentiated and compared with the integrand at several points before it is shown, and one that does not match is dropped. A
+  solution is substituted back where that can be done. A solver that cannot find an answer says "not supported yet" rather than
+  guessing.
+- **Limits** are the least certain part: they are found by substitution, or from a sequence of values at high precision that is
+  recognised as a known number, and an unusual function can fool the second.
+- **Decimals** are rounded to the digits asked for (6 to 30 in Settings; 50 inside). The functions are computed with 15 guard
+  digits and compared, in the tests, with Python's `decimal` at 300 digits: the last digit has to be the same, not just close.
+  Rounding can still differ in the last digit where the true value lies within about 10⁻¹⁵ of a rounding boundary.
+- **Graphs and the points marked on them** (roots, extrema, crossings) are found with ordinary floating-point numbers (about 12
+  digits), enough to place a point, not to read digits from. Use the answer line for digits.
+- A **numerical root** (`x = cos x`) is found inside −100 to 100 only, and a root outside it is not claimed or ruled out.
+- Anything whose value is astronomically large (`e^1000000` as a bound, a power with thousands of digits in the exponent) is
+  given up on, not approximated.
+
+The numbers behind the engine are tested against reference values made by Python, which has its own arbitrary-precision integers
+and decimals, so the tests do not check the Swift code with itself. To make the reference files again (they must come out
+byte for byte the same, as the seed is fixed):
+
+```bash
+python3 tools/gen_number_vectors.py     # BigInt and Rational
+python3 tools/gen_decimal_vectors.py    # BigDecimal and the functions
+```
+
+Random inputs, solved and compared with a naive evaluator, run with the tests; `MANTISSA_SEED=n` and `MANTISSA_SAMPLES=n` widen
+them. See [docs/design.md](docs/design.md) for how each part reaches its accuracy.
+
+## Development
 
 ```bash
 swift build
@@ -73,7 +141,8 @@ swift test
 
 ## Architecture
 
-The engine is a Swift package with no dependencies; the app will sit on top of it. See `docs/design.md`.
+The engine is a Swift package with no dependencies (`Sources/MantissaCore`); the SwiftUI app (`App`) sits on top of it and
+adds no maths. See [docs/design.md](docs/design.md), and [AGENTS.md](AGENTS.md) for a map of the files.
 
 ## Quality checks
 
