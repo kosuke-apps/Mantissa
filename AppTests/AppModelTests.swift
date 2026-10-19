@@ -494,4 +494,21 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(lower.index, 0)
     XCTAssertEqual(lower.y, 2, accuracy: 1e-9)
   }
+
+  func testAWholeNumberLongerThanTheDecimalAlsoGetsOneInScientificNotation() {
+    func answer(_ text: String) -> AppModel.Answer? {
+      if case .answer(let answer) = AppModel.outcome(for: text, calculator: Calculator(), digits: 12) { return answer }
+      return nil
+    }
+    XCTAssertNotNil(answer("100!")?.decimal)
+    XCTAssertFalse(answer("100!")?.exact.isEmpty ?? true, "the exact digits stay")
+    XCTAssertNil(answer("2^10+0.5*0")?.decimal, "a short whole number needs no decimal")
+  }
+
+  func testAFractionOfHugeNumbersShowsOnlyItsDecimal() throws {
+    let outcome = AppModel.outcome(for: "sum(1/k^2,k,1,1000)", calculator: Calculator(), digits: 12)
+    guard case .answer(let answer) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertTrue(answer.exact.isEmpty)
+    XCTAssertEqual(try XCTUnwrap(answer.decimal).plainText.prefix(8), "1.643934")
+  }
 }

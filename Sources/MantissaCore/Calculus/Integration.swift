@@ -91,6 +91,7 @@ private struct Integrator {
     if let known = table(f) { return known }
     if let result = trigonometricPower(f, [f]) { return result }
     if let result = rationalFunction(f) { return result }
+    if let result = QuadraticRadicals.antiderivative(of: f, variable: variable) { return result }
     if let result = substitute(f) { return result }
     if let result = integrateAfterExpanding(f) { return result }
     return nil
@@ -131,6 +132,12 @@ private struct Integrator {
         }
       }
       if base == u * u - one, exponent == .fraction(-1, 2) { return try? Expr.apply(.acosh, [u]) }
+      // sinh² and cosh².
+      if exponent == .integer(2), case .function(let function, let arguments) = base, arguments == [u],
+        function == .sinh || function == .cosh, let double = try? Expr.apply(.sinh, [Expr.integer(2) * u])
+      {
+        return Expr.fraction(1, 4) * double + (function == .sinh ? Expr.fraction(-1, 2) : Expr.fraction(1, 2)) * u
+      }
       // tan² = sec² − 1 and ln^n by parts.
       if exponent == .integer(2), case .function(.tan, let arguments) = base, arguments == [u],
         let tangent = try? Expr.apply(.tan, [u])
@@ -195,6 +202,17 @@ private struct Integrator {
       case .acos:
         guard let acos = try? Expr.apply(.acos, [u]) else { return nil }
         return u * acos - Expr.makePower(Expr.one - u * u, .fraction(1, 2))
+      case .asinh:
+        guard let inverse = try? Expr.apply(.asinh, [u]) else { return nil }
+        return u * inverse - Expr.makePower(u * u + Expr.one, .fraction(1, 2))
+      case .acosh:
+        guard let inverse = try? Expr.apply(.acosh, [u]) else { return nil }
+        return u * inverse - Expr.makePower(u * u - Expr.one, .fraction(1, 2))
+      case .atanh:
+        guard let inverse = try? Expr.apply(.atanh, [u]),
+          let magnitude = try? Expr.apply(.abs, [Expr.one - u * u]), let ln = try? Expr.apply(.ln, [magnitude])
+        else { return nil }
+        return u * inverse + Expr.fraction(1, 2) * ln
       case .abs: return u * f * Expr.fraction(1, 2)
       default: return nil
       }
@@ -304,6 +322,7 @@ private struct Integrator {
     if let result = productOfTrigonometric(f, factors) { return result }
     if let result = productOfExponentials(f, factors) { return result }
     if let result = rationalFunction(f) { return result }
+    if let result = QuadraticRadicals.antiderivative(of: f, variable: variable) { return result }
     if let result = substitute(f) { return result }
     return integrateAfterExpanding(f)
   }
@@ -333,7 +352,7 @@ private struct Integrator {
       polynomial.coefficients.enumerated().map { Expr.makeProduct([$1, Expr.makePower(x, .integer($0))]) })
 
     // Logarithms and inverse trigonometric functions: u = g, dv = P dx.
-    if case .function(let function, _) = g, [.ln, .atan, .asin, .acos].contains(function) {
+    if case .function(let function, _) = g, [.ln, .atan, .asin, .acos, .asinh, .acosh, .atanh].contains(function) {
       guard let q = integrate(p), let slope = try? g.derivative(variable) else { return nil }
       guard let rest = integrate((q * slope).expanded()) ?? integrate(Expr.makeProduct([q, slope])) else { return nil }
       return q * g - rest

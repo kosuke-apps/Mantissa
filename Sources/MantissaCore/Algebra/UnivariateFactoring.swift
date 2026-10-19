@@ -54,11 +54,12 @@ extension RationalPolynomial {
   /// value at each of `d + 1` whole numbers that divides the polynomial's value there, so those can be tried. The polynomial
   /// must have whole-number coefficients and no rational root. `nil` when there is none or the search would be long.
   func kroneckerFactor() -> RationalPolynomial? {
-    guard degree >= 4 else { return nil }
-    let candidatesLimit = 20_000
+    // A polynomial of high degree is not searched: the values at the points are too large to factor, and a search takes long.
+    guard degree >= 4, degree <= 24 else { return nil }
+    let candidatesLimit = 6_000
     let order = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6]
 
-    for factorDegree in 2...(degree / 2) {
+    for factorDegree in 2...min(degree / 2, 5) {
       let points = Array(order.prefix(factorDegree + 1))
       var divisorLists: [[Rational]] = []
       var count = 1

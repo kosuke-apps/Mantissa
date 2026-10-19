@@ -300,7 +300,10 @@ final class AppModel {
       if evaluation.isAntiderivative { exact += [.symbol("+"), .symbol("C")] }
       // The decimal is shown even when the exact form is what was typed: √2 and 1/3 still have a value to read.
       var decimal: [MathNode]?
-      if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true {
+      // A whole number with more digits than the decimal has is shown in scientific notation too (1000! ≈ 4.0238…×10²⁵⁶⁷).
+      let isLongInteger =
+        evaluation.exact.rational.map { $0.isInteger && $0.numerator.magnitude.description.count > digits } ?? false
+      if let value = evaluation.approximation, evaluation.exact.rational?.isInteger != true || isLongInteger {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
       } else if let value = evaluation.complexApproximation, !evaluation.exact.isGaussianInteger {
         decimal = Typesetter.nodes(for: value, significantDigits: digits)
@@ -314,6 +317,12 @@ final class AppModel {
             kind: factorization.cancelled ? .simplified : factorization.combinesFractions ? .combined : .factored,
             nodes: Typesetter.nodes(for: factorization))
         }
+      }
+      // A fraction of two huge numbers (Σ 1/k² to 1000) is no use to read; its decimal is.
+      if decimal != nil, let value = evaluation.exact.rational, !value.isInteger,
+        value.numerator.magnitude.description.count + value.denominator.description.count > 60
+      {
+        exact = []
       }
       if saysWhatWasTyped && forms.isEmpty && decimal == nil { return .empty }
       return .answer(

@@ -48,6 +48,8 @@ or from below.
   the reciprocal trigonometric and hyperbolic functions with their inverses.
 - Trigonometric inequalities (`sin x > 1/2` is `π/6 + 2πn < x < 5π/6 + 2πn`), trigonometric identities in answers (`sin²x + cos²x`
   is 1), the Gaussian integral (`∫ e^(−x²) dx` over the line is √π) and the integrals of sec and csc.
+- Integrals with the square root of a quadratic (`∫ √(x² + 1) dx`, `∫ x²/√(1 − x²) dx`, `∫ dx/(x²√(x² + 1))`) and the by-parts
+  integrals of the inverse trigonometric and hyperbolic functions (`∫ x asin x dx`).
 - Tap the formula to put the cursor there, also inside a fraction or an exponent.
 - Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
   it as text or to use it as the next input; hold the delete or arrow key to repeat it.

@@ -17,6 +17,8 @@ enum Series {
     if let end = b.rational, end.isInteger, let last = end.numerator.asInt {
       if last < first { return .zero }
       if last - first <= 400 { return try explicitSum(f, k, first, last) }
+      // A long sum of numbers is a number, which is worth adding up; one of anything else would be a page of terms.
+      if last - first <= 5000, let total = rationalSum(f, k, first, last) { return total }
     }
     if let result = polynomialSum(f, k, from: first, to: b) { return result }
     if let result = geometricSum(f, k, from: first, to: b) { return result }
@@ -32,6 +34,16 @@ enum Series {
       terms.append(term)
     }
     return Expr.makeSum(terms)
+  }
+
+  /// The sum when every term is a rational number; `nil` as soon as one is not.
+  private static func rationalSum(_ f: Expr, _ k: String, _ first: Int, _ last: Int) -> Expr? {
+    var total = Rational(0)
+    for index in first...last {
+      guard case .number(let term)? = f.substituting(k, with: .integer(index)) else { return nil }
+      total += term
+    }
+    return .number(total)
   }
 
   /// A polynomial in `k`: the partial sums `S(n)` at `n = a − 1, a, …, a + d` are known, and Newton's forward differences give

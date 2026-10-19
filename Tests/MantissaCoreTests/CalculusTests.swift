@@ -302,3 +302,44 @@ struct GaussianAndSecantTests {
     #expect((answer - expected).magnitude < BigDecimal(BigInt(1), exponent: -40))
   }
 }
+
+@Suite("Integrals with the square root of a quadratic")
+struct QuadraticRadicalIntegralTests {
+  private func value(_ text: String) throws -> Evaluation { try Calculator().evaluate(text) }
+
+  @Test(
+    "Exact antiderivatives",
+    arguments: [
+      ("int(sqrt(x^2+1),x)", "x√(x^2 + 1)/2 + asinh(x)/2"), ("int(x^2/sqrt(1-x^2),x)", "asin(x)/2 − x√(1 − x^2)/2"),
+      ("int(1/(x^2+1)^(3/2),x)", "x/√(x^2 + 1)"), ("int(1/(x^2*sqrt(x^2+1)),x)", "−√(x^2 + 1)/x"),
+      ("int(x*sqrt(x^2+1),x)", "√(x^2 + 1)·(x^2/3 + 1/3)"), ("int(1/sqrt(3-2x-x^2),x)", "asin(x/2 + 1/2)"),
+      ("int(sinh(x)^2,x)", "sinh(2x)/4 − x/2"), ("int(cosh(x)^2,x)", "x/2 + sinh(2x)/4"),
+      ("int(acosh(x),x)", "xacosh(x) − √(x^2 − 1)"),
+    ])
+  func antiderivatives(input: String, expected: String) throws {
+    #expect(Typesetter.nodes(for: try value(input).exact).plainText == expected, "\(input)")
+  }
+
+  @Test(
+    "These all have an antiderivative, which the integrator has already checked against the integrand",
+    arguments: [
+      "int(sqrt(x^2-1),x)", "int(x*asin(x),x)", "int(x*acos(x),x)", "int(x*asinh(x),x)", "int(x^2*sqrt(1-x^2),x)",
+      "int(sqrt(x^2+4x+5),x)", "int(sqrt(x^2-4x),x)", "int(x^3/sqrt(x^2+1),x)", "int(x^2/(x^2+1)^(3/2),x)",
+      "int(1/(x*sqrt(x^2-1)),x)", "int(1/(x*sqrt(1-x^2)),x)", "int(1/(x*sqrt(x^2+x+1)),x)", "int(sqrt(x^2+1)/x,x)",
+      "int(sqrt(4-x^2)/x^2,x)", "int(sqrt(4-x^2)/x,x)", "int((x+1)/(x*sqrt(x^2+1)),x)", "int(atanh(x),x)",
+      "int(x*atanh(x),x)", "int(acot(x),x)",
+    ])
+  func exists(input: String) throws {
+    #expect(try value(input).isAntiderivative)
+  }
+
+  @Test(
+    "Definite integrals with exact values",
+    arguments: [
+      ("int(sqrt(1-x^2),x,0,1)", "π/4"), ("int(x^2*sqrt(1-x^2),x,0,1)", "π/16"), ("int(sqrt(4-x^2),x,0,2)", "π"),
+      ("int(1/(x^2*sqrt(x^2-1)),x,1,2)", "√3/2"),
+    ])
+  func definite(input: String, expected: String) throws {
+    #expect(Typesetter.nodes(for: try value(input).exact).plainText == expected, "\(input)")
+  }
+}

@@ -332,6 +332,12 @@ A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 
 - **Gaussian integrals** (`GaussianIntegrals`): `∫ x^m e^(−a x² + b x + c) dx` over the line, or over a half line when `b = 0`, by
   completing the square and the moments of `e^(−a t²)`; the antiderivative route cannot do these (erf is not elementary).
   `∫ sec` and `∫ csc` are `ln|1 + sin| − ln|cos|` and `ln|1 − cos| − ln|sin|`.
+- **Square roots of quadratics** (`QuadraticRadicals`): `∫ N(x) √S`, `∫ N/√S`, `∫ N/(S√S)` and `∫ N/(x^j √S)` for `j` 1 or 2, with
+  `S = ax² + bx + c` rational. Instead of a trigonometric substitution the answer is given its known shape, `Q(x)√S + λ∫dx/√S`
+  (`Q/√S + …` for the odd power below), and the coefficients come from a small linear system found by differentiating that shape.
+  The one basic integral is `asinh`, a logarithm or `asin` by the signs of `a` and the discriminant (a constant is dropped from the
+  logarithm's argument so that it stays short). As everywhere in `Integration`, the result is differentiated and compared before it
+  is returned.
 - **Periodic inequalities** (`PeriodicInequalities`): `sin x > 1/2`, `tan x ≥ 1`, `cos 2x < 0`. The roots come from the numerator and
   the poles from the denominators (with `tan u` written as `sin u/cos u`), both through the trigonometric equation solver, over
   *two* periods of the roots, since an expression can take twice as long to repeat as its roots do (`cos 2x` has roots every π/2

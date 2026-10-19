@@ -79,7 +79,7 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     `RadicalEquations`, `TrigonometricEquations`, `NumericEquations`), `Atoms` (find and replace parts of an `Expr`).
   - `Sources/MantissaCore/Calculus/`: `Differentiation` (rules on the canonical form), `Integration` (a toolbox that checks
     every answer by differentiating it), `Limits` (substitution, then sequences at high precision and recognising the value),
-    `Series` (sums), `GaussianIntegrals`, `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
+    `Series` (sums), `GaussianIntegrals`, `QuadraticRadicals` (√ of a quadratic by an ansatz), `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
     the builder works out while it turns the syntax into an `Expr`).
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit; `Builder+Functions.swift`: the functions that
