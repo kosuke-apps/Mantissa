@@ -136,5 +136,11 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
   malformed input).
 - Formatting, linting and tests pass. New numeric code is checked against an independent oracle (Python's `int`,
   `Fraction`, `decimal`), not only against itself, and the rare branches are shown to run.
-- UI is checked in the iOS Simulator at representative sizes, in light and dark mode, with Dynamic Type and VoiceOver.
+- UI is checked in the iOS Simulator at representative sizes, in light and dark mode, with Dynamic Type and VoiceOver. A
+  debug build takes `-MantissaInput "x^2-4"` on the launch line (`xcrun simctl launch booted dev.kosuke.mantissa
+  -MantissaInput '...'`) to show a formula without tapping the keys.
+- Anything that takes an input must survive random ones: `RandomInputTests` feeds random text through the evaluator, the
+  solver, the forms and the plotting (`MANTISSA_SEED`, `MANTISSA_SAMPLES` widen it; `MANTISSA_LOG=path` keeps the input being
+  worked on when the test dies). Work that can grow without bound (polynomials in several unknowns, divisors, rational
+  roots) has a budget or a cap, and gives up instead of running on.
 - Documentation matches what was delivered.

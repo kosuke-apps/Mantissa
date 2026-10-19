@@ -393,3 +393,38 @@ struct CombinedFractionTests {
     #expect(Typesetter.nodes(for: factorization).plainText == "(y − x)/(xy)")
   }
 }
+
+@Suite("Square roots of a + b√c")
+struct DenestingTests {
+  private func text(_ input: String) throws -> String {
+    Typesetter.nodes(for: try Calculator().evaluate(input).exact).plainText
+  }
+
+  @Test(
+    "A nested root with a perfect-square discriminant is unnested",
+    arguments: [
+      ("sqrt(3+2*sqrt(2))", "1 + √2"), ("sqrt(7+4*sqrt(3))", "2 + √3"), ("sqrt(5-2*sqrt(6))", "√3 − √2"),
+      ("sqrt(5+2*sqrt(6))", "√2 + √3"), ("sqrt(6+2*sqrt(5))", "1 + √5"), ("sqrt(4+2*sqrt(3))", "1 + √3"),
+      ("sqrt(9-4*sqrt(5))", "−2 + √5"),
+    ])
+  func unnested(input: String, expected: String) throws {
+    #expect(try text(input) == expected)
+  }
+
+  @Test("Roots that do not unnest stay as they are")
+  func staysNested() throws {
+    #expect(try text("sqrt(1+sqrt(2))") == "√(1 + √2)")
+    #expect(try text("sqrt(2+sqrt(3)*2)") == "√(1 + √3)·√2")
+    #expect(try text("sqrt(5+3*sqrt(2))") == "√(5 + 3√2)")
+  }
+
+  @Test("The unnested value is the same number")
+  func sameValue() throws {
+    for (a, b, c) in [(3, 2, 2), (7, 4, 3), (5, 2, 6), (13, 4, 10), (8, 2, 15), (11, 6, 2), (9, 4, 5)] {
+      let nested = try Calculator().evaluate("sqrt(\(a)+\(b)*sqrt(\(c)))")
+      let reference = try #require(try Calculator().evaluate("(\(a)+\(b)*sqrt(\(c)))^0.5").approximation)
+      let value = try #require(nested.approximation)
+      #expect((value - reference).magnitude < BigDecimal(BigInt(1), exponent: -40), "√(\(a) + \(b)√\(c))")
+    }
+  }
+}

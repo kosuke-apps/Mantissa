@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import MantissaCore
@@ -147,5 +148,41 @@ struct NumericalEquationTests {
   @Test("An equation with no solution in the window is not claimed to have none")
   func notClaimed() {
     #expect(throws: CalculatorError.unsupported(.equation)) { try Calculator().solve("e^x=-x²-1") }
+  }
+}
+
+/// Inputs found by feeding random text to the solver, which once sent it round in circles or out of memory.
+@Suite("Solving what has no value or a huge one")
+struct SolverRobustnessTests {
+  @Test(
+    "Absolute values of something undefined are given up on, not looped over",
+    arguments: ["abs(i!)+ln(y)=0", "abs(i!)+ln(y)>=0", "abs(y+e!)=6", "sign(y+e!)=6", "abs(i!)+y!>=0"])
+  func undefinedInsideBars(input: String) {
+    // Any answer will do; the test is that there is one.
+    _ = try? Calculator().solve(input)
+  }
+
+  @Test("An inequality with a bound as large as e^1000000 reads the right side of it")
+  func hugeBounds() throws {
+    guard case .intervals(_, let intervals) = try Calculator().solve("x<e^1000000") else {
+      Issue.record("expected intervals")
+      return
+    }
+    #expect(intervals.count == 1 && intervals[0].lower == nil && intervals[0].upper?.isClosed == false)
+  }
+
+  @Test("The floor of a number with millions of digits is left as it is, not built digit by digit")
+  func floorOfAHugeNumber() throws {
+    let started = Date()
+    let result = try Calculator().evaluate("floor(2^3628800)")
+    #expect(Date().timeIntervalSince(started) < 10)
+    #expect(result.exact.description == "floor(2^3628800)")
+  }
+
+  @Test(
+    "An equation with a huge number in it is solved without listing its divisors",
+    arguments: ["n=100!", "n>100!", "x^2=100!", "n≠floor(7^e)!"])
+  func hugeConstants(input: String) throws {
+    #expect(throws: Never.self) { _ = try? Calculator().solve(input) }
   }
 }

@@ -126,8 +126,10 @@ extension Expr {
     case .ln: return try x[0].ln(precision: p)
     case .log: return try x[0].log(base: x[1], precision: p)
     case .abs: return x[0].magnitude
-    case .floor: return BigDecimal(x[0].floor)
-    case .ceil: return -BigDecimal((-x[0]).floor)
+    // A value with no digits after the point is its own floor and ceiling; making the integer of a number like 2^3628800 out of
+    // its digits would take minutes.
+    case .floor: return x[0].exponent >= 0 ? x[0] : BigDecimal(x[0].floor)
+    case .ceil: return x[0].exponent >= 0 ? x[0] : -BigDecimal((-x[0]).floor)
     case .round: return x[0].rounded(toPlaces: 0)
     case .factorial:
       guard let n = x[0].asInt, n >= 0 else { throw .domain }

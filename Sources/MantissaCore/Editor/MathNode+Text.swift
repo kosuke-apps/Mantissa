@@ -62,6 +62,8 @@ extension Array where Element == MathNode {
     for node in self {
       // A letter followed by a letter or a function name would be read as one longer name ("a" "sin" is "asin").
       if let previous, previous.isLetterSymbol, node.isLetterSymbol || node.isFunction { text += "*" }
+      // "!" and "=" side by side would be read as "≠": n! = 120 is not n ≠ 120.
+      if case .symbol("!")? = previous, case .symbol("=") = node { text += " " }
       text += node.parserText
       previous = node
     }

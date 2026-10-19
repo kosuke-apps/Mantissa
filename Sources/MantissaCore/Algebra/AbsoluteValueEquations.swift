@@ -7,7 +7,13 @@ enum AbsoluteValueEquations {
   }
 
   static func solve(_ expression: Expr, _ variable: String) -> [SolvedValue]? {
-    guard !expression.collect(where: isAbsolute).isEmpty else { return nil }
+    // Only an absolute value with the unknown inside it is cut: one of a constant is no business of this strategy, and going on
+    // would hand the same expression back to the transcendental solver, which hands it back here.
+    let hasUnknownInside = !expression.collectAll(where: { part in
+      guard case .function(.abs, let arguments) = part else { return false }
+      return arguments[0].contains(variable)
+    }).isEmpty
+    guard hasUnknownInside else { return nil }
     return solve(expression, variable, from: nil, to: nil)
   }
 
@@ -57,12 +63,18 @@ enum AbsoluteValueEquations {
       if let from, let to, from > to { continue }
 
       let test = testPoint(low, high)
+      // An argument with no value at the test point (it holds something undefined) cannot be resolved; leaving its bars in
+      // would send the same expression round again, so the stretch is skipped.
+      var unresolved = false
       let resolved = expression.replacing { part in
         guard innermost.contains(part), case .function(_, let arguments) = part else { return nil }
-        guard let value = try? arguments[0].approximation(precision: 40, values: [variable: test]) else { return nil }
+        guard let value = try? arguments[0].approximation(precision: 40, values: [variable: test]) else {
+          unresolved = true
+          return nil
+        }
         return value.isNegative ? -arguments[0] : arguments[0]
       }
-      guard let resolved else { continue }
+      guard !unresolved, let resolved, resolved != expression else { continue }
       guard let found = solve(resolved, variable, from: from, to: to) else { return nil }
       candidates += found
     }

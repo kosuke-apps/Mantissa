@@ -662,3 +662,25 @@ struct CursorPlacementTests {
     #expect(editor.isValid)
   }
 }
+
+@Suite("Factorial next to an equals sign")
+struct FactorialAndEqualsTests {
+  @Test("n! = 120 typed key by key is an equation, not n ≠ 120")
+  func equationWithFactorial() throws {
+    var editor = MathEditor()
+    editor.type("5!=120")
+    #expect(editor.text == "5! =120")
+    #expect(try Calculator().solve(editor.text) == .truth(true))
+
+    var wrong = MathEditor()
+    wrong.type("5!=121")
+    #expect(try Calculator().solve(wrong.text) == .truth(false))
+  }
+
+  @Test("The ≠ key still gives not-equal")
+  func notEqual() throws {
+    var editor = MathEditor()
+    editor.type("5≠121")
+    #expect(try Calculator().solve(editor.text) == .truth(true))
+  }
+}

@@ -178,12 +178,18 @@ enum InequalitySolver {
     return (x - y).magnitude <= scale * BigDecimal(BigInt(1), exponent: -30)
   }
 
-  /// A point inside the stretch before the first critical point (stretch 0), between two of them, or after the last.
+  /// A point inside the stretch before the first critical point (stretch 0), between two of them, or after the last. A step of
+  /// 1 from a point as large as e^1000000 would be lost in the digits kept, so the step is half the point's size when that
+  /// is more than 1.
   private static func testPoint(stretch: Int, points: [BigDecimal]) -> BigDecimal {
     if points.isEmpty { return BigDecimal(0) }
-    if stretch == 0 { return points[0] - BigDecimal(1) }
-    if stretch == points.count { return points[stretch - 1] + BigDecimal(1) }
-    let sum = points[stretch - 1] + points[stretch]
+    func step(_ point: BigDecimal) -> BigDecimal {
+      let half = point.magnitude.halved
+      return half > BigDecimal(1) ? half : BigDecimal(1)
+    }
+    if stretch == 0 { return points[0].adding(-step(points[0]), precision: 60) }
+    if stretch == points.count { return points[stretch - 1].adding(step(points[stretch - 1]), precision: 60) }
+    let sum = points[stretch - 1].adding(points[stretch], precision: 60)
     return (try? sum.divided(by: BigDecimal(2), precision: 50)) ?? points[stretch - 1]
   }
 }

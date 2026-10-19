@@ -222,6 +222,7 @@ extension Expr {
       {
         return result
       }
+      if exponent == .fraction(1, 2), let denested = denestedSquareRoot(terms) { return denested }
       if let root = complexHalfPower(of: base, exponent) { return root }
       // Take the numeric content out of the sum, so that (2x + 2)^-1 and (1/2)(x + 1)^-1 are one expression:
       // (c·s)^n = c^n · s^n for a positive number c.
@@ -243,6 +244,35 @@ extension Expr {
     case .symbol, .function:
       return .power(base, exponent)
     }
+  }
+
+  /// `√(a + b√c)` as `√m ± √n` when `a² − b²c` is a perfect square, so that `m = (a + s)/2` and `n = (a − s)/2` are rational:
+  /// √(3 + 2√2) is 1 + √2, √(7 + 4√3) is 2 + √3 and √(5 − 2√6) is √3 − √2. `nil` for anything else.
+  private static func denestedSquareRoot(_ terms: [Expr]) -> Expr? {
+    guard terms.count == 2, case .number(let a) = terms[0], a.signum > 0 else { return nil }
+    // The radical term is a number times square roots of whole numbers, which the canonical form keeps apart (√6 is √2·√3).
+    var b = Rational(1)
+    var radicand = Rational(1)
+    var hasRadical = false
+    let factors: [Expr]
+    if case .product(let inner) = terms[1] { factors = inner } else { factors = [terms[1]] }
+    for factor in factors {
+      switch factor {
+      case .number(let coefficient): b *= coefficient
+      case .power(.number(let c), let exponent) where exponent == .fraction(1, 2):
+        radicand *= c
+        hasRadical = true
+      default: return nil
+      }
+    }
+    guard hasRadical else { return nil }
+    let c = radicand
+    guard c.signum > 0, let root = (a * a - b * b * c).exactSquareRoot else { return nil }
+    let m = (a + root) / Rational(2)
+    let n = (a - root) / Rational(2)
+    let first = makePower(.number(m), .fraction(1, 2))
+    let second = makePower(.number(n), .fraction(1, 2))
+    return makeSum([first, b.signum > 0 ? second : makeProduct([.minusOne, second])])
   }
 
   /// `(u²v)^e` as `|u|^(2e) · v^e` for a product with factors that are even powers: they are not negative, which is what lets

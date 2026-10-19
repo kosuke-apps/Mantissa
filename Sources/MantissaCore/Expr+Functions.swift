@@ -251,6 +251,9 @@ extension Expr {
     guard x.freeSymbols.isEmpty, let value = try? x.approximation(precision: 60) else {
       return .function(function, [x])
     }
+    // A value with 55 or more digits before the point has none of its fraction in the 60 digits kept, and making an integer of a
+    // number like 2^3628800 out of its digits would take minutes.
+    if let order = value.decimalOrder, order > 55 { return .function(function, [x]) }
     // Decide only when the value is safely away from the boundary the function cuts at.
     let tolerance = BigDecimal(BigInt(1), exponent: -40)
     let fraction = value - BigDecimal(value.floor)

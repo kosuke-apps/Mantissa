@@ -106,18 +106,23 @@ struct RationalPolynomial: Equatable {
     let integers = primitiveIntegerCoefficients
     guard let constants = RationalPolynomial.divisors(of: integers.first!.magnitude),
       let leadings = RationalPolynomial.divisors(of: integers.last!.magnitude),
-      constants.count * leadings.count <= 200_000
+      constants.count * leadings.count * degree <= 400_000
     else { return ([], self) }
 
     var polynomial = self
+    var integerCoefficients = integers
     var roots: [Rational] = []
     for numerator in constants {
       for denominator in leadings where BigInt.gcd(numerator, denominator).isOne {
         for sign in [1, -1] {
-          let candidate = Rational(sign < 0 ? -numerator : numerator, denominator)
-          while polynomial.degree >= 1, polynomial.evaluate(candidate).isZero {
+          let top = sign < 0 ? -numerator : numerator
+          while polynomial.degree >= 1,
+            RationalPolynomial.vanishes(integerCoefficients, at: top, over: denominator)
+          {
+            let candidate = Rational(top, denominator)
             roots.append(candidate)
             polynomial = polynomial.deflated(byRoot: candidate)
+            integerCoefficients = polynomial.primitiveIntegerCoefficients
           }
         }
       }
@@ -125,11 +130,30 @@ struct RationalPolynomial: Equatable {
     return (roots, polynomial)
   }
 
+  /// Whether the polynomial with these whole-number coefficients is zero at `a/b`: `Σ cᵢ aⁱ bⁿ⁻ⁱ` by Horner's rule, in whole
+  /// numbers only, which is much faster than adding fractions that have to be reduced at every step.
+  private static func vanishes(_ coefficients: [BigInt], at a: BigInt, over b: BigInt) -> Bool {
+    guard let last = coefficients.last else { return true }
+    var result = last
+    var power = BigInt(1)
+    for index in stride(from: coefficients.count - 2, through: 0, by: -1) {
+      power = power * b
+      result = result * a + coefficients[index] * power
+    }
+    return result.isZero
+  }
+
   /// All the positive divisors of a positive integer, or `nil` when it cannot be factored completely.
   static func divisors(of value: BigInt) -> [BigInt]? {
     if value.isOne { return [value] }
     let factorization = NumberTheory.factor(value)
     guard factorization.cofactor.isOne else { return nil }
+    // 100! has more divisors than there is room for.
+    var count = 1
+    for entry in factorization.primes {
+      count *= entry.exponent + 1
+      if count > 50_000 { return nil }
+    }
     var divisors = [BigInt(1)]
     for entry in factorization.primes {
       var next: [BigInt] = []
