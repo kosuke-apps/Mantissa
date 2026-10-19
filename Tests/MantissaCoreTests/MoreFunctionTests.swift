@@ -334,6 +334,8 @@ struct CombinedFractionTests {
   private func combined(_ text: String) throws -> Expr? {
     for form in try Calculator().evaluate(text).otherForms {
       if case .combined(let expression) = form { return expression }
+      // A sum of fractions in the factored form is one fraction too.
+      if case .factored(let factorization) = form, factorization.combinesFractions { return factorization.expression }
     }
     return nil
   }
@@ -372,10 +374,22 @@ struct CombinedFractionTests {
     }
   }
 
-  @Test("No combined form for a single fraction, a sum with no fraction, or one unknown (the factored form does that)")
+  @Test(
+    "No combined form for a single fraction or a sum with no fraction; one unknown gets one with its numerator factored"
+  )
   func none() throws {
     #expect(try combined("1/x") == nil)
     #expect(try combined("x+y") == nil)
-    #expect(try combined("1/x+1/(x+1)") == nil)
+    #expect(try combined("1/x+1/(x+1)") != nil)
+  }
+
+  @Test("A difference of two fractions reads with the positive term first: y − x, not −(x − y)")
+  func differenceReadsForward() throws {
+    let forms = try Calculator().evaluate("1/x-1/y").otherForms
+    guard case .factored(let factorization)? = forms.first else {
+      Issue.record("expected a factored form")
+      return
+    }
+    #expect(Typesetter.nodes(for: factorization).plainText == "(y − x)/(xy)")
   }
 }

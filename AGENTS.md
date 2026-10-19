@@ -69,6 +69,9 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     out, substitute, put a sum over a common denominator), `Polynomial` and `RationalPolynomial` (coefficients as `Expr`
     or `Rational`; rational roots, squarefree part), `PolynomialRoots` and `NumericRoots` (exact roots, then decimals),
     `Factor` (a polynomial or fraction as a product of factors, and the other forms an answer is shown in),
+    `MultiPolynomial` (+ `+GCD`, `+Factor`: polynomials in several unknowns with a work budget in `PolynomialRing`; gcd,
+    repeated factors, perfect squares, factoring by discriminant, divisors and homogeneous forms), `UnivariateFactoring`
+    (irreducible factors by roots and Kronecker's method),
     `TrigonometricSimplify` (identities applied to a finished answer), `PeriodicInequalities` (`sin x > 1/2`), `Solver` (one
     equation in one unknown), `SystemSolver` (linear by Gauss–Jordan, nonlinear by substitution),
     `InequalitySolver` (sign analysis between the real roots), `Calculator+Solve` (`Calculator.solve` routes the input),

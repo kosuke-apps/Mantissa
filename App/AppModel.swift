@@ -311,7 +311,8 @@ final class AppModel {
         case .combined(let expression): return .init(kind: .combined, nodes: Typesetter.nodes(for: expression))
         case .factored(let factorization):
           return .init(
-            kind: factorization.cancelled ? .simplified : .factored, nodes: Typesetter.nodes(for: factorization))
+            kind: factorization.cancelled ? .simplified : factorization.combinesFractions ? .combined : .factored,
+            nodes: Typesetter.nodes(for: factorization))
         }
       }
       if saysWhatWasTyped && forms.isEmpty && decimal == nil { return .empty }

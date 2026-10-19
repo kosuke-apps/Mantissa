@@ -17,6 +17,17 @@ public struct Factorization: Sendable, Equatable {
   public var denominator: [Factor]
   /// Whether factors of the numerator and the denominator were cancelled: `(x² − 1)/(x − 1)` is `x + 1`.
   public var cancelled: Bool
+  /// Whether the expression was a sum of fractions, which this writes as one fraction (`1/x + 1/y` is `(x + y)/(xy)`).
+  public var combinesFractions = false
+
+  /// The value as an expression: the factors multiplied together, with the factors of the denominator to negative powers.
+  /// The factors are not multiplied out.
+  public var expression: Expr {
+    var factors: [Expr] = [.number(coefficient)]
+    for factor in numerator { factors.append(Expr.makePower(factor.base, .integer(factor.power))) }
+    for factor in denominator { factors.append(Expr.makePower(factor.base, .integer(-factor.power))) }
+    return Expr.makeProduct(factors)
+  }
 
   /// Whether it says anything more than a single factor to the first power: the expression itself.
   var isTrivial: Bool {
@@ -26,10 +37,26 @@ public struct Factorization: Sendable, Equatable {
 }
 
 extension Expr {
-  /// The expression as a product of factors, when it is a polynomial or a fraction of polynomials in one unknown with rational
-  /// coefficients; `nil` otherwise.
+  /// The expression as a product of factors, when it is a polynomial or a fraction of polynomials in one or several unknowns
+  /// with rational coefficients; `nil` otherwise.
   public func factorization() -> Factorization? {
-    guard freeSymbols.count == 1, let variable = freeSymbols.first, nodeCount <= 400 else { return nil }
+    guard nodeCount <= 400, !freeSymbols.isEmpty else { return nil }
+    guard var result = freeSymbols.count > 1 ? severalUnknownsFactorization() : singleUnknownFactorization() else {
+      return nil
+    }
+    if case .sum(let terms) = self, terms.contains(where: { $0.hasNegativePower }) { result.combinesFractions = true }
+    return result
+  }
+
+  private var hasNegativePower: Bool {
+    !collectAll(where: { part in
+      if case .power(_, let exponent) = part, exponent.rational?.isNegative == true { return true }
+      return false
+    }).isEmpty
+  }
+
+  private func singleUnknownFactorization() -> Factorization? {
+    guard let variable = freeSymbols.first else { return nil }
     guard let (numerator, denominators) = together(variable: variable),
       let top = numerator.polynomial(in: variable)?.rationalCoefficients, !top.isEmpty
     else { return nil }
@@ -59,7 +86,59 @@ extension Expr {
   }
 }
 
+extension Expr {
+  /// The same for a polynomial or a fraction of polynomials in several unknowns (`(a² − b²)/(a − b)` is `a + b`).
+  private func severalUnknownsFactorization() -> Factorization? {
+    let names = freeSymbols.sorted()
+    guard names.count <= 4, let (numerator, denominators) = together(variables: freeSymbols) else { return nil }
+    var bottom = Expr.one
+    for (base, power) in denominators { bottom = bottom * Expr.makePower(base, .integer(power)) }
+    let ring = PolynomialRing(names: names, budget: Factoring.workBudget)
+    guard let top = MultiPolynomial(numerator, ring: ring), !top.isZero, top.terms.count <= 80,
+      let low = MultiPolynomial(bottom, ring: ring), !low.isZero, low.terms.count <= 80
+    else { return nil }
+
+    let (upperCoefficient, upper) = top.factored()
+    let (lowerCoefficient, lower) = low.factored()
+    // A polynomial that took more work than that is left as it is.
+    guard !ring.isExhausted else { return nil }
+    var numeratorFactors = upper
+    var denominatorFactors = lower
+    var cancelled = false
+    for index in numeratorFactors.indices {
+      guard let other = denominatorFactors.firstIndex(where: { $0.base == numeratorFactors[index].base }) else {
+        continue
+      }
+      let common = min(numeratorFactors[index].power, denominatorFactors[other].power)
+      numeratorFactors[index].power -= common
+      denominatorFactors[other].power -= common
+      if common > 0 { cancelled = true }
+    }
+
+    func factors(_ list: [(base: MultiPolynomial, power: Int)]) -> [Factorization.Factor] {
+      list.filter { $0.power > 0 }
+        .sorted { Factoring.reads($0.base, before: $1.base) }
+        .map { Factorization.Factor(base: $0.base.expression, power: $0.power) }
+    }
+    var result = Factorization(
+      coefficient: upperCoefficient / lowerCoefficient, numerator: factors(numeratorFactors),
+      denominator: factors(denominatorFactors), cancelled: cancelled)
+    // −(x − y) reads better as y − x.
+    if result.coefficient == Rational(-1), result.numerator.count == 1, result.numerator[0].power == 1,
+      let flipped = numeratorFactors.first(where: { $0.power > 0 })?.base, flipped.terms.count == 2,
+      flipped.terms.values.contains(where: { $0.isNegative })
+    {
+      result.coefficient = Rational(1)
+      result.numerator[0].base = (-flipped).expression
+    }
+    return result
+  }
+}
+
 enum Factoring {
+  /// How much work the factoring of the polynomials of one expression may take, in the units of `PolynomialRing`.
+  static let workBudget = 100_000
+
   /// `p = coefficient · Π factorᵖᵒʷᵉʳ`.
   static func factor(_ polynomial: RationalPolynomial, _ variable: String) -> (Rational, [Factorization.Factor]) {
     guard polynomial.degree >= 0 else { return (Rational(0), []) }
@@ -105,11 +184,30 @@ enum Factoring {
     var product = RationalPolynomial([Rational(1)])
     for factor in factors { for _ in 0..<factor.power { product = multiply(product, factor.polynomial) } }
     if rest.degree >= 1 {
-      let normalized = RationalPolynomial(primitive(rest))
-      result.append(.init(base: expression(of: normalized, variable), power: 1))
-      product = multiply(product, normalized)
+      // What has no rational root may still be a product of polynomials of higher degree: x⁴ + 4 is (x² + 2x + 2)(x² − 2x + 2).
+      for piece in rest.factorsWithoutRoots() {
+        result.append(.init(base: expression(of: piece, variable), power: 1))
+        product = multiply(product, piece)
+      }
     }
     return (polynomial.leading / product.leading, result)
+  }
+
+  /// Whether a factor is written before another: the smaller one, then the one with fewer terms, then the one whose
+  /// coefficients come first (`a − b` before `a + b`).
+  static func reads(_ a: MultiPolynomial, before b: MultiPolynomial) -> Bool {
+    func key(_ polynomial: MultiPolynomial) -> (Int, Int, [Double]) {
+      (
+        polynomial.totalDegree, polynomial.terms.count,
+        polynomial.sortedTerms.map { Double($0.coefficient.numerator.description) ?? 0 }
+      )
+    }
+    let (left, right) = (key(a), key(b))
+    if left.0 != right.0 { return left.0 < right.0 }
+    if left.1 != right.1 { return left.1 < right.1 }
+    if left.2 != right.2 { return left.2.lexicographicallyPrecedes(right.2) }
+    // The same shape: the one with the earlier unknown first, a before b.
+    return (b.leadingMonomial ?? []).lexicographicallyPrecedes(a.leadingMonomial ?? [])
   }
 
   /// The polynomial with whole-number coefficients with no common factor and a positive leading coefficient.

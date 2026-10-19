@@ -58,9 +58,15 @@ enum Presentation {
       if hasUnknowns {
         let (da, db) = (degree(a.term), degree(b.term))
         if da != db { return da > db }
-        // Same degree: by the names of the unknowns, so that x comes before y.
-        let (ka, kb) = (a.term.freeSymbols.sorted().joined(), b.term.freeSymbols.sorted().joined())
-        if ka != kb { return ka < kb }
+        // Same degree: by the powers of the unknowns in alphabetical order, so that x comes before y and a²b before ab².
+        if let (ea, eb) = monomialPowers(a.term).flatMap({ left in monomialPowers(b.term).map { (left, $0) } }) {
+          for name in Set(ea.keys).union(eb.keys).sorted() where ea[name, default: 0] != eb[name, default: 0] {
+            return ea[name, default: 0] > eb[name, default: 0]
+          }
+        } else {
+          let (ka, kb) = (a.term.freeSymbols.sorted().joined(), b.term.freeSymbols.sorted().joined())
+          if ka != kb { return ka < kb }
+        }
       } else {
         let (na, nb) = (splitSign(a.term).0, splitSign(b.term).0)
         if na != nb { return !na }
@@ -70,6 +76,25 @@ enum Presentation {
     // Two terms with a minus sign first read better the other way round: 1 − x², not −x² + 1.
     if hasUnknowns, sorted.count == 2, splitSign(sorted[0]).0, !splitSign(sorted[1]).0 { return sorted.reversed() }
     return sorted
+  }
+
+  /// The powers of the unknowns in a term that is a product of unknowns to whole powers and a number (`3a²b`); `nil` for any
+  /// other term.
+  static func monomialPowers(_ term: Expr) -> [String: Int]? {
+    var powers: [String: Int] = [:]
+    let factors: [Expr]
+    if case .product(let inner) = term { factors = inner } else { factors = [term] }
+    for factor in factors {
+      switch factor {
+      case .number: continue
+      case .symbol(let name): powers[name, default: 0] += 1
+      case .power(.symbol(let name), let exponent):
+        guard let n = exponent.rational, n.isInteger, let whole = n.numerator.asInt, whole > 0 else { return nil }
+        powers[name, default: 0] += whole
+      default: return nil
+      }
+    }
+    return powers.isEmpty ? nil : powers
   }
 
   /// A polynomial-style degree, used only to order terms for reading.

@@ -211,6 +211,8 @@ extension Expr {
         let rest = factors.count == 2 ? factors[1] : Expr.product(Array(factors.dropFirst()))
         return makeProduct([makePower(.number(coefficient), exponent), makePower(rest, exponent)])
       }
+      // A factor that is an even power of a real expression is not negative, so a root splits around it: √(a²b) is |a|√b.
+      if exponent.rational != nil, let split = splittingNonNegativeFactors(factors, exponent: exponent) { return split }
       if let root = complexHalfPower(of: base, exponent) { return root }  // √(−2i)
       return .power(base, exponent)
 
@@ -230,6 +232,7 @@ extension Expr {
           return makeProduct([makePower(.number(content), exponent), makePower(primitive, exponent)])
         }
       }
+      if let pulled = pullingSquareFactors(from: base, exponent: exponent) { return pulled }
       return .power(base, exponent)
 
     case .function(.abs, let arguments):
@@ -240,6 +243,51 @@ extension Expr {
     case .symbol, .function:
       return .power(base, exponent)
     }
+  }
+
+  /// `(u²v)^e` as `|u|^(2e) · v^e` for a product with factors that are even powers: they are not negative, which is what lets
+  /// the power be taken factor by factor. `nil` when there is no such factor, or nothing else.
+  private static func splittingNonNegativeFactors(_ factors: [Expr], exponent: Expr) -> Expr? {
+    var nonNegative: [Expr] = []
+    var rest: [Expr] = []
+    for factor in factors {
+      if case .power(let inner, let power) = factor, let n = power.rational, n.isInteger, n.numerator.isEven,
+        !inner.containsImaginaryUnit
+      {
+        nonNegative.append(factor)
+      } else {
+        rest.append(factor)
+      }
+    }
+    guard !nonNegative.isEmpty else { return nil }
+    var parts = nonNegative.map { makePower($0, exponent) }
+    if !rest.isEmpty { parts.append(makePower(makeProduct(rest), exponent)) }
+    return makeProduct(parts)
+  }
+
+  /// A square root (or an odd power of one) of a polynomial with a repeated factor, with the repeated part taken out:
+  /// √(x² + 2x + 1) is |x + 1|, and √(x³ + 2x² + x) is |x + 1| √x.
+  private static func pullingSquareFactors(from base: Expr, exponent: Expr) -> Expr? {
+    guard let n = exponent.rational, n.denominator == BigInt(2), let odd = n.numerator.asInt,
+      !base.freeSymbols.isEmpty, base.freeSymbols.count <= 4, base.nodeCount <= 150
+    else { return nil }
+    let ring = PolynomialRing(names: base.freeSymbols.sorted(), budget: 20_000)
+    guard let polynomial = MultiPolynomial(base, ring: ring), !polynomial.isZero else { return nil }
+    let (coefficient, factors) = polynomial.squarefreeDecomposition()
+    guard !ring.isExhausted, factors.contains(where: { $0.power >= 2 }) else { return nil }
+
+    var pulled: [Expr] = []
+    var kept: [Expr] = [.number(coefficient)]
+    for (factor, power) in factors {
+      let expression = factor.expression
+      if power >= 2 {
+        let magnitude = (try? Expr.apply(.abs, [expression])) ?? .function(.abs, [expression])
+        pulled.append(makePower(magnitude, .integer(power / 2)))
+      }
+      if power % 2 == 1 { kept.append(expression) }
+    }
+    // base = pulled² · kept, with pulled not negative, so base^(odd/2) = pulled^odd · kept^(odd/2).
+    return makeProduct([makePower(makeProduct(pulled), .integer(odd)), makePower(makeProduct(kept), exponent)])
   }
 
   /// The positive rational `c` for which every term of the sum divided by `c` has a whole-number coefficient and
