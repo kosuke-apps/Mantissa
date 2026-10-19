@@ -30,6 +30,9 @@ struct SolutionsDisplay: Equatable {
 
   var kind: Kind
   var lines: [Line] = []
+  /// For an equation with several letters, all of them, the one solved for first; and which one that is.
+  var choices: [String] = []
+  var chosen: String?
   /// For an inequality, the solution set as `(−∞, −1) ∪ (2, ∞)`.
   var notation: [MathNode]?
 

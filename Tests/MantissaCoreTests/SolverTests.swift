@@ -213,3 +213,43 @@ struct SolverTests {
     #expect(checked > rounds * 4 / 5)
   }
 }
+
+@Suite("Solving for a chosen letter")
+struct ChosenUnknownTests {
+  private func text(_ solved: Solved) -> [String] {
+    guard case .values(let variable, let values) = solved else { return [] }
+    return values.compactMap { $0.exact.map { "\(variable) = " + Typesetter.nodes(for: $0).plainText } }
+  }
+
+  @Test("The letters of an equation, the default one first")
+  func unknowns() {
+    let calculator = Calculator()
+    #expect(calculator.unknowns(in: "v=u+a*t") == ["a", "t", "u", "v"])
+    #expect(calculator.unknowns(in: "a*x+b=c") == ["x", "a", "b", "c"])
+    #expect(calculator.unknowns(in: "x^2=4").isEmpty)
+    #expect(calculator.unknowns(in: "x+y>3").isEmpty)
+    #expect(calculator.unknowns(in: "x+y=3\nx-y=1").isEmpty)
+  }
+
+  @Test(
+    "An equation is solved for the letter asked for",
+    arguments: [
+      ("v=u+a*t", "t", ["t = (v − u)/a"]), ("v=u+a*t", "u", ["u = v − at"]), ("v=u+a*t", "v", ["v = at + u"]),
+      ("F=m*a", "m", ["m = F/a"]), ("a*x+b=c", "a", ["a = (c − b)/x"]), ("y=m*x+b", "m", ["m = (y − b)/x"]),
+      ("y=x^2", "x", ["x = −√y", "x = √y"]),
+    ])
+  func solvesForTheLetter(input: String, letter: String, expected: [String]) throws {
+    let actual = text(try Calculator().solve(input, for: letter))
+    #expect(actual == expected, "\(input) for \(letter) gave \(actual)")
+  }
+
+  @Test("A letter that is not in the equation is ignored")
+  func unknownLetter() throws {
+    #expect(try Calculator().solve("x+1=3", for: "q") == Calculator().solve("x+1=3"))
+  }
+
+  @Test("y = x² is still a function to draw, not an equation to solve, until a letter is asked for")
+  func functionsStayFunctions() {
+    #expect(throws: CalculatorError.self) { try Calculator().solve("y=x^2") }
+  }
+}

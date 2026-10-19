@@ -246,6 +246,16 @@ struct SumAndFractionReadingTests {
     #expect(try nodes("(-b-sqrt(b^2-4a*c))/(2a)").plainText == "(−b − √(b^2 − 4ac))/(2a)")
   }
 
+  @Test(
+    "The sign of a lone sum above the bar leaves the fewest minus signs inside it",
+    arguments: [
+      ("-(u-v)/t", "(v − u)/t"), ("-(a+b)/t", "−(a + b)/t"), ("(u-v)/t", "(u − v)/t"), ("(v-u)/t", "(v − u)/t"),
+      ("-(x-1)/(x+1)", "(1 − x)/(x + 1)"), ("-x/y", "−x/y"),
+    ])
+  func signAboveTheBar(input: String, expected: String) throws {
+    #expect(try nodes(input).plainText == expected)
+  }
+
   @Test("An unknown to a power and a plain number: the highest power first, a before b")
   func termOrder() throws {
     #expect(try nodes("(a+b)^3").plainText == "(a + b)^3")

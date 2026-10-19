@@ -119,7 +119,7 @@ enum Presentation {
 
 extension Expr {
   /// Whether the term is, or has as a factor, a power with a fractional exponent: a square root.
-  fileprivate var hasRoot: Bool {
+  var hasRoot: Bool {
     func isRoot(_ expression: Expr) -> Bool {
       if case .power(_, let exponent) = expression, let n = exponent.rational, !n.isInteger { return true }
       return false

@@ -1178,6 +1178,28 @@
           }
         }
       }
+    },
+    "Solve for": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解く変数"
+          }
+        }
+      }
+    },
+    "Solve for %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ について解く"
+          }
+        }
+      }
     }
   }
 }

@@ -226,12 +226,36 @@ private struct ResultView: View {
 
 /// The answer to an equation: one line for each solution, or a sentence when there is none or every number works.
 private struct SolutionsView: View {
+  @Environment(AppModel.self) private var model
   let solutions: AppModel.Solutions
+
+  /// "Solve for  x  a  b": the letters of an equation, the one in use filled.
+  private var choices: some View {
+    HStack(spacing: 8) {
+      Text("Solve for").scaledFont(size: 15).foregroundStyle(.secondary)
+      ForEach(solutions.choices, id: \.self) { letter in
+        let selected = letter == solutions.chosen
+        Button {
+          model.solve(for: letter)
+        } label: {
+          Text(letter)
+            .scaledFont(size: 17, weight: .medium)
+            .frame(minWidth: 36, minHeight: 32)
+            .foregroundStyle(selected ? Color(.systemBackground) : Color.primary)
+            .background(selected ? Color.primary : Color(.secondarySystemBackground), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Solve for \(letter)"))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+      }
+    }
+  }
 
   var body: some View {
     HStack(alignment: .top, spacing: 12) {
       Rectangle().fill(Color.accentColor).frame(width: 4)
       VStack(alignment: .leading, spacing: 14) {
+        if solutions.choices.count >= 2 { choices }
         switch solutions.kind {
         case .values:
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }

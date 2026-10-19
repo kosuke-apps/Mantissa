@@ -167,6 +167,21 @@ public enum Typesetter {
       }
     }
 
+    // A lone sum above the bar is written with the sign that leaves fewer minus signs inside it: (v − u)/t, not −(u − v)/t, and
+    // −(a + b)/t, not (−a − b)/t. With as many either way, the sign outside is the plus.
+    // (A sum with a root in it is left alone: the roots of a quadratic are (−b + √D)/2a and (−b − √D)/2a.)
+    if !denominator.isEmpty, numerator.count == 1, coefficient.numerator.magnitude.isOne,
+      case .sum(let terms) = numerator[0], !terms.contains(where: \.hasRoot)
+    {
+      let flipped = terms.map { Expr.makeProduct([.minusOne, $0]) }
+      let keptNegatives = terms.filter { Presentation.splitSign($0).0 }.count
+      let flippedNegatives = flipped.filter { Presentation.splitSign($0).0 }.count
+      if flippedNegatives < keptNegatives || (flippedNegatives == keptNegatives && coefficient.isNegative) {
+        numerator = [Expr.makeSum(flipped)]
+        coefficient = -coefficient
+      }
+    }
+
     let sign: [MathNode] = coefficient.isNegative ? [.symbol("−")] : []
     let level = coefficient.isNegative ? Level.sum : Level.product
     let isFraction = !(denominator.isEmpty && coefficient.denominator.isOne)

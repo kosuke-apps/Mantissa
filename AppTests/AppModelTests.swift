@@ -511,4 +511,27 @@ final class AppModelTests: XCTestCase {
     XCTAssertTrue(answer.exact.isEmpty)
     XCTAssertEqual(try XCTUnwrap(answer.decimal).plainText.prefix(8), "1.643934")
   }
+
+  func testAnEquationWithSeveralLettersOffersThemAndSolvesForTheChosenOne() {
+    func solutions(_ letter: String?) -> AppModel.Solutions? {
+      if case .solutions(let solutions) = AppModel.outcome(
+        for: "v=u+a*t", calculator: Calculator(), digits: 12, solveFor: letter)
+      {
+        return solutions
+      }
+      return nil
+    }
+    let byDefault = solutions(nil)
+    XCTAssertEqual(byDefault?.choices, ["a", "t", "u", "v"])
+    XCTAssertEqual(byDefault?.chosen, "a")
+    let forT = solutions("t")
+    XCTAssertEqual(forT?.chosen, "t")
+    XCTAssertEqual(forT?.lines.first?.exact.plainText, "t = (v − u)/a")
+    // One letter: nothing to choose.
+    if case .solutions(let one) = AppModel.outcome(for: "x+1=3", calculator: Calculator(), digits: 12) {
+      XCTAssertTrue(one.choices.isEmpty)
+    } else {
+      XCTFail("expected solutions")
+    }
+  }
 }

@@ -96,6 +96,9 @@ final class AppModel {
 
   private let storage: SettingsStorage
 
+  /// The letter an equation with several is solved for, when the user has chosen one; `nil` for the one picked by default.
+  private(set) var solveFor: String?
+
   private var evaluation: Task<Void, Never>?
   private var recording: Task<Void, Never>?
   private let feedback = UIImpactFeedbackGenerator(style: .light)
@@ -128,6 +131,7 @@ final class AppModel {
   /// Puts an earlier problem back into the calculator.
   func open(_ entry: HistoryEntry) {
     editor = MathEditor(lines: entry.lines)
+    solveFor = nil
     refresh()
   }
 
@@ -150,6 +154,14 @@ final class AppModel {
 
   func clearAll() {
     editor.clear()
+    solveFor = nil
+    refresh()
+  }
+
+  /// Solves the equation for another of its letters.
+  func solve(for letter: String) {
+    feedback.impactOccurred()
+    solveFor = letter
     refresh()
   }
 
@@ -243,9 +255,13 @@ final class AppModel {
     }
     let calculator = Calculator(settings: settings)
     let digits = decimalDigits
+    let letter = solveFor
     evaluation = Task {
       let result = await Task.detached(priority: .userInitiated) {
-        (AppModel.outcome(for: text, calculator: calculator, digits: digits), calculator.plotContent(text))
+        (
+          AppModel.outcome(for: text, calculator: calculator, digits: digits, solveFor: letter),
+          calculator.plotContent(text)
+        )
       }.value
       if !Task.isCancelled {
         var answer = result.0
@@ -299,7 +315,9 @@ final class AppModel {
     }
   }
 
-  nonisolated static func outcome(for text: String, calculator: Calculator, digits: Int) -> Outcome {
+  nonisolated static func outcome(
+    for text: String, calculator: Calculator, digits: Int, solveFor: String? = nil
+  ) -> Outcome {
     do {
       let evaluation = try calculator.evaluate(text)
       var exact = Typesetter.nodes(for: evaluation.exact)
@@ -341,7 +359,7 @@ final class AppModel {
     } catch {
       switch error {
       case .parse: return .incomplete
-      case .unsupported: return solution(for: text, calculator: calculator, digits: digits)
+      case .unsupported: return solution(for: text, calculator: calculator, digits: digits, solveFor: solveFor)
       case .math(let math): return failure(math)
       }
     }
@@ -359,9 +377,18 @@ final class AppModel {
   }
 
   /// An equation, system or inequality: its solutions, or "not supported yet" for the kinds that are not solved.
-  nonisolated private static func solution(for text: String, calculator: Calculator, digits: Int) -> Outcome {
+  nonisolated private static func solution(
+    for text: String, calculator: Calculator, digits: Int, solveFor: String?
+  ) -> Outcome {
     do {
-      return .solutions(SolutionsDisplay(try calculator.solve(text), digits: digits))
+      var display = SolutionsDisplay(try calculator.solve(text, for: solveFor), digits: digits)
+      // An equation with several letters can be solved for any of them.
+      let letters = calculator.unknowns(in: text)
+      if letters.count >= 2 {
+        display.choices = letters
+        display.chosen = solveFor.flatMap { letters.contains($0) ? $0 : nil } ?? letters[0]
+      }
+      return .solutions(display)
     } catch {
       switch error {
       case .parse: return .incomplete

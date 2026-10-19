@@ -402,6 +402,10 @@ says are undefined, where `asin(2)` has no *real* answer.
 - **Common factors**: a sum that `factorization` cannot take (it has `eˣ`, `ln x`, `sin x` in it) is tried for what every term shares
   (`Expr.commonFactorization`): an atom (a function, an exponential, a symbol) or a power with the least exponent, and the
   greatest common divisor of the coefficients. The result is a `Factorization` whose factors are those and the rest.
+- **Solving for another letter**: an equation with two or more letters is solved for `x` (else `y`, `z`, or the first letter), and
+  `Calculator.unknowns(in:)` lists the others for the chips above the answer; `Calculator.solve(_:for:)` solves for the chosen one
+  (and then `y = x²` is an equation like any other, not a function to draw). The choice lives in `AppModel.solveFor` and is
+  dropped when the formula is cleared or an entry is opened from the history.
 - **Which forms are shown**: expanded when multiplying out changes the answer and there is no fraction in it, factored when it
   says something the answer does not (checked by comparing the typeset text, so `(x + 1)(x + 2)` is not shown again as itself).
 - **Cotangent, secant, cosecant** are `cos/sin`, `1/cos`, `1/sin` (so `cot(π/2)` is 0 and `sec(π/2)` a division by zero); they are not new
