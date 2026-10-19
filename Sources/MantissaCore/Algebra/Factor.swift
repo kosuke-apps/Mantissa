@@ -19,6 +19,8 @@ public struct Factorization: Sendable, Equatable {
   public var cancelled: Bool
   /// Whether the expression was a sum of fractions, which this writes as one fraction (`1/x + 1/y` is `(x + y)/(xy)`).
   public var combinesFractions = false
+  /// Whether the factors are what the terms of a sum have in common (`eˣ(x − 1)`), not the factors of a polynomial.
+  public var isCommonFactor = false
 
   /// The value as an expression: the factors multiplied together, with the factors of the denominator to negative powers.
   /// The factors are not multiplied out.
@@ -131,6 +133,83 @@ extension Expr {
       result.coefficient = Rational(1)
       result.numerator[0].base = (-flipped).expression
     }
+    return result
+  }
+}
+
+extension Expr {
+  /// A sum with a factor in every term, written as that factor times the rest: `x eˣ − eˣ` is `eˣ(x − 1)`, `x ln x − x` is
+  /// `x(ln x − 1)`, and a number that divides every coefficient comes out too. The factors are whatever is the same in all
+  /// terms: a function, a power of the unknown with the least exponent, an exponential. `nil` when there is none.
+  func commonFactorization() -> Factorization? {
+    guard case .sum(let terms) = self, terms.count >= 2 else { return nil }
+    typealias Part = (coefficient: Rational, factors: [(base: Expr, exponent: Rational)])
+
+    func split(_ term: Expr) -> Part {
+      var coefficient = Rational(1)
+      var factors: [(base: Expr, exponent: Rational)] = []
+      func add(_ base: Expr, _ exponent: Rational) {
+        if let index = factors.firstIndex(where: { $0.base == base }) {
+          factors[index].exponent += exponent
+        } else {
+          factors.append((base, exponent))
+        }
+      }
+      let list: [Expr]
+      if case .product(let inner) = term { list = inner } else { list = [term] }
+      for factor in list {
+        switch factor {
+        case .number(let value): coefficient *= value
+        case .power(let base, let exponent):
+          if let n = exponent.rational { add(base, n) } else { add(factor, Rational(1)) }
+        default: add(factor, Rational(1))
+        }
+      }
+      return (coefficient, factors)
+    }
+    let parts = terms.map(split)
+
+    // The number: the greatest common divisor of the numerators over the least common multiple of the denominators.
+    var numeratorGCD = BigInt(0)
+    var denominatorLCM = BigInt(1)
+    for part in parts {
+      numeratorGCD = BigInt.gcd(numeratorGCD, part.coefficient.numerator.magnitude)
+      denominatorLCM =
+        denominatorLCM / BigInt.gcd(denominatorLCM, part.coefficient.denominator)
+        * part.coefficient.denominator
+    }
+    guard !numeratorGCD.isZero else { return nil }
+    var content = Rational(numeratorGCD, denominatorLCM)
+    if parts.allSatisfy({ $0.coefficient.isNegative }) { content = -content }
+
+    // What every term has: the same base with a positive exponent in each, to the least of them.
+    var common: [(base: Expr, exponent: Rational)] = []
+    for (base, _) in parts[0].factors {
+      var least: Rational?
+      for part in parts {
+        guard let exponent = part.factors.first(where: { $0.base == base })?.exponent, exponent.signum > 0 else {
+          least = nil
+          break
+        }
+        least = least.map { min($0, exponent) } ?? exponent
+      }
+      if let least { common.append((base, least)) }
+    }
+    guard !common.isEmpty || (content != Rational(1) && content != Rational(-1)) else { return nil }
+
+    var rest: [Expr] = []
+    for part in parts {
+      var factors: [Expr] = [.number(part.coefficient / content)]
+      for (base, exponent) in part.factors {
+        let taken = common.first(where: { $0.base == base })?.exponent ?? Rational(0)
+        if exponent != taken { factors.append(Expr.makePower(base, .number(exponent - taken))) }
+      }
+      rest.append(Expr.makeProduct(factors))
+    }
+    var numerator = common.map { Factorization.Factor(base: Expr.makePower($0.base, .number($0.exponent)), power: 1) }
+    numerator.append(Factorization.Factor(base: Expr.makeSum(rest), power: 1))
+    var result = Factorization(coefficient: content, numerator: numerator, denominator: [], cancelled: false)
+    result.isCommonFactor = true
     return result
   }
 }
@@ -277,6 +356,8 @@ extension Expr {
       Typesetter.nodes(for: combined).parserText != shown
     {
       forms.append(.combined(combined))
+    } else if let common = commonFactorization(), Typesetter.nodes(for: common).parserText != shown {
+      forms.append(.factored(common))
     }
     return forms
   }

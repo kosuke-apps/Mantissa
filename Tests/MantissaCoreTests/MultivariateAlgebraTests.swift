@@ -225,3 +225,47 @@ struct SquareRootSimplificationTests {
     }
   }
 }
+
+@Suite("What the terms of a sum have in common")
+struct CommonFactorTests {
+  @Test(
+    "The common factor comes out",
+    arguments: [
+      ("x*e^x-e^x", "e^x·(x − 1)"), ("x*ln(x)-x", "x(ln(x) − 1)"), ("x*sin(x)+sin(x)", "sin(x)(x + 1)"),
+      ("2x*e^x+4e^x", "2e^x·(x + 2)"), ("-x*e^x-e^x", "−e^x·(x + 1)"), ("x^(3/2)-x^(1/2)", "√x·(x − 1)"),
+      ("ln(x)/2-ln(x+1)/2", "(ln(x) − ln(x + 1))/2"), ("x^3*ln(x)+x^2", "x^2·(x ln(x) + 1)"),
+    ])
+  func common(input: String, expected: String) throws {
+    let text = try #require(try factoredText(input), "\(input) has no factored form")
+    // Compare ignoring the spaces the typesetter puts around some signs.
+    #expect(text.replacingOccurrences(of: " ", with: "") == expected.replacingOccurrences(of: " ", with: ""))
+  }
+
+  @Test("The factored form has the value of the sum")
+  func sameValue() throws {
+    for input in ["x*e^x-e^x", "x^(3/2)-x^(1/2)", "2x*e^x+4e^x", "x*ln(x)-x", "ln(x)/2-ln(x+1)/2", "-x*e^x-e^x"] {
+      let evaluation = try Calculator().evaluate(input)
+      guard
+        case .factored(let factorization)? = evaluation.otherForms.first(where: {
+          if case .factored = $0 { return true } else { return false }
+        })
+      else {
+        Issue.record("\(input) has no factored form")
+        continue
+      }
+      for point in [Rational(13, 10), Rational(5, 2), Rational(7)] {
+        let values = ["x": BigDecimal(point, precision: 40)]
+        let a = try evaluation.exact.approximation(precision: 40, values: values)
+        let b = try factorization.expression.approximation(precision: 40, values: values)
+        #expect((a - b).magnitude < BigDecimal(BigInt(1), exponent: -30), "\(input) at \(point)")
+      }
+    }
+  }
+
+  @Test("No common factor, no form")
+  func none() throws {
+    #expect(try factoredText("x+sin(x)") == nil)
+    #expect(try factoredText("e^x+x") == nil)
+    #expect(try factoredText("sin(x)+cos(x)") == nil)
+  }
+}

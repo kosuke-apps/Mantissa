@@ -66,7 +66,10 @@ public enum Typesetter {
       for factor in factors {
         // A lone factor needs no brackets: x + 1, not (x + 1); with a minus sign in front it does: −(x + 1).
         let alone = factors.count == 1 && factor.power == 1 && (leading?.isOne ?? true) && !signed
-        var piece = alone ? typeset(factor.base).nodes : typeset(factor.base).wrapped(minimum: Level.atom)
+        // A factor to a power is in brackets unless it is a plain symbol; to the first power only a sum or a product is
+        // (eˣ(x − 1), not (eˣ)(x − 1)).
+        let minimum = factor.power > 1 ? Level.atom : Level.factor
+        var piece = alone ? typeset(factor.base).nodes : typeset(factor.base).wrapped(minimum: minimum)
         if factor.power > 1 { piece.append(.superscript(digits(BigInt(factor.power)))) }
         nodes += piece
       }

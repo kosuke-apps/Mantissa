@@ -35,7 +35,8 @@ Working today (in the `MantissaCore` package):
   is `π/6 + 2πn` or `5π/6 + 2πn`), systems of equations, and inequalities in one unknown (`x² > 4` is `x < −2 or x > 2`).
   English and Japanese (the language can be chosen in the app).
 - An answer with an unknown in it also shows its expanded and factored forms (`x² − 5x + 6` is `(x − 2)(x − 3)`), and a fraction
-  with common factors is shown simplified; this works with several unknowns too (`(a² − b²)/(a − b)` is `a + b`). Radians or degrees, and the number of digits, are settings.
+  with common factors is shown simplified; this works with several unknowns too (`(a² − b²)/(a − b)` is `a + b`). A sum with
+  a factor in every term shows it taken out (`x eˣ − eˣ` is `eˣ(x − 1)`). Radians or degrees, and the number of digits, are settings.
 
 - Calculus: derivatives (`d/dx`), integrals (indefinite, definite and improper), limits (including at ∞ and one-sided) and
   sums and series, with exact answers (`∫ x e^x dx`, `lim (1 + 1/x)^x = e`, `Σ 1/k² = π²/6`).

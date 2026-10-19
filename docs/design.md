@@ -399,6 +399,9 @@ says are undefined, where `asin(2)` has no *real* answer.
 - **Roots of squares**: `(x² + 2x + 1)^(1/2)` is `|x + 1|` and `√(a²b)` is `|a|√b`, built into the power constructor (a
   repeated factor of a polynomial under a square root comes out as an absolute value, and so does an even power of a real
   expression in a product).
+- **Common factors**: a sum that `factorization` cannot take (it has `eˣ`, `ln x`, `sin x` in it) is tried for what every term shares
+  (`Expr.commonFactorization`): an atom (a function, an exponential, a symbol) or a power with the least exponent, and the
+  greatest common divisor of the coefficients. The result is a `Factorization` whose factors are those and the rest.
 - **Which forms are shown**: expanded when multiplying out changes the answer and there is no fraction in it, factored when it
   says something the answer does not (checked by comparing the typeset text, so `(x + 1)(x + 2)` is not shown again as itself).
 - **Cotangent, secant, cosecant** are `cos/sin`, `1/cos`, `1/sin` (so `cot(π/2)` is 0 and `sec(π/2)` a division by zero); they are not new
