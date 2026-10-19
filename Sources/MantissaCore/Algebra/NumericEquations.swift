@@ -33,17 +33,26 @@ enum NumericEquations {
 
   /// Newton's method with a numerical derivative.
   private static func refine(_ expression: Expr, _ variable: String, start: BigDecimal) -> BigDecimal? {
-    func value(_ x: BigDecimal) -> BigDecimal? { try? expression.approximation(precision: 60, values: [variable: x]) }
+    // A value of astronomical size (e^3628800·x) is no use to Newton's method, and subtracting two of them exactly would build an
+    // integer with millions of digits, so such a value is given up on.
+    func value(_ x: BigDecimal) -> BigDecimal? {
+      guard let result = try? expression.approximation(precision: 60, values: [variable: x]) else { return nil }
+      if let order = result.decimalOrder, abs(order) > 1000 { return nil }
+      return result
+    }
     var x = start
     for _ in 0..<10 {
       guard let f = value(x) else { return nil }
       if f.isZero { return x }
       let step = BigDecimal(BigInt(1), exponent: -25) * max(BigDecimal(1), x.magnitude)
-      guard let f1 = value(x + step), let slope = try? (f1 - f).divided(by: step, precision: 60), !slope.isZero,
+      guard let f1 = value(x.adding(step, precision: 70)),
+        let slope = try? f1.adding(-f, precision: 70).divided(by: step, precision: 60), !slope.isZero,
         let change = try? f.divided(by: slope, precision: 60)
       else { return x }
-      let next = x - change
-      if (next - x).magnitude < BigDecimal(BigInt(1), exponent: -45) * max(BigDecimal(1), x.magnitude) {
+      let next = x.adding(-change, precision: 70)
+      if next.adding(-x, precision: 70).magnitude < BigDecimal(BigInt(1), exponent: -45)
+        * max(BigDecimal(1), x.magnitude)
+      {
         return next.rounded(toSignificantDigits: 50)
       }
       x = next

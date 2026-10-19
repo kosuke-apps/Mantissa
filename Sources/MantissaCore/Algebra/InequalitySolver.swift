@@ -92,18 +92,24 @@ enum InequalitySolver {
     critical = EquationSolver.sortedAndDistinct(critical)
 
     // The elements of the line in order: the stretch before the first point, the first point, the stretch after it, ...
-    let points = critical.map { $0.approximation!.real }
+    guard let points = critical.map({ $0.approximation?.real }) as? [BigDecimal] else { return nil }
     var satisfied: [Bool] = []
+    let readings = Readings()
     for element in 0...(2 * points.count) {
       if element % 2 == 1 {
         let point = critical[element / 2]
         satisfied.append(
-          constraints.indices.allSatisfy { holds(at: point, constraints[$0], analyses[$0], variable: variable) })
+          constraints.indices.allSatisfy {
+            holds(at: point, constraints[$0], analyses[$0], variable: variable, readings: readings)
+          })
       } else {
         let test = testPoint(stretch: element / 2, points: points)
-        satisfied.append(constraints.allSatisfy { holdsBetween(at: test, $0, variable: variable) })
+        satisfied.append(constraints.allSatisfy { holdsBetween(at: test, $0, variable: variable, readings: readings) })
       }
     }
+    // A sign that could not be worked out (a value too large to compute) is not the same as a point where the expression is
+    // undefined, and an answer built on it would be wrong, so there is none.
+    if readings.failed { return nil }
 
     // Runs of consecutive satisfied elements are the intervals.
     var intervals: [SolvedInterval] = []
@@ -137,25 +143,41 @@ enum InequalitySolver {
 
   /// Whether the relation holds at a critical point, which is where some numerator or denominator is zero.
   private static func holds(
-    at point: SolvedValue, _ constraint: Constraint, _ analysis: Analysis, variable: String
+    at point: SolvedValue, _ constraint: Constraint, _ analysis: Analysis, variable: String, readings: Readings
   )
     -> Bool
   {
     if analysis.denominatorRoots.contains(where: { same($0, point) }) { return false }
     if analysis.numeratorRoots.contains(where: { same($0, point) }) { return satisfies(constraint.op, sign: 0) }
     // A point that matters to another condition only: read the sign there.
-    guard let real = point.approximation?.real, let sign = sign(of: constraint.expression, at: real, variable: variable)
+    guard let real = point.approximation?.real,
+      let sign = sign(of: constraint.expression, at: real, variable: variable, readings: readings)
     else { return false }
     return satisfies(constraint.op, sign: sign)
   }
 
-  private static func holdsBetween(at test: BigDecimal, _ constraint: Constraint, variable: String) -> Bool {
-    guard let sign = sign(of: constraint.expression, at: test, variable: variable) else { return false }
+  private static func holdsBetween(
+    at test: BigDecimal, _ constraint: Constraint, variable: String, readings: Readings
+  ) -> Bool {
+    guard let sign = sign(of: constraint.expression, at: test, variable: variable, readings: readings) else {
+      return false
+    }
     return satisfies(constraint.op, sign: sign)
   }
 
-  private static func sign(of expression: Expr, at value: BigDecimal, variable: String) -> Int? {
-    guard let result = try? expression.approximation(precision: 50, values: [variable: value]) else { return nil }
+  /// Whether a sign could not be worked out during one `solve` (as opposed to the expression being undefined there).
+  private final class Readings {
+    var failed = false
+  }
+
+  private static func sign(of expression: Expr, at value: BigDecimal, variable: String, readings: Readings) -> Int? {
+    let result: BigDecimal
+    do {
+      result = try expression.approximation(precision: 50, values: [variable: value])
+    } catch {
+      if error == .overflow || error == .unsupported { readings.failed = true }
+      return nil
+    }
     if result.isZero { return 0 }
     if let order = result.decimalOrder, order < -30 { return 0 }
     return result.isNegative ? -1 : 1

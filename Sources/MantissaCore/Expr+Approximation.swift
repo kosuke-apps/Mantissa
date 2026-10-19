@@ -4,7 +4,7 @@ extension Expr {
   /// A value is not worked out when that would take more than this many extra digits of precision to keep the result right:
   /// the sine of a number with 10^5 digits, or e to such a power, is not something to compute (and the latter is far beyond
   /// what a number here can hold anyway).
-  static let maxExtraDigits = 100_000
+  static let maxExtraDigits = 2_500
 
   /// The value to `precision` significant digits. Symbols take their values from `values`; one with no value is
   /// `MathError.notNumeric`. Non-real results (such as the square root of a negative number) are `.domain`.

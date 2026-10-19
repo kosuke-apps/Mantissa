@@ -171,6 +171,29 @@ struct SolverRobustnessTests {
     #expect(intervals.count == 1 && intervals[0].lower == nil && intervals[0].upper?.isClosed == false)
   }
 
+  @Test("A bound too large to compute is not reported as having no solution")
+  func boundTooLarge() {
+    #expect(throws: CalculatorError.self) { try Calculator().solve("x>2^(10^2000)") }
+  }
+
+  @Test(
+    "Equations whose values are astronomically large are given up on quickly",
+    arguments: [
+      "exp(3628800*(y-e))=y/7", "exp(((y-e)*10!))<=(y/7)",
+    ])
+  func astronomicalValues(input: String) {
+    let started = Date()
+    _ = try? Calculator().solve(input)
+    #expect(Date().timeIntervalSince(started) < 15)
+  }
+
+  @Test("A power whose exponent has tens of thousands of digits is too large, not slow")
+  func hugeExponent() {
+    let started = Date()
+    #expect(throws: Never.self) { _ = try? Calculator().evaluate("0^(ln(10)^(π^10))") }
+    #expect(Date().timeIntervalSince(started) < 10)
+  }
+
   @Test("The floor of a number with millions of digits is left as it is, not built digit by digit")
   func floorOfAHugeNumber() throws {
     let started = Date()
