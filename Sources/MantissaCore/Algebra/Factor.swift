@@ -344,7 +344,7 @@ extension Expr {
       if case .power(_, let exponent) = part, exponent.rational?.isNegative == true { return true }
       return false
     }).isEmpty
-    let expanded = self.expanded()
+    let expanded = self.expanded().trigonometricallyTidied()
     if !hasDenominator, expanded != self, expanded.nodeCount <= 400 { forms.append(.expanded(expanded)) }
 
     if let factorization = factorization(), !factorization.isTrivial,

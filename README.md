@@ -48,7 +48,7 @@ or from below.
 - Also: `mod`, `min`, `max`, `sign`, the real and imaginary parts, conjugate and argument of a complex number, `atan(y, x)`, and
   the reciprocal trigonometric and hyperbolic functions with their inverses.
 - Trigonometric inequalities (`sin x > 1/2` is `π/6 + 2πn < x < 5π/6 + 2πn`), trigonometric identities in answers (`sin²x + cos²x`
-  is 1), the Gaussian integral (`∫ e^(−x²) dx` over the line is √π) and the integrals of sec and csc.
+  is 1, `tan x cos x` is `sin x`, `1/cos²x − tan²x` is 1), the Gaussian integral (`∫ e^(−x²) dx` over the line is √π) and the integrals of sec and csc.
 - Integrals with the square root of a quadratic (`∫ √(x² + 1) dx`, `∫ x²/√(1 − x²) dx`, `∫ dx/(x²√(x² + 1))`) and the by-parts
   integrals of the inverse trigonometric and hyperbolic functions (`∫ x asin x dx`).
 - An equation with several letters (`v = u + at`) is solved for one of them, and a row of letters above the answer solves it for

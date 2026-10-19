@@ -329,6 +329,11 @@ A logarithm with a base is its own editor node, `log₂(8)`, written as `log(8, 
 - **Identities that make an answer smaller** are not in the canonical form but applied to the finished answer
   (`Expr.trigonometricallySimplified`), bottom up, and used when the result is no larger: `sin² + cos² = 1`, `1 − sin² = cos²`,
   `cos² − sin² = cos 2u`, `1 − 2 sin² = cos 2u`, `2 sin u cos u = sin 2u`, with the same product beside both terms.
+- **Trigonometric reduction** (`Expr.trigonometricallyReduced`, used through `trigonometricallyTidied` for answers and for the
+  multiplied-out form): an expression in one angle is a rational function of `s = sin u` and `c = cos u` (`tan u = s/c`), and
+  `s² + c² = 1` writes every `s²` as `1 − c²` (or every `c²` as `1 − s²`). The numerator and denominator reduced that way have
+  their gcd cancelled (`MultiPolynomial`), and the smaller of the two results is used when it is smaller than the original.
+  Several angles, or any function other than those three, leave it alone.
 - **Gaussian integrals** (`GaussianIntegrals`): `∫ x^m e^(−a x² + b x + c) dx` over the line, or over a half line when `b = 0`, by
   completing the square and the moments of `e^(−a t²)`; the antiderivative route cannot do these (erf is not elementary).
   `∫ sec` and `∫ csc` are `ln|1 + sin| − ln|cos|` and `ln|1 − cos| − ln|sin|`.

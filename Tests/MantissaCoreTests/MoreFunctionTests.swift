@@ -242,7 +242,7 @@ struct TrigonometricSimplificationTests {
       ("2cos(x)^2-1", "cos(2x)"), ("2sin(x)cos(x)", "sin(2x)"), ("4sin(x)cos(x)", "2sin(2x)"),
       ("x*sin(x)^2+x*cos(x)^2", "x"), ("sin(2x)^2+cos(2x)^2", "1"), ("sin(x)^2+cos(x)^2+x", "x + 1"),
       ("e^(sin(x)^2+cos(x)^2)", "e"), ("3-3cos(x)^2", "3sin(x)^2"), ("sin(x+1)^2+cos(x+1)^2", "1"),
-      ("(sin(x)^2+cos(x)^2)^3+x", "x + 1"),
+      ("(sin(x)^2+cos(x)^2)^3+x", "x + 1"), ("3sin(x)^2+2cos(x)^2", "sin(x)^2 + 2"), ("tan(x)^2+1", "1/cos(x)^2"),
     ])
   func identities(input: String, expected: String) throws {
     #expect(try exact(input) == expected, "\(input)")
@@ -251,8 +251,8 @@ struct TrigonometricSimplificationTests {
   @Test(
     "Left alone: different angles, different coefficients, nothing smaller",
     arguments: [
-      "sin(x)^2+cos(y)^2", "3sin(x)^2+2cos(x)^2", "sin(x)cos(y)", "sin(x)^2", "3sin(x)cos(x)", "sin(x)^2+x*cos(x)^2",
-      "(sin(x)+cos(x))^2", "tan(x)^2+1",
+      "sin(x)^2+cos(y)^2", "sin(x)cos(y)", "sin(x)^2", "3sin(x)cos(x)", "sin(x)^2+x*cos(x)^2",
+      "(sin(x)+cos(x))^2",
     ])
   func unchanged(input: String) throws {
     let value = try Calculator().evaluate(input).exact
@@ -426,5 +426,85 @@ struct DenestingTests {
       let value = try #require(nested.approximation)
       #expect((value - reference).magnitude < BigDecimal(BigInt(1), exponent: -40), "√(\(a) + \(b)√\(c))")
     }
+  }
+}
+
+@Suite("Trigonometric reduction through sin² + cos² = 1")
+struct TrigonometricReductionTests {
+  private func canonical(_ text: String) throws -> Expr {
+    guard case .expression(let syntax) = try Parser.parse(text) else { throw MathError.unsupported }
+    return try Builder(angleUnit: .radians).build(syntax)
+  }
+
+  private func text(_ input: String) throws -> String {
+    Typesetter.nodes(for: try Calculator().evaluate(input).exact).plainText
+  }
+
+  @Test(
+    "Products and quotients of sine, cosine and tangent reduce",
+    arguments: [
+      ("tan(x)*cos(x)", "sin(x)"), ("1/cos(x)^2-tan(x)^2", "1"), ("(1+tan(x)^2)*cos(x)^2", "1"),
+      ("sin(x)^3+sin(x)*cos(x)^2", "sin(x)"), ("(sin(x)^2)/(1-cos(x))", "cos(x) + 1"),
+      ("cos(x)^2*tan(x)^2", "sin(x)^2"),
+      ("tan(x)*cos(x)^2/sin(x)", "cos(x)"), ("sin(x)^4-cos(x)^4", "−cos(2x)"), ("(sin(x)+cos(x))^2-1", "sin(2x)"),
+      ("sec(x)^2-tan(x)^2", "1"), ("csc(x)^2-cot(x)^2", "1"), ("1-sin(x)^2-cos(x)^2", "0"),
+      ("tan(2x)*cos(2x)", "sin(2x)"), ("tan(x)^2+1", "1/(cos(x)^2)"),
+    ])
+  func reductions(input: String, expected: String) throws {
+    #expect(try text(input) == expected)
+  }
+
+  @Test("The multiplied-out form is tidied too")
+  func expandedIsTidied() throws {
+    let forms = try Calculator().evaluate("(sin(x)+cos(x))^2").otherForms
+    let expanded = forms.compactMap { form -> String? in
+      if case .expanded(let expression) = form { return Typesetter.nodes(for: expression).plainText }
+      return nil
+    }
+    #expect(expanded == ["sin(2x) + 1"])
+  }
+
+  @Test("Expressions with two angles, or other functions, are left alone")
+  func leftAlone() throws {
+    #expect(try text("sin(x)*cos(2x)") == "cos(2x)·sin(x)" || (try text("sin(x)*cos(2x)")).contains("sin"))
+    #expect(try Calculator().evaluate("ln(x)*tan(x)*cos(x)").exact.trigonometricallyReduced() == nil)
+  }
+
+  @Test("Random rational expressions in sine, cosine and tangent keep their value and never get bigger")
+  func randomExpressions() throws {
+    var random = SplitMix64(seed: 31337 &+ propertySeedOffset)
+    func pick<T>(_ items: [T]) -> T { items[Int(random.next() % UInt64(items.count))] }
+    let atoms = ["sin(x)", "cos(x)", "tan(x)", "1", "2", "sin(x)^2", "cos(x)^2", "tan(x)^2"]
+    func expression(_ depth: Int) -> String {
+      if depth == 0 { return pick(atoms) }
+      switch random.next() % 5 {
+      case 0: return "(" + expression(depth - 1) + "+" + expression(depth - 1) + ")"
+      case 1: return "(" + expression(depth - 1) + "-" + expression(depth - 1) + ")"
+      case 2: return "(" + expression(depth - 1) + "*" + expression(depth - 1) + ")"
+      case 3: return "(" + expression(depth - 1) + "/" + expression(depth - 1) + ")"
+      default: return pick(atoms)
+      }
+    }
+    var changed = 0
+    var compared = 0
+    for _ in 0..<200 {
+      let source = expression(3)
+      guard let typed = try? canonical(source) else { continue }
+      let tidied = typed.trigonometricallyTidied()
+      #expect(tidied.nodeCount <= typed.nodeCount, "\(source)")
+      if tidied != typed { changed += 1 }
+      for point in [Rational(13, 10), Rational(-7, 10), Rational(27, 10)] {
+        let values = ["x": BigDecimal(point, precision: 40)]
+        guard let a = try? typed.approximation(precision: 40, values: values),
+          let b = try? tidied.approximation(precision: 40, values: values)
+        else { continue }
+        compared += 1
+        #expect(
+          (a - b).magnitude <= BigDecimal(BigInt(1), exponent: -25) * max(BigDecimal(1), a.magnitude),
+          "\(source) at \(point): \(a) became \(b)")
+      }
+    }
+    #expect(compared > 200, "only \(compared) values compared")
+    #expect(changed > 20, "only \(changed) expressions were tidied")
   }
 }

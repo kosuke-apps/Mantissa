@@ -15,7 +15,7 @@ struct DerivativeTests {
       ("diff(x^2)", "2x"), ("diff(x^3+2x)", "3x^2 + 2"), ("diff(5)", "0"), ("diff(sin(x))", "cos(x)"),
       ("diff(cos(x))", "-sin(x)"), ("diff(e^x)", "e^x"), ("diff(ln(x))", "1/x"), ("diff(1/x)", "-1/x^2"),
       ("diff(√x)", "1/(2√x)"), ("diff((x^2+1)^3)", "6x(x^2 + 1)^2"), ("diff(x^x)", "x^x(ln(x) + 1)"),
-      ("diff(tan(x))", "tan(x)^2 + 1"), ("diff(atan(x))", "1/(x^2 + 1)"), ("diff(asin(x))", "1/√(1 - x^2)"),
+      ("diff(tan(x))", "1/cos(x)^2"), ("diff(atan(x))", "1/(x^2 + 1)"), ("diff(asin(x))", "1/√(1 - x^2)"),
       ("diff(sin(2x))", "2cos(2x)"), ("diff(e^(x^2))", "2xe^(x^2)"), ("diff(2^x)", "2^x ln(2)"),
       ("diff(x*e^x)", "xe^x + e^x"), ("diff(ln(x^2+1))", "2x/(x^2 + 1)"), ("diff(x^(1/3))", "1/(3x^(2/3))"),
       ("diff(log(x,2))", "1/(x ln(2))"), ("diff(sinh(x))", "cosh(x)"), ("diff(cosh(2x))", "2sinh(2x)"),
