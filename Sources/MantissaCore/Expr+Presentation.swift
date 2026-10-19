@@ -58,7 +58,10 @@ enum Presentation {
       if hasUnknowns {
         let (da, db) = (degree(a.term), degree(b.term))
         if da != db { return da > db }
-        // Same degree: by the powers of the unknowns in alphabetical order, so that x comes before y and a²b before ab².
+        // Same degree: a plain monomial before a term with a root in it (−b + √(b² − 4ac)), then by the powers of the
+        // unknowns in alphabetical order, so that x comes before y and a²b before ab².
+        let (ma, mb) = (monomialPowers(a.term) != nil, monomialPowers(b.term) != nil)
+        if ma != mb, (ma ? b.term : a.term).hasRoot { return ma }
         if let (ea, eb) = monomialPowers(a.term).flatMap({ left in monomialPowers(b.term).map { (left, $0) } }) {
           for name in Set(ea.keys).union(eb.keys).sorted() where ea[name, default: 0] != eb[name, default: 0] {
             return ea[name, default: 0] > eb[name, default: 0]
@@ -74,7 +77,10 @@ enum Presentation {
       return a.index < b.index
     }.map(\.term)
     // Two terms with a minus sign first read better the other way round: 1 − x², not −x² + 1.
-    if hasUnknowns, sorted.count == 2, splitSign(sorted[0]).0, !splitSign(sorted[1]).0 { return sorted.reversed() }
+    // The exception is the quadratic formula's −b + √(b² − 4ac).
+    if hasUnknowns, sorted.count == 2, splitSign(sorted[0]).0, !splitSign(sorted[1]).0, !sorted[1].hasRoot {
+      return sorted.reversed()
+    }
     return sorted
   }
 
@@ -112,6 +118,16 @@ enum Presentation {
 }
 
 extension Expr {
+  /// Whether the term is, or has as a factor, a power with a fractional exponent: a square root.
+  fileprivate var hasRoot: Bool {
+    func isRoot(_ expression: Expr) -> Bool {
+      if case .power(_, let exponent) = expression, let n = exponent.rational, !n.isInteger { return true }
+      return false
+    }
+    if case .product(let factors) = self { return factors.contains(where: isRoot) }
+    return isRoot(self)
+  }
+
   /// Whether the value is `a + bi` for whole numbers `a` and `b`, which a decimal would only repeat.
   public var isGaussianInteger: Bool {
     guard let (real, imaginary) = complexParts() else { return false }

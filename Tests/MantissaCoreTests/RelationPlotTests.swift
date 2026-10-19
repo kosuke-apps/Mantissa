@@ -207,6 +207,14 @@ struct RelationWindowTests {
     #expect(both.xMin < -10 && both.xMax > 10)
   }
 
+  @Test("An inequality that crosses the axis again and again is shown over a few crossings, not all out to 100")
+  func periodicInequalityWindow() {
+    let window = PlotViewport.fit(content("sin(x)>1/2"))
+    #expect(window.xMax < 20 && window.xMin > -20, "\(window)")
+    // The nearest crossings are still inside.
+    #expect(window.xMax > 5 && window.xMin < -5)
+  }
+
   @Test("A line meets a circle where the roots along the line are")
   func lineAndCircle() {
     let drawn = content("y=x\nx^2+y^2=18")

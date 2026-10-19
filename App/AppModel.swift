@@ -114,6 +114,15 @@ final class AppModel {
 
   convenience init() {
     self.init(history: HistoryStore())
+    #if DEBUG
+      // `-MantissaInput "x^2-4"` on the launch command line types a formula, for checking a screen without tapping keys.
+      let arguments = ProcessInfo.processInfo.arguments
+      if let index = arguments.firstIndex(of: "-MantissaInput"), index + 1 < arguments.count {
+        let text = arguments[index + 1]
+        _ = editor.paste(text.replacingOccurrences(of: "\\n", with: "\n"))
+        refresh()
+      }
+    #endif
   }
 
   /// Puts an earlier problem back into the calculator.

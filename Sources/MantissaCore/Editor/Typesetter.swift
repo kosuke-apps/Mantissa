@@ -166,8 +166,12 @@ public enum Typesetter {
 
     let sign: [MathNode] = coefficient.isNegative ? [.symbol("−")] : []
     let level = coefficient.isNegative ? Level.sum : Level.product
-    let top = join(numerator, leading: coefficient.numerator.magnitude)
-    if denominator.isEmpty && coefficient.denominator.isOne { return Piece(nodes: sign + top, level: level) }
+    let isFraction = !(denominator.isEmpty && coefficient.denominator.isOne)
+    // Above or below the bar a lone sum needs no brackets: the bar groups it.
+    let top =
+      isFraction && numerator.count == 1 && coefficient.numerator.magnitude.isOne
+      ? typeset(numerator[0]).nodes : join(numerator, leading: coefficient.numerator.magnitude)
+    if !isFraction { return Piece(nodes: sign + top, level: level) }
 
     // A denominator that multiplies a sum of plain numbers by anything else would be multiplied out when read back; a
     // chain of divisions, one factor at a time, reads back as it was.
@@ -182,7 +186,9 @@ public enum Typesetter {
       for factor in denominator { chain = [.fraction(numerator: chain, denominator: typeset(factor).nodes)] }
       return Piece(nodes: sign + chain, level: level)
     }
-    let bottom = join(denominator, leading: coefficient.denominator)
+    let bottom =
+      denominator.count == 1 && coefficient.denominator.isOne
+      ? typeset(denominator[0]).nodes : join(denominator, leading: coefficient.denominator)
     return Piece(nodes: sign + [.fraction(numerator: top, denominator: bottom)], level: level)
   }
 

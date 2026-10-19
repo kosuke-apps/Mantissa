@@ -211,3 +211,48 @@ struct PlainTextTests {
     #expect(failures.isEmpty, "\(failures.count) failures; first: \(failures.prefix(4))")
   }
 }
+
+@Suite("Sums and fractions as they are read")
+struct SumAndFractionReadingTests {
+  private func nodes(_ text: String) throws -> [MathNode] {
+    Typesetter.nodes(for: try Calculator().evaluate(text).exact)
+  }
+
+  @Test("A sum above or below a fraction bar has no brackets of its own")
+  func noBracketsAroundALoneSum() throws {
+    let result = try nodes("(a^2-b^2)/(a-b)")
+    guard case .fraction(let top, let bottom)? = result.first else {
+      Issue.record("expected a fraction, got \(result)")
+      return
+    }
+    for side in [top, bottom] {
+      #expect(!side.contains { if case .group = $0 { return true } else { return false } }, "\(side)")
+    }
+  }
+
+  @Test("A coefficient or another factor still brings the brackets back: 2(a + b)/c stays 2a + 2b over c")
+  func otherFactorsKeepTheirBrackets() throws {
+    let result = try nodes("(a+b)*(c+d)/e")
+    guard case .fraction(let top, _)? = result.first else {
+      Issue.record("expected a fraction, got \(result)")
+      return
+    }
+    #expect(top.filter { if case .group = $0 { return true } else { return false } }.count == 2)
+  }
+
+  @Test("The quadratic formula reads −b ± √(b² − 4ac)")
+  func quadraticFormula() throws {
+    #expect(try nodes("(-b+sqrt(b^2-4a*c))/(2a)").plainText == "(−b + √(b^2 − 4ac))/(2a)")
+    #expect(try nodes("(-b-sqrt(b^2-4a*c))/(2a)").plainText == "(−b − √(b^2 − 4ac))/(2a)")
+  }
+
+  @Test("An unknown to a power and a plain number: the highest power first, a before b")
+  func termOrder() throws {
+    #expect(try nodes("(a+b)^3").plainText == "(a + b)^3")
+    let expanded = try Calculator().evaluate("(a+b)^3").otherForms.compactMap { form -> String? in
+      if case .expanded(let expression) = form { return Typesetter.nodes(for: expression).plainText }
+      return nil
+    }
+    #expect(expanded == ["a^3 + 3a^2·b + 3ab^2 + b^3"])
+  }
+}

@@ -47,8 +47,12 @@ public struct PlotViewport: Equatable, Sendable {
     guard !content.relations.isEmpty else { return fit(content.functions) }
     var extent = 0.0
     for (index, relation) in content.relations.enumerated() {
-      for point in PlotAnalysis.intercepts(of: relation, index: index, within: 100) {
-        extent = max(extent, abs(point.x), abs(point.y))
+      // Only the points nearest the origin count: where a curve crosses an axis again and again (sin x > 1/2), the window
+      // shows a few of the crossings and not all those out to 100.
+      let points = PlotAnalysis.intercepts(of: relation, index: index, within: 100)
+      for kind in [PlotPoint.Kind.xIntercept, .yIntercept] {
+        let nearest = points.filter { $0.kind == kind }.map { max(abs($0.x), abs($0.y)) }.sorted().prefix(4)
+        extent = max(extent, nearest.max() ?? 0)
       }
     }
     let half = extent > 1e-6 ? extent * 1.6 : 10

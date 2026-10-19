@@ -284,6 +284,8 @@ private struct MathNodeView: View {
           .alignmentGuide(.mathAxis) { $0[VerticalAlignment.center] }
         slot(denominator, 1).padding(.horizontal, size * 0.04)
       }
+      // The bar is as wide as the wider of the two lines, not as wide as the space it is offered.
+      .fixedSize(horizontal: true, vertical: false)
       .padding(.horizontal, size * 0.03)
 
     case .radical(let index, let radicand):
