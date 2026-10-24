@@ -101,13 +101,13 @@ enum KeyboardLayout {
     case .basic:
       return [
         [
-          symbol("x", alternates: ["y", "z", "a", "b", "t"].map(alternate)),
           KeySpec(
             "group", .group, [.group],
             alternates: [
               .init(title: "(", actions: [.literal("(")]), .init(title: ")", actions: [.literal(")")]),
               .init(title: "|□|", actions: [.absolute]),
             ]),
+          symbol(">", alternates: ["<", "≤", "≥", "≠"].map(alternate)),
           digit("7"), digit("8"), digit("9"), symbol("÷"),
         ],
         [
@@ -125,15 +125,15 @@ enum KeyboardLayout {
             ]),
         ],
         [
-          symbol("π", alternates: [alternate("e"), alternate("i")]),
           KeySpec(
             "power", .power, [.power],
             alternates: [.init(title: "□²", actions: [.exponent("2")]), .init(title: "□³", actions: [.exponent("3")])]),
+          symbol("x", alternates: ["y", "z", "a", "b", "t"].map(alternate)),
           digit("1"), digit("2"), digit("3"), symbol("−"),
         ],
         [
+          symbol("π", alternates: [alternate("e"), alternate("i")]),
           symbol("%", alternates: [alternate("!"), alternate("°")]),
-          symbol(">", alternates: ["<", "≤", "≥", "≠"].map(alternate)),
           digit("0"), symbol(".", alternates: [alternate(",")]), symbol("=", alternates: [alternate("≠")]), symbol("+"),
         ],
       ]

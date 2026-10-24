@@ -1,5 +1,4 @@
-// Draws the Mantissa app icon: a "1" and a decimal point followed by digits that fade away, the part of a number that gives the
-// app its name.
+#!/usr/bin/env swift  // Draws the Mantissa app icon: a radical sign over the dotted empty box that marks an unfilled slot in the editor.
 //
 //   swift tools/make_icon.swift App/Resources/Assets.xcassets/AppIcon.appiconset
 //
@@ -16,7 +15,8 @@ struct Variant {
   let name: String
   let backgroundTop: CGColor
   let backgroundBottom: CGColor
-  let mark: CGColor
+  let radical: CGColor
+  let box: CGColor
   let shadow: CGColor
 }
 
@@ -28,22 +28,21 @@ func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
 
 let variants = [
   Variant(
-    name: "light", backgroundTop: rgb(0x1AA79E), backgroundBottom: rgb(0x0B5F63), mark: rgb(0xFFFFFF),
-    shadow: rgb(0x032A2C, 0.35)),
+    name: "light", backgroundTop: rgb(0x1AA79E), backgroundBottom: rgb(0x0B5F63), radical: rgb(0xFFFFFF),
+    box: rgb(0xFFFFFF, 0.78), shadow: rgb(0x032A2C, 0.35)),
   Variant(
-    name: "dark", backgroundTop: rgb(0x10302F), backgroundBottom: rgb(0x071413), mark: rgb(0x4FD1C5),
-    shadow: rgb(0x000000, 0.5)),
+    name: "dark", backgroundTop: rgb(0x10302F), backgroundBottom: rgb(0x071413), radical: rgb(0x4FD1C5),
+    box: rgb(0x4FD1C5, 0.6), shadow: rgb(0x000000, 0.5)),
   Variant(
-    name: "tinted", backgroundTop: rgb(0x000000), backgroundBottom: rgb(0x000000), mark: rgb(0xFFFFFF),
-    shadow: rgb(0x000000, 0.0)),
+    name: "tinted", backgroundTop: rgb(0x000000), backgroundBottom: rgb(0x000000), radical: rgb(0xFFFFFF),
+    box: rgb(0xFFFFFF, 0.7), shadow: rgb(0x000000, 0.0)),
 ]
 
-// The "1": a short flag falling to the left of the top of a straight stem. Coordinates are measured from the top left.
-let onePoints = [CGPoint(x: 205, y: 395), CGPoint(x: 335, y: 320), CGPoint(x: 335, y: 705)]
-
-// The point, then the digits after it, each smaller and fainter than the last: centre, radius and opacity.
-let dots: [(x: CGFloat, y: CGFloat, radius: CGFloat, opacity: CGFloat)] = [
-  (465, 690, 46, 1.0), (590, 690, 37, 0.85), (698, 690, 29, 0.65), (790, 690, 21, 0.45), (866, 690, 14, 0.28),
+// The radical sign: a short rising tick, the long fall, the long rise, then the bar over the radicand.
+// Coordinates are measured from the top left.
+let radicalPoints = [
+  CGPoint(x: 185, y: 600), CGPoint(x: 290, y: 548), CGPoint(x: 410, y: 815), CGPoint(x: 545, y: 285),
+  CGPoint(x: 850, y: 285),
 ]
 
 func render(_ v: Variant) -> CGImage {
@@ -59,19 +58,23 @@ func render(_ v: Variant) -> CGImage {
     colorsSpace: space, colors: [v.backgroundTop, v.backgroundBottom] as CFArray, locations: [0, 1])!
   ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 0, y: size), options: [])
 
+  // The empty box under the bar: dashed, like the placeholder in the editor.
+  let box = CGRect(x: 590, y: 415, width: 215, height: 290)
+  ctx.setStrokeColor(v.box)
+  ctx.setLineWidth(30)
+  ctx.setLineDash(phase: 0, lengths: [44, 34])
+  ctx.setLineCap(.round)
+  ctx.addPath(CGPath(roundedRect: box, cornerWidth: 34, cornerHeight: 34, transform: nil))
+  ctx.strokePath()
+  ctx.setLineDash(phase: 0, lengths: [])
+
   ctx.setShadow(offset: CGSize(width: 0, height: 14), blur: 34, color: v.shadow)
-  ctx.setStrokeColor(v.mark)
-  ctx.setLineWidth(84)
+  ctx.setStrokeColor(v.radical)
+  ctx.setLineWidth(64)
   ctx.setLineCap(.round)
   ctx.setLineJoin(.round)
-  ctx.addLines(between: onePoints)
+  ctx.addLines(between: radicalPoints)
   ctx.strokePath()
-
-  for dot in dots {
-    ctx.setFillColor(v.mark.copy(alpha: dot.opacity)!)
-    ctx.fillEllipse(
-      in: CGRect(x: dot.x - dot.radius, y: dot.y - dot.radius, width: dot.radius * 2, height: dot.radius * 2))
-  }
 
   return ctx.makeImage()!
 }

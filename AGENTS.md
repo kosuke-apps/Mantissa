@@ -20,9 +20,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   access, subscriptions, textbook content.
 - Precision target: scientific-calculator grade. Exact when the result is exact; otherwise at least 12 correct
   digits, and never a result like `sin(π) = 1.2e-16` where the exact answer is 0.
-- Mantissa has its own name, icon, colour, wording and layout (`docs/screen-design.md`). Nothing is modelled on another
-  product's screens or text, and nothing in the repository, the app or a release presents it as a copy or clone of another app.
-  UX: it should feel instant.
+- Mantissa has its own name, icon, wording and code, all written for it. Other apps may be studied for ideas and conventions like
+  any reference (a calculator keypad is a standard arrangement), but their text, artwork, icons, names and code are never copied,
+  and nothing in the repository, the app or a release presents Mantissa as a copy of another app or as connected to it. UX: it
+  should feel instant.
 
 ## Technical context
 

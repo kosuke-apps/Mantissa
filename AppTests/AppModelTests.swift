@@ -536,7 +536,7 @@ final class AppModelTests: XCTestCase {
   }
 
   func testTheParenthesesKeyOffersALoneBracketAndTheClearAllKeyEmptiesEverything() {
-    let group = KeyboardLayout.rows(for: .basic)[0][1]
+    let group = KeyboardLayout.rows(for: .basic)[0][0]
     XCTAssertEqual(group.alternates.map(\.title), ["(", ")", "|□|"])
     XCTAssertEqual(group.alternates[0].actions, [.literal("(")])
 

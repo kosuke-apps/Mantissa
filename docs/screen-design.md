@@ -24,10 +24,10 @@ need them. Matrices, vectors, geometry, differential equations and polar coordin
 ├──────────────────────────────────┤
 │ abc   ←    →    ↵   AC   ⌫      │  letters, cursor, new line, clear all, delete
 │ [ Basic | Functions | Trig | Calculus ]   the pages of the keyboard
-│ x    (□)  7  8  9  ÷             │
+│ (□)  >    7  8  9  ÷             │
 │ □/□  √□   4  5  6  ×             │  six columns, four rows
-│ π    □ⁿ   1  2  3  −             │
-│ %    >    0  .  =  +             │
+│ □ⁿ   x    1  2  3  −             │
+│ π    %    0  .  =  +             │
 └──────────────────────────────────┘
 ```
 
@@ -49,8 +49,8 @@ need them. Matrices, vectors, geometry, differential equations and polar coordin
 - **Angles**: radians are the default; `cos(30)` is radians and `cos(30°)` is degrees whatever the setting says.
 - **Typing rules**: square brackets and braces are read as parentheses; `-3^2` is −9 and `(-3)^2` is 9; a percentage is a plain
   number (`10%` is 0.1).
-- **Look**: system greys and one teal accent, flat; a rounded keyboard panel; the answer on a soft card. The app icon is a "1",
-  the decimal point and digits that fade away.
+- **Look**: system greys and one teal accent, flat; a rounded keyboard panel; the answer on a soft card. The app icon is a radical sign
+  over the dotted empty box that marks an unfilled slot in the editor.
 
 ## The other screens
 
