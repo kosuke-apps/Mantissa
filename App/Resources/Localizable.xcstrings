@@ -13,28 +13,6 @@
         }
       }
     },
-    "Type a math problem…": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "数式を入力してください…"
-          }
-        }
-      }
-    },
-    "Please enter a complete math problem so we can solve it!": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "計算できるよう，式を最後まで入力してください．"
-          }
-        }
-      }
-    },
     "Dividing by zero has no answer.": {
       "extractionState": "manual",
       "localizations": {
@@ -1208,6 +1186,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "すべて消去"
+          }
+        }
+      }
+    },
+    "Enter an expression or an equation…": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "式か方程式を入力してください…"
+          }
+        }
+      }
+    },
+    "This isn't a complete problem yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まだ式が途中です．"
+          }
+        }
+      }
+    },
+    "Basic": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本"
+          }
+        }
+      }
+    },
+    "Functions": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "関数"
+          }
+        }
+      }
+    },
+    "Trig": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三角"
+          }
+        }
+      }
+    },
+    "Keyboard page": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーボードのページ"
           }
         }
       }

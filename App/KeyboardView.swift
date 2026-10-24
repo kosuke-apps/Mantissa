@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The maths keyboard: a row of controls, the chips that switch pages, and six columns of keys.
+/// The maths keyboard: a row of controls, the tabs that switch pages, and six columns of keys.
 struct KeyboardView: View {
   @Environment(AppModel.self) private var model
   @State private var page = KeyboardPage.basic
@@ -11,7 +11,7 @@ struct KeyboardView: View {
   var body: some View {
     VStack(spacing: 0) {
       controlRow
-      if !showsLetters { chipRow }
+      if !showsLetters { pageTabs }
       Group {
         if showsLetters { letterKeys } else { keys }
       }
@@ -71,28 +71,12 @@ struct KeyboardView: View {
     .accessibilityLabel(accessibility)
   }
 
-  private var chipRow: some View {
-    HStack(spacing: 8) {
-      ForEach(KeyboardPage.allCases) { candidate in
-        Button {
-          page = candidate
-        } label: {
-          VStack(spacing: -1) {
-            Text(candidate.chip.0)
-            Text(candidate.chip.1)
-          }
-          .font(.system(size: 11, weight: .medium))
-          .frame(maxWidth: .infinity)
-          .frame(height: 34)
-          .foregroundStyle(page == candidate ? Color(.systemBackground) : Color.primary)
-          .background(page == candidate ? Color.primary : Color(.systemBackground), in: Capsule())
-          .overlay(Capsule().strokeBorder(Color(.separator), lineWidth: page == candidate ? 0 : 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(candidate.spokenName)
-        .accessibilityAddTraits(page == candidate ? .isSelected : [])
-      }
+  /// The pages of the keyboard, named in words, as one segmented control.
+  private var pageTabs: some View {
+    Picker("Keyboard page", selection: $page) {
+      ForEach(KeyboardPage.allCases) { candidate in Text(candidate.title).tag(candidate) }
     }
+    .pickerStyle(.segmented)
     .padding(.horizontal, 10)
     .padding(.bottom, 6)
   }

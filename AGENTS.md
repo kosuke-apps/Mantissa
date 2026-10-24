@@ -5,11 +5,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
 
 ## Product
 
-- Purpose: bring back the calculator the Photomath app had before Google acquired it, without the parts nobody
-  wanted. The author used it daily as a scientific calculator, a function grapher and an equation solver, with a
-  history, entirely offline. The current app lost those features, and the alternatives are either plain calculators,
-  imitations of a physical scientific calculator, or GeoGebra (too hard to use). A standard iOS Calculator is not an
-  option for the author.
+- Purpose: the calculator its author wants to use every day: a scientific calculator, a function grapher and an equation
+  solver, with a history, entirely offline. The alternatives are plain calculators, imitations of a physical scientific
+  calculator, or large graphing and geometry suites that are heavy to use. The system calculator app is not enough for the
+  author.
 - Intended users: the author first; students and anyone who wants a normal scientific calculator that is pleasant.
 - Core user journey: open the app, type a problem in ordinary maths notation on a maths keyboard (stacked fractions,
   roots, powers), see the exact answer (fraction, root, π) with a switch to the decimal, tap to see the graph, find
@@ -21,8 +20,9 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   access, subscriptions, textbook content.
 - Precision target: scientific-calculator grade. Exact when the result is exact; otherwise at least 12 correct
   digits, and never a result like `sin(π) = 1.2e-16` where the exact answer is 0.
-- Do not copy the original app's name, logo, icons, artwork or wording. Behaviour and layout feel are the reference,
-  not its assets. UX: it should feel instant.
+- Mantissa has its own name, icon, colour, wording and layout (`docs/screen-design.md`). Nothing is modelled on another
+  product's screens or text, and nothing in the repository, the app or a release presents it as a copy or clone of another app.
+  UX: it should feel instant.
 
 ## Technical context
 
@@ -100,8 +100,7 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 1. Numbers (done): `BigInt`, `Rational`, `BigDecimal` with π, e, exp, ln, log, power, sqrt, trigonometric, inverse
    trigonometric and hyperbolic functions, verified against Python to the last digit.
 2. Expressions (done): parser, expression tree, exact simplification, evaluation with angle modes, the imaginary unit.
-3. App: maths keyboard and editor, result card (exact and decimal) (done, first version: `docs/ui-reference.md` says
-   what is followed), history, icon (done); the keyboard's remaining pages and long-press alternatives.
+3. App: maths keyboard and editor, result card (exact and decimal) (done, first version: `docs/screen-design.md`), history, icon (done); the keyboard's remaining pages and long-press alternatives.
 4. Graphs (done, first version): a function of x, or `y = …`, or several lines, with roots, y-intercept, extrema and
    crossings marked and tappable; pan and pinch. To do: implicit curves, inequalities, a trace along the curve.
 5. Solving: equations in one unknown (polynomial, rational, with roots, absolute values, exponentials, logarithms,

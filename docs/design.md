@@ -117,7 +117,7 @@ How the functions reach their accuracy, so that a change does not quietly lose i
   only approximated; factorials and counts beyond that are `MathError.overflow`. Factoring is by trial division
   (completely below 10^12, up to 50 000 for larger numbers); a number with a larger prime factor is split as far as
   possible and the rest is treated as one opaque factor.
-- **Angles**: functions work in radians, and radians are the default, as in the app this one follows (`cos(30)` is
+- **Angles**: functions work in radians, and radians are the default (`cos(30)` is
   radians, `cos(30°)` is degrees). `°` after a number means that many degrees in whatever unit the calculator works
   in, so `sin(30°)` is `1/2` in both. In degree mode (a setting) the `Builder` converts: `sin(30)` becomes
   `sin(30π/180)`, which the exact table turns into `1/2`, and an argument that *writes* π (`sin(π/6)`) is already

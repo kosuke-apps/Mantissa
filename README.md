@@ -42,7 +42,7 @@ What it does (the maths is in the `MantissaCore` package, which has no dependenc
 - Calculus: derivatives (`d/dx`), integrals (indefinite, definite and improper), limits (including at ∞ and one-sided) and
   sums and series, with exact answers (`∫ x e^x dx`, `lim (1 + 1/x)^x = e`, `Σ 1/k² = π²/6`).
 
-The keyboard places ∫, Σ, lim and d/dx with boxes for their expression, variable and ends, as in the app this one follows.
+The keyboard places ∫, Σ, lim and d/dx with boxes for their expression, variable and ends.
 `log` with a base is typed with its base small below it (`log₂(8)`), and a small + or − after the point of a limit means from above
 or from below.
 

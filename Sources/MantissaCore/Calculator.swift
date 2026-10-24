@@ -1,6 +1,6 @@
 /// How a `Calculator` reads and answers.
 public struct CalculatorSettings: Sendable, Equatable {
-  /// The unit of angles typed into and returned by trigonometric functions. Radians, as in the app this one follows:
+  /// The unit of angles typed into and returned by trigonometric functions. Radians by default:
   /// `cos(30)` is radians and `cos(30°)` is degrees.
   public var angleUnit: AngleUnit = .radians
   /// Significant digits of the decimal approximation.

@@ -48,7 +48,6 @@ struct CalculatorScreen: View {
   /// The title, the angle unit (tap to switch) and Settings.
   private var topBar: some View {
     ZStack {
-      Text("Calculator").scaledFont(size: 17, weight: .semibold)
       HStack {
         Button {
           model.angleUnit = model.angleUnit == .radians ? .degrees : .radians
@@ -115,7 +114,8 @@ private struct InputView: View {
           }
           .overlay(alignment: .leading) {
             if editor.isEmpty && index == 0 {
-              Text("Type a math problem…").scaledFont(size: 24).foregroundStyle(.tertiary).allowsHitTesting(false)
+              Text("Enter an expression or an equation…").scaledFont(size: 24).foregroundStyle(.tertiary)
+                .allowsHitTesting(false)
             }
           }
         }
@@ -175,7 +175,7 @@ private struct ResultView: View {
     case .empty:
       EmptyView()
     case .incomplete:
-      warning("Please enter a complete math problem so we can solve it!")
+      warning("This isn't a complete problem yet.")
     case .failure(let failure):
       switch failure {
       case .divisionByZero: warning("Dividing by zero has no answer.")
@@ -188,8 +188,7 @@ private struct ResultView: View {
     case .solutions(let solutions):
       SolutionsView(solutions: solutions)
     case .answer(let answer):
-      HStack(alignment: .top, spacing: 12) {
-        Rectangle().fill(Color.accentColor).frame(width: 4)
+      HStack(alignment: .top, spacing: 0) {
         VStack(alignment: .leading, spacing: 8) {
           if !answer.exact.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -212,6 +211,7 @@ private struct ResultView: View {
           }
         }
       }
+      .answerCard()
     }
   }
 
@@ -261,8 +261,7 @@ private struct SolutionsView: View {
   }
 
   var body: some View {
-    HStack(alignment: .top, spacing: 12) {
-      Rectangle().fill(Color.accentColor).frame(width: 4)
+    HStack(alignment: .top, spacing: 0) {
       VStack(alignment: .leading, spacing: 14) {
         if solutions.choices.count >= 2 { choices }
         switch solutions.kind {
@@ -294,6 +293,7 @@ private struct SolutionsView: View {
         }
       }
     }
+    .answerCard()
   }
 
   private func row(_ line: AppModel.Solutions.Line) -> some View {
@@ -306,5 +306,14 @@ private struct SolutionsView: View {
         }
       }
     }
+  }
+}
+
+extension View {
+  /// What an answer sits on: a soft rounded card.
+  fileprivate func answerCard() -> some View {
+    padding(14)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
   }
 }

@@ -46,7 +46,7 @@ struct KeySpec: Identifiable {
   }
 }
 
-/// The pages of the maths keyboard, which the chips above the keys switch between.
+/// The pages of the maths keyboard, which the tabs above the keys switch between.
 enum KeyboardPage: CaseIterable, Identifiable {
   case basic
   case functions
@@ -55,7 +55,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
 
   var id: Self { self }
 
-  /// What VoiceOver says for the chip.
+  /// What VoiceOver says for the page.
   var spokenName: LocalizedStringKey {
     switch self {
     case .basic: return "Basic keys"
@@ -65,13 +65,13 @@ enum KeyboardPage: CaseIterable, Identifiable {
     }
   }
 
-  /// The two lines written on the chip.
-  var chip: (String, String) {
+  /// The word on the page's tab.
+  var title: LocalizedStringKey {
     switch self {
-    case .basic: return ("+ −", "× ÷")
-    case .functions: return ("f(x) e", "log ln")
-    case .trigonometry: return ("sin cos", "tan cot")
-    case .calculus: return ("lim d/dx", "∫ Σ ∞")
+    case .basic: return "Basic"
+    case .functions: return "Functions"
+    case .trigonometry: return "Trig"
+    case .calculus: return "Calculus"
     }
   }
 }
@@ -101,13 +101,13 @@ enum KeyboardLayout {
     case .basic:
       return [
         [
+          symbol("x", alternates: ["y", "z", "a", "b", "t"].map(alternate)),
           KeySpec(
             "group", .group, [.group],
             alternates: [
               .init(title: "(", actions: [.literal("(")]), .init(title: ")", actions: [.literal(")")]),
               .init(title: "|□|", actions: [.absolute]),
             ]),
-          symbol(">", alternates: ["<", "≤", "≥", "≠"].map(alternate)),
           digit("7"), digit("8"), digit("9"), symbol("÷"),
         ],
         [
@@ -125,15 +125,15 @@ enum KeyboardLayout {
             ]),
         ],
         [
+          symbol("π", alternates: [alternate("e"), alternate("i")]),
           KeySpec(
             "power", .power, [.power],
             alternates: [.init(title: "□²", actions: [.exponent("2")]), .init(title: "□³", actions: [.exponent("3")])]),
-          symbol("x", alternates: ["y", "z", "a", "b", "t"].map(alternate)),
           digit("1"), digit("2"), digit("3"), symbol("−"),
         ],
         [
-          symbol("π", alternates: [alternate("e"), alternate("i")]),
           symbol("%", alternates: [alternate("!"), alternate("°")]),
+          symbol(">", alternates: ["<", "≤", "≥", "≠"].map(alternate)),
           digit("0"), symbol(".", alternates: [alternate(",")]), symbol("=", alternates: [alternate("≠")]), symbol("+"),
         ],
       ]
