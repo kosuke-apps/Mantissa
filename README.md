@@ -54,6 +54,8 @@ or from below.
   integrals of the inverse trigonometric and hyperbolic functions (`∫ x asin x dx`).
 - An equation with several letters (`v = u + at`) is solved for one of them, and a row of letters above the answer solves it for
   another (`t = (v − u)/a`).
+- Hold a key that has a dot in its corner and slide to the alternative you want (a tick is felt on each), then let go; AC clears
+  every line, and the parentheses key can put in a single `(` or `)`.
 - Tap the formula to put the cursor there, also inside a fraction or an exponent.
 - Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
   it as text or to use it as the next input; hold the delete or arrow key to repeat it.

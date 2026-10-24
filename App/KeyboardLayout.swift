@@ -101,7 +101,12 @@ enum KeyboardLayout {
     case .basic:
       return [
         [
-          KeySpec("group", .group, [.group], alternates: [.init(title: "|□|", actions: [.absolute])]),
+          KeySpec(
+            "group", .group, [.group],
+            alternates: [
+              .init(title: "(", actions: [.literal("(")]), .init(title: ")", actions: [.literal(")")]),
+              .init(title: "|□|", actions: [.absolute]),
+            ]),
           symbol(">", alternates: ["<", "≤", "≥", "≠"].map(alternate)),
           digit("7"), digit("8"), digit("9"), symbol("÷"),
         ],

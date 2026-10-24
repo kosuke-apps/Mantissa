@@ -63,13 +63,22 @@ struct CalculatorScreen: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Angle unit")
         Spacer()
-        Button {
-          model.showsSettings = true
-        } label: {
-          Image(systemName: "gearshape").scaledFont(size: 18).foregroundStyle(.primary)
+        HStack(spacing: 22) {
+          Button {
+            model.showsHistory = true
+          } label: {
+            Image(systemName: "clock").scaledFont(size: 18).foregroundStyle(.primary)
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel("History")
+          Button {
+            model.showsSettings = true
+          } label: {
+            Image(systemName: "gearshape").scaledFont(size: 18).foregroundStyle(.primary)
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel("Settings")
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Settings")
       }
       .padding(.horizontal, 20)
     }

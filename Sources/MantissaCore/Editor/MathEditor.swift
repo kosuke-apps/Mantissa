@@ -114,6 +114,10 @@ public struct MathEditor: Equatable, Sendable {
     }
   }
 
+  /// Puts one symbol at the cursor exactly as it is. For `(` and `)` that means a single bracket, not a pair with the cursor
+  /// inside: the brackets are then matched when the formula is read, which lets them go round what is already typed.
+  public mutating func insertLiteral(_ text: String) { insertNode(.symbol(text)) }
+
   private mutating func insertNode(_ node: MathNode) {
     edit { sequence, offset in
       sequence.insert(node, at: offset)

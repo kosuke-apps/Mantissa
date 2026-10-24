@@ -1200,6 +1200,17 @@
           }
         }
       }
+    },
+    "Clear all": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて消去"
+          }
+        }
+      }
     }
   }
 }

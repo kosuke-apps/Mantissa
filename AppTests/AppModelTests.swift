@@ -534,4 +534,19 @@ final class AppModelTests: XCTestCase {
       XCTFail("expected solutions")
     }
   }
+
+  func testTheParenthesesKeyOffersALoneBracketAndTheClearAllKeyEmptiesEverything() {
+    let group = KeyboardLayout.rows(for: .basic)[0][0]
+    XCTAssertEqual(group.alternates.map(\.title), ["(", ")", "|□|"])
+    XCTAssertEqual(group.alternates[0].actions, [.literal("(")])
+
+    let model = makeModel()
+    model.press([.literal("("), .symbol("1"), .symbol("+"), .symbol("2"), .literal(")")])
+    model.press(.newLine)
+    model.press(.symbol("3"))
+    XCTAssertEqual(model.editor.lines.count, 2)
+    model.clearAll()
+    XCTAssertTrue(model.editor.isEmpty)
+    XCTAssertEqual(model.editor.lines.count, 1)
+  }
 }

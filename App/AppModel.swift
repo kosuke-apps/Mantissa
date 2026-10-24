@@ -6,6 +6,8 @@ import UIKit
 /// What a key does.
 enum KeyAction: Hashable {
   case symbol(String)
+  /// A symbol put in as it is, a lone bracket for instance (`symbol("(")` would make a pair).
+  case literal(String)
   /// An exponent that is already filled in, as on the x² and x³ keys.
   case exponent(String)
   case fraction, power, squareRoot, nthRoot, group, absolute
@@ -223,6 +225,7 @@ final class AppModel {
   private func perform(_ action: KeyAction) {
     switch action {
     case .symbol(let text): editor.insert(text)
+    case .literal(let text): editor.insertLiteral(text)
     case .exponent(let digit):
       editor.insertPower()
       editor.insert(digit)

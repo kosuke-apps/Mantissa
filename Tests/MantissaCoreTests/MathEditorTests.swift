@@ -684,3 +684,52 @@ struct FactorialAndEqualsTests {
     #expect(try Calculator().solve(editor.text) == .truth(true))
   }
 }
+
+@Suite("Lone brackets")
+struct LoneBracketTests {
+  @Test("A literal ( is one bracket, where typing ( makes a pair with the cursor inside")
+  func literalBracket() throws {
+    var typed = MathEditor()
+    typed.insert("(")
+    #expect(typed.text == "()")
+
+    var literal = MathEditor()
+    literal.insertLiteral("(")
+    #expect(literal.text == "(")
+    literal.type("1+2")
+    literal.insertLiteral(")")
+    literal.type("*3")
+    #expect(literal.text == "(1+2)*3")
+    #expect(try Calculator().evaluate(literal.text).exact.description == "9")
+  }
+
+  @Test("A bracket can go round what is already typed: 1+2 then ( at the start and ) at the end")
+  func aroundWhatIsTyped() throws {
+    var editor = MathEditor()
+    editor.type("1+2")
+    for _ in 0..<3 { editor.moveLeft() }
+    editor.insertLiteral("(")
+    for _ in 0..<3 { editor.moveRight() }
+    editor.insertLiteral(")")
+    editor.type("*3")
+    #expect(editor.text == "(1+2)*3")
+  }
+
+  @Test("A bracket left open is an unfinished formula, not a wrong answer")
+  func leftOpen() {
+    var editor = MathEditor()
+    editor.insertLiteral("(")
+    editor.type("1+2")
+    #expect(throws: CalculatorError.self) { try Calculator().evaluate(editor.text) }
+  }
+
+  @Test("Delete takes a lone bracket away")
+  func deleting() {
+    var editor = MathEditor()
+    editor.insertLiteral("(")
+    editor.type("5")
+    editor.backspace()
+    editor.backspace()
+    #expect(editor.text.isEmpty)
+  }
+}
