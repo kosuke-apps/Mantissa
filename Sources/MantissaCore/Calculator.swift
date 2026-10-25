@@ -45,7 +45,15 @@ public enum CalculatorError: Error, Equatable, Sendable {
   public enum Unsupported: Equatable, Sendable {
     case equation
     case system
+    /// The input comes to a matrix, which `evaluate` has no way to return: `compute` does.
+    case matrix
   }
+}
+
+/// What an input comes to: a number or an expression, or a matrix (a vector is a matrix with one column).
+public enum Computation: Sendable, Equatable {
+  case number(Evaluation)
+  case matrix(Matrix)
 }
 
 /// The entry point: text in, exact and decimal answer out.
@@ -56,8 +64,17 @@ public struct Calculator: Sendable {
     self.settings = settings
   }
 
-  /// Reads `text` as an expression and evaluates it.
+  /// Reads `text` as an expression and evaluates it. An input that comes to a matrix is `unsupported(.matrix)` here; `compute`
+  /// answers those too.
   public func evaluate(_ text: String) throws(CalculatorError) -> Evaluation {
+    switch try compute(text) {
+    case .number(let evaluation): return evaluation
+    case .matrix: throw .unsupported(.matrix)
+    }
+  }
+
+  /// Reads `text` as an expression, possibly with matrices in it, and works out what it comes to.
+  public func compute(_ text: String) throws(CalculatorError) -> Computation {
     let statement: Statement
     do {
       statement = try Parser.parse(text)
@@ -66,17 +83,22 @@ public struct Calculator: Sendable {
     }
     switch statement {
     case .expression(let syntax):
-      let exact: Expr
+      let value: Value
       do {
-        exact = try Builder(angleUnit: settings.angleUnit).build(syntax)
+        value = try Builder(angleUnit: settings.angleUnit).value(syntax)
       } catch {
         throw .math(error)
+      }
+      let exact: Expr
+      switch value {
+      case .matrix(let matrix): return .matrix(matrix.mapped { $0.trigonometricallyTidied() })
+      case .scalar(let number): exact = number
       }
       // sin²x + cos²x is 1: an identity that makes the answer smaller is applied to it.
       var result = evaluation(of: exact.trigonometricallyTidied())
       if case .call(.int, let arguments) = syntax, arguments.count <= 2 { result.isAntiderivative = true }
       result.otherForms = result.exact.otherForms()
-      return result
+      return .number(result)
     case .relation: throw .unsupported(.equation)
     case .system: throw .unsupported(.system)
     }

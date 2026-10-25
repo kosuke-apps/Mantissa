@@ -52,6 +52,9 @@ struct PositionedToken: Equatable, Sendable {
   var token: Token
   /// The character offset in the original input.
   var offset: Int
+  /// Whether a parenthesis was written as `[` `]` or `{` `}`, which is what tells a matrix `[[1, 2], [3, 4]]` from brackets
+  /// round a formula.
+  var isBracket = false
 }
 
 /// Turns text into tokens. It accepts what a keyboard, a pasted formula or a Japanese input method produces:
@@ -66,7 +69,9 @@ enum Lexer {
     func peek(_ offset: Int = 0) -> Character? {
       index + offset < characters.count ? characters[index + offset] : nil
     }
-    func add(_ token: Token, at offset: Int) { tokens.append(PositionedToken(token: token, offset: offset)) }
+    func add(_ token: Token, at offset: Int, bracket: Bool = false) {
+      tokens.append(PositionedToken(token: token, offset: offset, isBracket: bracket))
+    }
 
     while let character = peek() {
       let start = index
@@ -114,8 +119,10 @@ enum Lexer {
           }
         case "%": add(.percent, at: start)
         case "°": add(.degree, at: start)
-        case "(", "[", "{": add(.leftParen, at: start)
-        case ")", "]", "}": add(.rightParen, at: start)
+        case "(": add(.leftParen, at: start)
+        case "[", "{": add(.leftParen, at: start, bracket: true)
+        case ")": add(.rightParen, at: start)
+        case "]", "}": add(.rightParen, at: start, bracket: true)
         case "|": add(.bar, at: start)
         case ",": add(.comma, at: start)
         case ";": add(.separator, at: start)

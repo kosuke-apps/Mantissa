@@ -12,6 +12,8 @@ indirect enum Syntax: Equatable, Sendable {
   case radical(index: Syntax?, radicand: Syntax)
   /// ∞, which only means something as a limit, an end of an integral or a sum.
   case infinity
+  /// A matrix, row by row, written `[[1, 2], [3, 4]]`; a vector is a matrix with one column.
+  case matrix([[Syntax]])
 }
 
 extension Syntax {
@@ -24,6 +26,20 @@ extension Syntax {
     case .binary(_, let left, let right): return left.mentionsPi || right.mentionsPi
     case .call(_, let arguments): return arguments.contains { $0.mentionsPi }
     case .radical(let index, let radicand): return (index?.mentionsPi ?? false) || radicand.mentionsPi
+    case .matrix(let rows): return rows.contains { $0.contains { $0.mentionsPi } }
+    }
+  }
+
+  /// Whether the text writes a matrix, or a function that gives or takes one, anywhere inside.
+  var involvesMatrix: Bool {
+    switch self {
+    case .matrix: return true
+    case .number, .symbol, .constant, .infinity: return false
+    case .negate(let operand), .postfix(_, let operand): return operand.involvesMatrix
+    case .binary(_, let left, let right): return left.involvesMatrix || right.involvesMatrix
+    case .call(let function, let arguments):
+      return function.isMatrixFunction || arguments.contains { $0.involvesMatrix }
+    case .radical(let index, let radicand): return (index?.involvesMatrix ?? false) || radicand.involvesMatrix
     }
   }
 }
@@ -63,6 +79,11 @@ enum FunctionName: String, CaseIterable, Sendable {
   case re, im, conj, arg
   /// Calculus: `diff(f, x, n)`, `int(f, x, a, b)`, `lim(f, x, a)`, `sum(f, k, a, b)`.
   case diff, int, lim, sum
+  /// Matrices and vectors: the determinant, inverse, transpose, trace, rank and reduced row echelon form of a matrix,
+  /// the dot and cross product and the length of vectors, and the identity matrix of a size.
+  case det, inverse, transpose, trace, rank, rref, dot, cross, norm, identity
+  /// The eigenvalues of a matrix, as a column, and a matrix whose columns are its eigenvectors.
+  case eigvals, eigvecs
 
   /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
   var isCalculus: Bool {
@@ -72,9 +93,19 @@ enum FunctionName: String, CaseIterable, Sendable {
     }
   }
 
+  /// Whether the function works on matrices or makes one, so that a formula with it is worked out as a matrix computation.
+  var isMatrixFunction: Bool {
+    switch self {
+    case .det, .inverse, .transpose, .trace, .rank, .rref, .dot, .cross, .norm, .identity, .eigvals, .eigvecs:
+      return true
+    default: return false
+    }
+  }
+
   /// Alternative spellings the parser accepts.
   static let aliases: [String: FunctionName] = [
-    "arcsin": .asin, "arccos": .acos, "arctan": .atan,
+    "inv": .inverse, "eigenvalues": .eigvals, "eigenvectors": .eigvecs, "arcsin": .asin, "arccos": .acos,
+    "arctan": .atan,
     "arcsinh": .asinh, "arccosh": .acosh, "arctanh": .atanh,
     "arsinh": .asinh, "arcosh": .acosh, "artanh": .atanh,
   ]
@@ -91,7 +122,7 @@ enum FunctionName: String, CaseIterable, Sendable {
   var needsParenthesis: Bool {
     switch self {
     case .mod, .min, .max, .sign, .re, .im, .conj, .arg: return true
-    default: return false
+    default: return isMatrixFunction
     }
   }
 
@@ -104,7 +135,7 @@ enum FunctionName: String, CaseIterable, Sendable {
     case .lim: return 3...4
     case .sum: return 4...4
     case .min, .max: return 2...8
-    case .root, .nCr, .nPr, .gcd, .lcm, .mod: return 2...2
+    case .root, .nCr, .nPr, .gcd, .lcm, .mod, .dot, .cross: return 2...2
     default: return 1...1
     }
   }

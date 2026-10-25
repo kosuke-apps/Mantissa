@@ -23,7 +23,7 @@ need them. Matrices, vectors, geometry, differential equations and polar coordin
 │ └──────────────────────────────┘ │  (or "This isn't a complete problem yet.")
 ├──────────────────────────────────┤
 │ abc   ←    →    ↵   AC   ⌫      │  letters, cursor, new line, clear all, delete
-│ [ Basic | Functions | Trig | Calculus ]   the pages of the keyboard
+│ [ Basic | Functions | Trig | Calculus | Matrix ]   the pages of the keyboard
 │ (□)  >    7  8  9  ÷             │
 │ □/□  √□   4  5  6  ×             │  six columns, four rows
 │ □ⁿ   x    1  2  3  −             │
@@ -44,8 +44,11 @@ need them. Matrices, vectors, geometry, differential equations and polar coordin
   common exponents, the parentheses key a single `(` or `)` that can go round what is already typed, and `x` offers other
   letters. VoiceOver has the alternatives as actions.
 - **Pages**: Basic (the grid above), Functions (logarithms, `e`, `|x|`, `nCr`, `mod`, `gcd`, rounding), Trig (sines, cosines,
-  tangents, their inverses and hyperbolic forms, and the degree sign) and Calculus (limits, derivatives, integrals, sums, ∞).
-  `abc` swaps the keyboard for letters.
+  tangents, their inverses and hyperbolic forms, and the degree sign), Calculus (limits, derivatives, integrals, sums, ∞) and
+  Matrix (a matrix or vector with cells to fill in, rows and columns added or removed, and the number pad, so that a matrix is
+  filled in without leaving the page). `abc` swaps the keyboard for letters (Latin with a number row and shift, Greek, symbols),
+  and the same place shows `123` to swap back; the letters keyboard has its own tabs and four rows on every page, so the
+  keyboard is as tall as with the maths pages and the formula above it does not move.
 - **Angles**: radians are the default; `cos(30)` is radians and `cos(30°)` is degrees whatever the setting says.
 - **Typing rules**: square brackets and braces are read as parentheses; `-3^2` is −9 and `(-3)^2` is 9; a percentage is a plain
   number (`10%` is 0.1).

@@ -9,11 +9,16 @@ import Testing
 /// `MANTISSA_SEED=n` changes the sequence and `MANTISSA_SAMPLES=n` the number of inputs.
 @Suite("Random inputs")
 struct RandomInputTests {
-  private static let atoms = ["x", "y", "2", "3", "0", "1", "10", "0.5", "π", "e", "i", "7", "100", "1/2", "∞", "a"]
+  private static let atoms = [
+    "x", "y", "2", "3", "0", "1", "10", "0.5", "π", "e", "i", "7", "100", "1/2", "∞", "a",
+    // Matrices and vectors, so that they meet every operator and function.
+    "[[1,2],[3,4]]", "[[x,1],[0,y]]", "[[1],[2],[3]]", "[[0,0],[0,0]]", "[[a,b,c]]",
+  ]
   private static let functions = [
     "sin", "cos", "tan", "ln", "log", "sqrt", "abs", "asin", "atan", "exp", "cbrt", "sinh", "cosh", "floor", "sign",
     "acos",
     "re", "im", "conj",
+    "det", "inverse", "transpose", "trace", "rank", "rref", "norm", "identity",
   ]
   private static let operators = ["+", "-", "*", "/", "^"]
   private static let relations = ["=", "<", ">", "<=", ">=", "≠"]
@@ -25,7 +30,7 @@ struct RandomInputTests {
 
     mutating func expression(_ depth: Int) -> String {
       if depth == 0 || generator.next() % 5 == 0 { return pick(RandomInputTests.atoms) }
-      switch generator.next() % 8 {
+      switch generator.next() % 9 {
       case 0, 1, 2:
         return "(" + expression(depth - 1) + pick(RandomInputTests.operators) + expression(depth - 1) + ")"
       case 3, 4: return pick(RandomInputTests.functions) + "(" + expression(depth - 1) + ")"
@@ -37,6 +42,7 @@ struct RandomInputTests {
         case 2: return "lim(" + expression(depth - 1) + ",x," + pick(RandomInputTests.atoms) + ")"
         default: return "sum(" + expression(depth - 1) + ",k,1," + pick(["5", "n", "∞", "50"]) + ")"
         }
+      case 7: return pick(["dot", "cross"]) + "(" + expression(depth - 1) + "," + expression(depth - 1) + ")"
       default: return pick(["+", "-"]) + expression(depth - 1)
       }
     }
@@ -53,6 +59,7 @@ struct RandomInputTests {
   @Test("Whatever is typed, the app gets an answer or an error back, and not too slowly")
   func everythingTheAppDoes() {
     let count = Int(ProcessInfo.processInfo.environment["MANTISSA_SAMPLES"] ?? "") ?? 400
+    let limit = Self.limit
     var writer = Writer(generator: SplitMix64(seed: 4242 &+ propertySeedOffset &* 7919))
     let calculator = Calculator()
     var slow: [String] = []
@@ -62,11 +69,18 @@ struct RandomInputTests {
       if let path = ProcessInfo.processInfo.environment["MANTISSA_LOG"] {
         try? text.write(toFile: path, atomically: false, encoding: .utf8)
       }
-      let started = Date()
+      let started = Self.cpuSeconds()
       do {
-        let evaluation = try calculator.evaluate(text)
-        _ = evaluation.otherForms
-        _ = Typesetter.nodes(for: evaluation.exact).parserText
+        switch try calculator.compute(text) {
+        case .number(let evaluation):
+          _ = evaluation.otherForms
+          _ = Typesetter.nodes(for: evaluation.exact).parserText
+        case .matrix(let matrix):
+          let nodes = Typesetter.nodes(for: matrix)
+          _ = nodes.parserText
+          _ = nodes.plainText
+          _ = matrix.approximations(precision: 20)
+        }
       } catch {
         if case .unsupported = error { _ = try? calculator.solve(text) }
       }
@@ -79,9 +93,23 @@ struct RandomInputTests {
           _ = PlotSampler.contourLines(of: relation, in: window, columns: 40, rows: 60)
         }
       }
-      // The tests run unoptimised, which is several times slower than the app.
-      if Date().timeIntervalSince(started) > 20 { slow.append(text.replacingOccurrences(of: "\n", with: " ; ")) }
+      if Self.cpuSeconds() - started > limit { slow.append(text.replacingOccurrences(of: "\n", with: " ; ")) }
     }
-    #expect(slow.isEmpty, "took over 20 s: \(slow)")
+    #expect(slow.isEmpty, "took over \(limit) s of processor time: \(slow)")
+  }
+
+  /// The processor time this thread has used, which does not grow when the machine, or another test running beside this one,
+  /// is busy. The test is not asynchronous, so all its work is on one thread.
+  private static func cpuSeconds() -> Double {
+    var time = timespec()
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time)
+    return Double(time.tv_sec) + Double(time.tv_nsec) / 1e9
+  }
+
+  /// How long one input may take. The tests run unoptimised, which is several times slower than the app, and under a
+  /// sanitizer slower again.
+  private static var limit: Double {
+    let sanitized = ProcessInfo.processInfo.environment["DYLD_INSERT_LIBRARIES"]?.contains("san") ?? false
+    return sanitized ? 80 : 20
   }
 }

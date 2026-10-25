@@ -20,6 +20,9 @@ public indirect enum MathNode: Hashable, Sendable, Codable {
   case logarithm(base: [MathNode], argument: [MathNode])
   /// ∫, Σ, lim and d/dx, each with the slots listed under `CalculusKind`.
   case calculus(CalculusKind, [[MathNode]])
+  /// A matrix, or a vector when it has one column: `rows` × `columns` cells, row by row, each a sequence of its own. A cursor
+  /// visits them in that order, so that → goes along a row and on to the next.
+  case matrix(rows: Int, columns: Int, cells: [[MathNode]])
 }
 
 /// The operators of calculus the keyboard can place, and the slots each has, in the order the cursor visits them:
@@ -65,6 +68,7 @@ extension MathNode {
     case .superscript, .group, .function, .absolute: return 1
     case .logarithm: return 2
     case .calculus(let kind, _): return kind.slotCount
+    case .matrix(_, _, let cells): return cells.count
     }
   }
 
@@ -77,6 +81,7 @@ extension MathNode {
     case .function(_, let argument): return argument
     case .logarithm(let base, let argument): return index == 0 ? base : argument
     case .calculus(_, let slots): return slots[index]
+    case .matrix(_, _, let cells): return cells[index]
     }
   }
 
@@ -99,6 +104,9 @@ extension MathNode {
     case .calculus(let kind, var slots):
       slots[index] = content
       return .calculus(kind, slots)
+    case .matrix(let rows, let columns, var cells):
+      cells[index] = content
+      return .matrix(rows: rows, columns: columns, cells: cells)
     }
   }
 

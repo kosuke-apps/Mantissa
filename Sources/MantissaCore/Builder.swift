@@ -41,13 +41,7 @@ struct Builder {
       case .divide: return try a.divided(by: b)
       case .power: return try a.raised(to: b)
       }
-    case .postfix(let op, let operand):
-      let value = try build(operand)
-      switch op {
-      case .factorial: return try Expr.apply(.factorial, [value])
-      case .percent: return value * .fraction(1, 100)
-      case .degree: return angleUnit == .degrees ? value : value * Builder.degreesToRadians
-      }
+    case .postfix(let op, let operand): return try postfix(op, try build(operand))
     case .call(let function, let arguments) where function.isCalculus:
       return try Calculus(builder: self).evaluate(function, arguments)
     case .call(let function, let arguments):
@@ -56,16 +50,31 @@ struct Builder {
       return try call(function, built, argumentMentionsPi: arguments.contains { $0.mentionsPi })
     case .radical(let index, let radicand):
       let value = try build(radicand)
-      guard let index else { return try value.raised(to: .fraction(1, 2)) }
-      return try root(value, index: try build(index))
+      var builtIndex: Expr?
+      if let index { builtIndex = try build(index) }
+      return try radical(index: builtIndex, value)
+    case .matrix: throw .unsupported  // handled by `value`, which knows about matrices
     }
+  }
+
+  func postfix(_ op: PostfixOperator, _ value: Expr) throws(MathError) -> Expr {
+    switch op {
+    case .factorial: return try Expr.apply(.factorial, [value])
+    case .percent: return value * .fraction(1, 100)
+    case .degree: return angleUnit == .degrees ? value : value * Builder.degreesToRadians
+    }
+  }
+
+  func radical(index: Expr?, _ radicand: Expr) throws(MathError) -> Expr {
+    guard let index else { return try radicand.raised(to: .fraction(1, 2)) }
+    return try root(radicand, index: index)
   }
 
   private func root(_ value: Expr, index: Expr) throws(MathError) -> Expr {
     try value.raised(to: Expr.one.divided(by: index))
   }
 
-  private func call(_ function: FunctionName, _ x: [Expr], argumentMentionsPi: Bool) throws(MathError) -> Expr {
+  func call(_ function: FunctionName, _ x: [Expr], argumentMentionsPi: Bool) throws(MathError) -> Expr {
     switch function {
     case .sin, .cos, .tan:
       let argument = angleUnit == .degrees && !argumentMentionsPi ? Builder.radians(fromDegrees: x[0]) : x[0]
@@ -91,6 +100,8 @@ struct Builder {
       .arg:
       return try derivedCall(function, x)
     case .diff, .int, .lim, .sum: throw .unsupported  // handled before the arguments are built
+    case .det, .inverse, .transpose, .trace, .rank, .rref, .dot, .cross, .norm, .identity, .eigvals, .eigvecs:
+      throw .unsupported  // handled by `value`, which knows about matrices
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))
     case .cbrt: return try x[0].raised(to: .fraction(1, 3))
     case .root: return try root(x[0], index: x[1])

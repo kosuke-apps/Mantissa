@@ -10,6 +10,10 @@ enum Glyph: Hashable {
   case absolute
   /// `log` with a small box for its base.
   case logarithm
+  /// A matrix: boxes in a grid between square brackets, `rows` of `columns`.
+  case matrix(rows: Int, columns: Int)
+  /// A short instruction in words, translated (`+ row`).
+  case word(String)
 }
 
 struct KeySpec: Identifiable {
@@ -52,6 +56,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
   case functions
   case trigonometry
   case calculus
+  case matrix
 
   var id: Self { self }
 
@@ -62,6 +67,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
     case .functions: return "Functions and logarithms"
     case .trigonometry: return "Trigonometry"
     case .calculus: return "Calculus"
+    case .matrix: return "Matrices and vectors"
     }
   }
 
@@ -72,6 +78,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
     case .functions: return "Functions"
     case .trigonometry: return "Trig"
     case .calculus: return "Calculus"
+    case .matrix: return "Matrix"
     }
   }
 }
@@ -232,6 +239,49 @@ enum KeyboardLayout {
           digit("0"), digit("1"), digit("2"), KeySpec("power", .power, [.power]),
         ],
       ]
+
+    case .matrix:
+      func size(_ rows: Int, _ columns: Int) -> KeySpec.Alternate {
+        .init(title: "\(rows)×\(columns)", actions: [.matrix(rows: rows, columns: columns)])
+      }
+      // The number pad is where it is on the first page, so that a matrix can be filled in without changing page.
+      return [
+        [
+          // Tapped, a 2×2 matrix; held, the other sizes. A vector is a matrix with one column (or one row).
+          KeySpec(
+            "matrix", .matrix(rows: 2, columns: 2), [.matrix(rows: 2, columns: 2)],
+            alternates: [size(3, 3), size(2, 3), size(3, 2), .init(title: "Iₙ", actions: [.function("identity")])]),
+          KeySpec(
+            "vector", .matrix(rows: 3, columns: 1), [.matrix(rows: 3, columns: 1)],
+            alternates: [size(2, 1), size(4, 1), size(1, 2), size(1, 3)]),
+          digit("7"), digit("8"), digit("9"), symbol("×"),
+        ],
+        [
+          KeySpec(
+            "addRow", .word("+ row"), [.matrixChange(.addRow)],
+            alternates: [.init(title: "− row", actions: [.matrixChange(.removeRow)])]),
+          KeySpec(
+            "addColumn", .word("+ col"), [.matrixChange(.addColumn)],
+            alternates: [.init(title: "− col", actions: [.matrixChange(.removeColumn)])]),
+          digit("4"), digit("5"), digit("6"), symbol("−"),
+        ],
+        [
+          KeySpec(
+            "det", [.function("det")],
+            alternates: ["trace", "rank", "rref"].map(functionAlternate) + [.init(title: "|□|", actions: [.absolute])]),
+          // The inverse and the transpose are powers: A⁻¹ and Aᵀ.
+          KeySpec(
+            "A⁻¹", [.power, .symbol("−"), .symbol("1"), .right],
+            alternates: [.init(title: "Aᵀ", actions: [.power, .symbol("T"), .right])]),
+          digit("1"), digit("2"), digit("3"), symbol("+"),
+        ],
+        [
+          KeySpec("dot", [.function("dot")], alternates: ["cross", "norm"].map(functionAlternate)),
+          KeySpec("eigvals", .text("λ"), [.function("eigvals")], alternates: [functionAlternate("eigvecs")]),
+          digit("0"), symbol("."), symbol(","),
+          KeySpec("power", .power, [.power]),
+        ],
+      ]
     }
   }
 
@@ -309,6 +359,15 @@ enum KeyboardLayout {
     case "d/dx": return "Derivative"
     case "∫": return "Integral"
     case "Σ": return "Sum"
+    case "matrix": return "Matrix"
+    case "vector": return "Vector"
+    case "addRow": return "Add a row"
+    case "addColumn": return "Add a column"
+    case "det": return "Determinant"
+    case "A⁻¹": return "Inverse matrix"
+    case "Aᵀ": return "Transpose"
+    case "dot": return "Dot product"
+    case "eigvals": return "Eigenvalues"
     case "[": return "Open square bracket"
     case "]": return "Close square bracket"
     case "{": return "Open brace"

@@ -180,6 +180,8 @@ private struct ResultView: View {
       switch failure {
       case .divisionByZero: warning("Dividing by zero has no answer.")
       case .noRealAnswer: warning("This has no real answer.")
+      case .sizesDoNotFit: warning("These sizes do not fit together.")
+      case .noInverse: warning("This matrix has no inverse.")
       case .undefinedHere: warning("This is undefined.")
       case .tooLarge: warning("This is too large to work out.")
       case .notSupportedYet: warning("This isn't supported yet.")

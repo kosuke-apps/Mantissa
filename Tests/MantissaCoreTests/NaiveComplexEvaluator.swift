@@ -12,7 +12,7 @@ struct NaiveComplexEvaluator {
     let p = precision
     switch syntax {
     case .number(let value): return ComplexDecimal(real: BigDecimal(value, precision: p))
-    case .symbol, .infinity: throw .notNumeric
+    case .symbol, .infinity, .matrix: throw .notNumeric
     case .constant(let constant):
       switch constant {
       case .pi: return ComplexDecimal(real: BigDecimal.pi(precision: p))

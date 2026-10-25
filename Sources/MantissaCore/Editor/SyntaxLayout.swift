@@ -96,6 +96,10 @@ enum SyntaxLayout {
     case .radical(let index, let radicand):
       return Piece(
         nodes: [.radical(index: index.map { piece($0).nodes }, radicand: piece(radicand).nodes)], level: Level.atom)
+    case .matrix(let rows):
+      return Piece(
+        nodes: [.matrix(rows: rows.count, columns: rows[0].count, cells: rows.flatMap { $0 }.map { piece($0).nodes })],
+        level: Level.atom)
     }
   }
 

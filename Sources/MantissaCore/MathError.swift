@@ -14,4 +14,9 @@ public enum MathError: Error, Equatable, Sendable {
   case unsupported
   /// A limit whose two sides disagree or that oscillates, an integral or a series that does not converge: there is no value.
   case undefined
+  /// The sizes of the matrices do not fit the operation: adding a 2×2 and a 3×3, multiplying a 2×3 by a 2×3, the determinant of a
+  /// matrix that is not square.
+  case dimensionMismatch
+  /// A matrix with no inverse: its determinant is zero.
+  case singular
 }

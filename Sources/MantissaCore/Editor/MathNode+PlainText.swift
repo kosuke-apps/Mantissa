@@ -156,6 +156,11 @@ extension MathNode {
       return "log" + written + "(" + argument.plainText + ")"
     case .calculus(let kind, let slots):
       return kind.functionName + "(" + slots.map(\.plainText).joined(separator: ", ") + ")"
+    case .matrix(let rows, let columns, let cells):
+      let lines = (0..<rows).map { row in
+        "[" + (0..<columns).map { cells[row * columns + $0].plainText }.joined(separator: ", ") + "]"
+      }
+      return "[" + lines.joined(separator: ", ") + "]"
     }
   }
 }

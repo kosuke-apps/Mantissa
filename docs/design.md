@@ -426,3 +426,33 @@ removes the operator. `parserText` writes the function the parser knows (`int(f,
 `sum(f,k,a,b)`, `lim(f,x,a)`, `diff(f,x)`); an empty slot gives an empty argument, which the parser reports as unfinished. The view
 draws ∫ with its ends beside it and `dx` after the integrand, Σ with the index below and the end above, lim with `x → a` below, and
 d/dx as a small fraction in front of the expression in brackets.
+
+## Matrices
+
+`Expr` has no matrix, and making it hold one would touch every function that walks an expression. A matrix is a separate value,
+`Matrix` (rows × columns of `Expr`, kept expanded so that equal matrices are `==`), and the code that turns syntax into values knows
+both: `Builder.value` returns a `Value`, a number (`Expr`) or a matrix. A formula with no matrix in it goes straight to `Builder.build`
+as before; `Syntax.involvesMatrix` says which. A 1 × 1 matrix is the number in it, so a row times a column, `dot(a, b)` and
+`det(A)` come out as numbers. `Calculator.compute` returns a `Computation` and `evaluate` is the number-only form (a matrix result
+there is `unsupported(.matrix)`).
+
+- **Reading**: `[[1,2],[3,4]]` (or with braces). The lexer marks a parenthesis written as `[` or `{`, and the parser reads `[[` as a
+  matrix when rows of cells in brackets follow and otherwise as brackets round a formula, so `[[1+2]*3]` is 9. Functions: `det`,
+  `inverse` (`inv`), `transpose`, `trace`, `rank`, `rref`, `dot`, `cross`, `norm`, `identity`, `eigvals` (`eigenvalues`), `eigvecs`
+  (`eigenvectors`); they need their parenthesis, like `mod` and `max`, so that letters side by side stay products. `A^T` is the
+  transpose, `A^(-1)` the inverse, `|A|` the determinant of a square matrix and the length of a vector.
+- **Exactness**: a matrix of numbers (fractions, roots, π, `i`) is reduced by Gauss–Jordan elimination in which an entry is zero when it
+  is zero exactly or to 40 digits (`Expr.isZeroEntry`; a number is only exactly zero). With letters in it a determinant is written out
+  by cofactors (up to 6 × 6) and an inverse as the adjugate over the determinant (up to 4 × 4); rank, echelon form and eigenvalues
+  are not worked out for letters, because which pivot is zero depends on their values. Powers are by repeated squaring (up to 1000, and
+  16 with letters). Eigenvalues are the roots of `det(A − λI)` that the equation solver has in closed form (up to 5 × 5), each as many
+  times as the polynomial and its derivatives vanish there; eigenvectors are the null spaces of `A − λI`, scaled to whole numbers where
+  they are fractions, and a matrix with too few of them is `unsupported`. A result is given up (`overflow`) when its entries grow
+  past 100 000 nodes.
+- **Errors**: `MathError.dimensionMismatch` (sizes that do not fit, a determinant of a non-square matrix) and `.singular` (no inverse), shown
+  as "These sizes do not fit together." and "This matrix has no inverse.".
+- **In the editor**: `MathNode.matrix(rows:columns:cells:)` has a slot for each cell, visited row by row, so the arrows need no
+  change. A comma in a cell goes to the next cell and return to the first cell of the next row (both do nothing at the end);
+  `MathEditor.change(matrix:)` adds or removes a row or column of the innermost matrix the cursor is in. `parserText` is
+  `[[a,b],[c,d]]`, so an empty cell is an unfinished formula. The view draws a grid between square brackets, and an exponent that
+  follows a matrix sits at its top.

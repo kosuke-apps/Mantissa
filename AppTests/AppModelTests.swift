@@ -589,4 +589,88 @@ final class AppModelTests: XCTestCase {
       }
     }
   }
+
+  /// Types a matrix with the keys: a comma goes to the next cell and return to the next row.
+  private func typeMatrix(_ model: AppModel, _ rows: [[String]]) {
+    model.press(.matrix(rows: rows.count, columns: rows[0].count))
+    for (index, row) in rows.enumerated() {
+      for (column, cell) in row.enumerated() {
+        for character in cell { model.press(.symbol(String(character))) }
+        if column < row.count - 1 { model.press(.symbol(",")) }
+      }
+      if index < rows.count - 1 { model.press(.newLine) }
+    }
+  }
+
+  func testTypingAMatrixAndItsInverseGivesTheInverseAndItsDecimals() async {
+    let model = makeModel()
+    typeMatrix(model, [["1", "2"], ["3", "4"]])
+    XCTAssertEqual(model.editor.text, "[[1,2],[3,4]]")
+    // The matrix as typed is not an answer.
+    let typed = await answer(model, timeout: 0.3)
+    XCTAssertEqual(typed, .empty)
+
+    model.press(.right)  // out of the matrix
+    model.press([.power, .symbol("−"), .symbol("1")])
+    let outcome = await answer(model)
+    guard case .answer(let answer) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    guard case .matrix(let rows, let columns, _)? = answer.exact.first else { return XCTFail("not a matrix") }
+    XCTAssertEqual(rows, 2)
+    XCTAssertEqual(columns, 2)
+    XCTAssertEqual(answer.exact.plainText, "[[−2, 1], [3/2, −1/2]]")
+    XCTAssertEqual(answer.decimal?.plainText, "[[−2, 1], [1.5, −0.5]]")
+  }
+
+  func testTheRowAndColumnKeysChangeTheMatrixTheCursorIsIn() {
+    let model = makeModel()
+    model.press(.matrix(rows: 1, columns: 1))
+    model.press(.symbol("1"))
+    model.press(.matrixChange(.addColumn))
+    model.press(.symbol(","))
+    model.press(.symbol("2"))
+    model.press(.matrixChange(.addRow))
+    model.press(.newLine)
+    model.press([.symbol("3"), .symbol(","), .symbol("4")])
+    XCTAssertEqual(model.editor.text, "[[1,2],[3,4]]")
+    model.press(.matrixChange(.removeColumn))
+    XCTAssertEqual(model.editor.text, "[[1],[3]]")
+  }
+
+  func testMatricesThatDoNotFitOrHaveNoInverseSayWhy() async {
+    let model = makeModel()
+    typeMatrix(model, [["1", "2"], ["3", "4"]])
+    model.press(.right)
+    model.press(.symbol("+"))
+    typeMatrix(model, [["1", "2", "3"]])
+    var outcome = await answer(model)
+    XCTAssertEqual(outcome, .failure(.sizesDoNotFit))
+
+    model.clearAll()
+    typeMatrix(model, [["1", "2"], ["2", "4"]])
+    model.press(.right)
+    model.press([.power, .symbol("−"), .symbol("1")])
+    outcome = await answer(model)
+    XCTAssertEqual(outcome, .failure(.noInverse))
+  }
+
+  func testAFunctionOfAMatrixIsANumber() async {
+    let model = makeModel()
+    model.press(.function("det"))
+    typeMatrix(model, [["1", "2"], ["3", "4"]])
+    let outcome = await answer(model)
+    guard case .answer(let answer) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(answer.exact.parserText, "−2")
+  }
+
+  func testTheMatrixPageHasTheNumberPadAndEveryKeyAlternativeTypesSomething() {
+    let keys = KeyboardLayout.rows(for: .matrix).flatMap { $0 }
+    for digit in "0123456789" { XCTAssertTrue(keys.contains { $0.id == String(digit) }, "no \(digit)") }
+    for key in keys {
+      for alternate in key.alternates { XCTAssertFalse(alternate.actions.isEmpty, "\(key.id) \(alternate.title)") }
+    }
+    // Tapped, the matrix key is 2×2, and its alternatives are other sizes.
+    let matrix = keys.first { $0.id == "matrix" }
+    XCTAssertEqual(matrix?.actions, [.matrix(rows: 2, columns: 2)])
+    XCTAssertEqual(matrix?.alternates.map(\.title), ["3×3", "2×3", "3×2", "Iₙ"])
+  }
 }

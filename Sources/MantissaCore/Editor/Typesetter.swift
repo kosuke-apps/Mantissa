@@ -8,6 +8,21 @@ public enum Typesetter {
     typeset(expression).nodes
   }
 
+  /// A matrix, its entries typeset.
+  public static func nodes(for matrix: Matrix) -> [MathNode] {
+    [.matrix(rows: matrix.rowCount, columns: matrix.columnCount, cells: matrix.entries.map { nodes(for: $0) })]
+  }
+
+  /// A matrix of decimals, each rounded to `significantDigits` digits.
+  public static func nodes(for matrix: Matrix, decimals: [BigDecimal], significantDigits: Int) -> [MathNode] {
+    precondition(decimals.count == matrix.entries.count)
+    return [
+      .matrix(
+        rows: matrix.rowCount, columns: matrix.columnCount,
+        cells: decimals.map { nodes(for: $0, significantDigits: significantDigits) })
+    ]
+  }
+
   /// A decimal rounded to `significantDigits` digits: `0.0125`, `3.14159265`, or `1.5 × 10^30` when it is very large or
   /// very small. Trailing zeros are not shown.
   public static func nodes(for decimal: BigDecimal, significantDigits: Int) -> [MathNode] {

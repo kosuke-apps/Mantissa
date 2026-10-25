@@ -41,6 +41,12 @@ extension MathNode {
       case .derivative: break
       }
       return kind.functionName + "(" + arguments.joined(separator: ",") + ")"
+    case .matrix(let rows, let columns, let cells):
+      // `[[1,2],[3,4]]`; an empty cell leaves `,,` or `[]`, which the parser rejects.
+      let lines = (0..<rows).map { row in
+        "[" + (0..<columns).map { cells[row * columns + $0].parserText }.joined(separator: ",") + "]"
+      }
+      return "[" + lines.joined(separator: ",") + "]"
     }
   }
 

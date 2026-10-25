@@ -3,7 +3,7 @@
 A free scientific and graphing calculator for iPhone. It works entirely offline, shows exact results (fractions,
 roots, π), solves equations and keeps a history. No ads, no accounts, no network access.
 
-> **Status: early release (0.22).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
+> **Status: early release (0.26).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
 > is not on the App Store: install it as described under [Installing](#installing). Expect rough edges and answers the
 > solver cannot give yet (it says so rather than guessing).
 
@@ -56,6 +56,13 @@ or from below.
   another (`t = (v − u)/a`).
 - Hold a key that has a dot in its corner and slide to the alternative you want (a tick is felt on each), then let go; AC clears
   every line, and the parentheses key can put in a single `(` or `)`.
+- Matrices and vectors, worked out exactly: sums, products, powers (`[[1,2],[3,4]]^(-1)` is `[[−2, 1], [3/2, −1/2]]`), the
+  determinant, inverse, transpose, trace, rank, reduced row echelon form, eigenvalues and eigenvectors, the dot and cross
+  products and the length of a vector, with numbers, roots, `i` or letters in the entries. A Matrix page of the keyboard
+  places a matrix of any size up to 10 × 10 with a cell for each entry (a comma moves to the next cell, return to the next row),
+  and adds or removes rows and columns. A matrix written as text, `[[1,2],[3,4]]`, is read too.
+- The letters keyboard (`abc`) has Latin letters with a number row and shift, the Greek alphabet and a page of symbols, and is as tall
+  as the maths keyboard, so the formula does not move when it opens.
 - Tap the formula to put the cursor there, also inside a fraction or an exponent.
 - Paste a formula from anywhere (`2x^2 + sqrt(3)`) and it is laid out like one typed on the keyboard; hold the answer to copy
   it as text or to use it as the next input; hold the delete or arrow key to repeat it.

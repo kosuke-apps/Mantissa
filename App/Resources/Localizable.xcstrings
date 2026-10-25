@@ -1453,6 +1453,182 @@
           }
         }
       }
+    },
+    "These sizes do not fit together.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大きさが合わないので計算できません．"
+          }
+        }
+      }
+    },
+    "This matrix has no inverse.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この行列には逆行列がありません．"
+          }
+        }
+      }
+    },
+    "Matrix": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行列"
+          }
+        }
+      }
+    },
+    "Matrices and vectors": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行列とベクトル"
+          }
+        }
+      }
+    },
+    "+ row": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "＋行"
+          }
+        }
+      }
+    },
+    "+ col": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "＋列"
+          }
+        }
+      }
+    },
+    "− row": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−行"
+          }
+        }
+      }
+    },
+    "− col": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−列"
+          }
+        }
+      }
+    },
+    "Vector": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ベクトル"
+          }
+        }
+      }
+    },
+    "Add a row": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行を追加"
+          }
+        }
+      }
+    },
+    "Add a column": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列を追加"
+          }
+        }
+      }
+    },
+    "Determinant": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行列式"
+          }
+        }
+      }
+    },
+    "Inverse matrix": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逆行列"
+          }
+        }
+      }
+    },
+    "Transpose": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "転置"
+          }
+        }
+      }
+    },
+    "Dot product": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内積"
+          }
+        }
+      }
+    },
+    "Eigenvalues": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固有値"
+          }
+        }
+      }
     }
   }
 }

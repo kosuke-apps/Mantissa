@@ -32,8 +32,8 @@ public struct MathCursor: Hashable, Sendable, Codable {
 /// user interface and no dependence on the rest of the engine except `text`, which writes the lines in the form the
 /// parser reads.
 public struct MathEditor: Equatable, Sendable {
-  public private(set) var lines: [[MathNode]]
-  public private(set) var cursor: MathCursor
+  public internal(set) var lines: [[MathNode]]
+  public internal(set) var cursor: MathCursor
 
   public init() {
     lines = [[]]
@@ -61,12 +61,12 @@ public struct MathEditor: Equatable, Sendable {
 
   // MARK: Reading and editing the sequence at the cursor
 
-  private static func sequence(in root: [MathNode], path: ArraySlice<MathCursor.Step>) -> [MathNode] {
+  static func sequence(in root: [MathNode], path: ArraySlice<MathCursor.Step>) -> [MathNode] {
     guard let step = path.first else { return root }
     return sequence(in: root[step.index].slot(step.slot), path: path.dropFirst())
   }
 
-  private static func update<T>(
+  static func update<T>(
     _ root: inout [MathNode], path: ArraySlice<MathCursor.Step>, _ body: (inout [MathNode]) -> T
   ) -> T {
     guard let step = path.first else { return body(&root) }
@@ -77,12 +77,12 @@ public struct MathEditor: Equatable, Sendable {
     return result
   }
 
-  private var currentSequence: [MathNode] {
+  var currentSequence: [MathNode] {
     Self.sequence(in: lines[cursor.line], path: cursor.path[...])
   }
 
   /// The node that holds the sequence the cursor is in, or `nil` when the cursor is in the line itself.
-  private var container: MathNode? {
+  var container: MathNode? {
     guard let step = cursor.path.last else { return nil }
     return Self.sequence(in: lines[cursor.line], path: cursor.path.dropLast())[step.index]
   }
@@ -110,6 +110,8 @@ public struct MathEditor: Equatable, Sendable {
     switch text {
     case "(": insertGroup()
     case ")": closeEnclosing()
+    // A comma in the cell of a matrix goes on to the next cell.
+    case "," where goToNextCell(): break
     default: insertNode(.symbol(text))
     }
   }
@@ -126,7 +128,7 @@ public struct MathEditor: Equatable, Sendable {
   }
 
   /// Inserts a structure at the cursor and moves into slot `slot` of it.
-  private mutating func insertStructure(_ node: MathNode, enteringSlot slot: Int = 0) {
+  mutating func insertStructure(_ node: MathNode, enteringSlot slot: Int = 0) {
     let index = edit { sequence, offset -> Int in
       sequence.insert(node, at: offset)
       return offset
@@ -310,6 +312,8 @@ public struct MathEditor: Equatable, Sendable {
 
   /// Starts a new line after the current one, for the next equation of a system.
   public mutating func newLine() {
+    // In a matrix, a new line is the start of the next row.
+    if goToNextRow() { return }
     lines.insert([], at: cursor.line + 1)
     cursor = MathCursor(line: cursor.line + 1)
   }

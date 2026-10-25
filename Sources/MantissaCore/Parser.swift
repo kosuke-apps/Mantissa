@@ -166,6 +166,7 @@ struct Parser {
       advance()
       return .infinity
     case .leftParen:
+      if positioned.isBracket, let matrix = parseMatrix() { return matrix }
       advance()
       let inner = try parseExpression()
       guard consume(.rightParen) else {
@@ -189,6 +190,37 @@ struct Parser {
     default:
       throw unexpected()
     }
+  }
+
+  /// A matrix written as rows of cells in brackets, `[[1, 2], [3, 4]]`; `nil` (with nothing consumed) when what follows is not
+  /// one, so that `[[1 + 2] × 3]` is still brackets round a formula.
+  private mutating func parseMatrix() -> Syntax? {
+    let start = index
+    let savedDepth = barDepth
+    func opensBracket(_ token: PositionedToken?) -> Bool { token?.token == .leftParen && token?.isBracket == true }
+    guard opensBracket(current), index + 1 < tokens.count, opensBracket(tokens[index + 1]) else { return nil }
+    func fail() -> Syntax? {
+      index = start
+      barDepth = savedDepth
+      return nil
+    }
+    advance()
+    var rows: [[Syntax]] = []
+    repeat {
+      guard opensBracket(current) else { return fail() }
+      advance()
+      var cells: [Syntax] = []
+      repeat {
+        guard let cell = try? parseExpression() else { return fail() }
+        cells.append(cell)
+      } while consume(.comma)
+      guard consume(.rightParen) else { return fail() }
+      rows.append(cells)
+    } while consume(.comma)
+    guard consume(.rightParen), rows.count <= Matrix.maxDimension, rows.allSatisfy({ $0.count == rows[0].count }),
+      rows[0].count <= Matrix.maxDimension
+    else { return fail() }
+    return .matrix(rows)
   }
 
   private mutating func parseRadicalOperand() throws(ParseError) -> Syntax {

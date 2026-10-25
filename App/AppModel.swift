@@ -16,6 +16,10 @@ enum KeyAction: Hashable {
   case function(String)
   /// ∫, Σ, lim or d/dx with its slots.
   case calculus(CalculusKind)
+  /// A matrix of this size with empty cells; a vector has one column.
+  case matrix(rows: Int, columns: Int)
+  /// A row or column added to, or removed from, the matrix the cursor is in.
+  case matrixChange(MathEditor.MatrixChange)
   case left, right, newLine, backspace
 }
 
@@ -44,6 +48,10 @@ final class AppModel {
   enum Failure: Equatable {
     case divisionByZero
     case noRealAnswer
+    /// The matrices are of sizes that do not fit the operation.
+    case sizesDoNotFit
+    /// A matrix whose determinant is zero.
+    case noInverse
     case tooLarge
     case notSupportedYet
     /// A limit whose sides disagree, an integral or a series that diverges.
@@ -239,6 +247,8 @@ final class AppModel {
     case .logarithm: editor.insertLogarithm()
     case .function(let name): editor.insertFunction(name)
     case .calculus(let kind): editor.insertCalculus(kind)
+    case .matrix(let rows, let columns): editor.insertMatrix(rows: rows, columns: columns)
+    case .matrixChange(let change): editor.change(matrix: change)
     case .left: editor.moveLeft()
     case .right: editor.moveRight()
     case .newLine: editor.newLine()
@@ -322,7 +332,11 @@ final class AppModel {
     for text: String, calculator: Calculator, digits: Int, solveFor: String? = nil
   ) -> Outcome {
     do {
-      let evaluation = try calculator.evaluate(text)
+      let evaluation: Evaluation
+      switch try calculator.compute(text) {
+      case .matrix(let matrix): return answer(for: matrix, text: text, digits: digits)
+      case .number(let number): evaluation = number
+      }
       var exact = Typesetter.nodes(for: evaluation.exact)
       // An answer that says what was typed (a lone number, `x²`) adds nothing, unless it has other forms to show.
       let saysWhatWasTyped = exact.parserText == text
@@ -368,12 +382,29 @@ final class AppModel {
     }
   }
 
+  /// A matrix, with its decimals beneath it when some entry is not a whole number.
+  nonisolated private static func answer(for matrix: Matrix, text: String, digits: Int) -> Outcome {
+    let exact = Typesetter.nodes(for: matrix)
+    var decimal: [MathNode]?
+    if let values = matrix.approximations(precision: digits),
+      matrix.entries.contains(where: { $0.rational?.isInteger != true })
+    {
+      decimal = Typesetter.nodes(for: matrix, decimals: values, significantDigits: digits)
+    }
+    // A matrix that is just what was typed says nothing new.
+    let saysWhatWasTyped = exact.parserText == text
+    if saysWhatWasTyped && decimal == nil { return .empty }
+    return .answer(Answer(exact: saysWhatWasTyped ? [] : exact, decimal: decimal, hasNoRealValue: false))
+  }
+
   nonisolated private static func failure(_ error: MathError) -> Outcome {
     switch error {
     case .divisionByZero: return .failure(.divisionByZero)
     case .domain, .notNumeric: return .failure(.noRealAnswer)
     case .noValue: return .failure(.undefinedHere)
     case .overflow: return .failure(.tooLarge)
+    case .dimensionMismatch: return .failure(.sizesDoNotFit)
+    case .singular: return .failure(.noInverse)
     case .unsupported: return .failure(.notSupportedYet)
     case .undefined: return .failure(.doesNotExist)
     }

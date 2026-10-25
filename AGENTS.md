@@ -82,6 +82,12 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     every answer by differentiating it), `Limits` (substitution, then sequences at high precision and recognising the value),
     `Series` (sums), `GaussianIntegrals`, `QuadraticRadicals` (√ of a quadratic by an ansatz), `Simplify` (one fraction when that is smaller), `Calculus` (the `diff`, `int`, `lim`, `sum` functions, which
     the builder works out while it turns the syntax into an `Expr`).
+  - `Sources/MantissaCore/Matrix/`: `Matrix` (exact entries, row by row, up to 10 × 10), `+Arithmetic` (sum, product, power, trace),
+    `+Elimination` (determinant by cofactors for letters and elimination for numbers, inverse, rank, reduced row echelon form),
+    `+Vectors` (dot, cross, length), `+Eigen` (eigenvalues from the characteristic polynomial by the equation solver, eigenvectors
+    from the null spaces), `Builder+Matrix` (`Value` is a number or a matrix; `Builder.value` works out a formula that has matrices in it
+    and hands everything else to `build`). `Calculator.compute` returns a `Computation` (a number or a matrix); `evaluate` is the
+    number-only form.
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit; `Builder+Functions.swift`: the functions that
     are written with others (`mod`, `min`, `max`, `sign`, `re`, `im`, `conj`, `arg`, `acot`, `coth`, …). `Calculator.swift`: `evaluate(_:)` returns the
@@ -109,7 +115,9 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 6. Calculus: derivatives, indefinite and definite integrals (improper too), limits, sums and series, with the keyboard page
    and structured ∫, Σ, lim and d/dx in the editor (`MathNode.calculus`, written as `int(…)`, `sum(…)`, `lim(…)`, `diff(…)`)
    (done).
-7. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
+7. Matrices and vectors (`MathNode.matrix`, written `[[1,2],[3,4]]`; a comma in a cell goes to the next cell, return to the next row),
+   with a keyboard page that has the number pad (done).
+8. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
    accessibility; running on the author's iPhone.
 
 ## Commands

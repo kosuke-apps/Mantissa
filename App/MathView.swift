@@ -98,17 +98,43 @@ struct MathLine: View {
     case caret
     case box
     case node(Int)
+    /// A matrix and the exponent right after it (`A²`, `A⁻¹`), which sits at the top of the matrix and not at its middle.
+    case matrixWithExponent(Int)
   }
 
   private var items: [Item] {
     var result: [Item] = []
     let cursorHere = cursor?.path.isEmpty ?? false
-    for index in 0...nodes.count {
+    var index = 0
+    while index <= nodes.count {
       if cursorHere && cursor?.offset == index { result.append(.caret) }
-      if index < nodes.count { result.append(.node(index)) }
+      if index < nodes.count {
+        if case .matrix = nodes[index], index + 1 < nodes.count, case .superscript = nodes[index + 1],
+          !(cursorHere && cursor?.offset == index + 1)
+        {
+          result.append(.matrixWithExponent(index))
+          index += 2
+          continue
+        }
+        result.append(.node(index))
+      }
+      index += 1
     }
     if nodes.isEmpty && placeholder { result.append(.box) }
     return result
+  }
+
+  /// The node at `index`, drawn, and the places the cursor can be put around it.
+  private func nodeView(_ index: Int) -> some View {
+    MathNodeView(
+      node: nodes[index], size: size, cursor: childCursor(index), isSign: isSign(index), address: address, index: index
+    )
+    .background(
+      spotReader { frame in
+        var spots = [spot(at: index, x: frame.minX, y: frame.midY)]
+        if index == nodes.count - 1 { spots.append(spot(at: nodes.count, x: frame.maxX, y: frame.midY)) }
+        return spots
+      })
   }
 
   /// Whether the node at `index` is a plus or minus that is a sign (at the start, or after an operator or a comma) and not
@@ -146,16 +172,12 @@ struct MathLine: View {
         case .box:
           PlaceholderBox(size: size).background(spotReader { [spot(at: 0, x: $0.midX, y: $0.midY)] })
         case .node(let index):
-          MathNodeView(
-            node: nodes[index], size: size, cursor: childCursor(index), isSign: isSign(index), address: address,
-            index: index
-          )
-          .background(
-            spotReader { frame in
-              var spots = [spot(at: index, x: frame.minX, y: frame.midY)]
-              if index == nodes.count - 1 { spots.append(spot(at: nodes.count, x: frame.maxX, y: frame.midY)) }
-              return spots
-            })
+          nodeView(index)
+        case .matrixWithExponent(let index):
+          HStack(alignment: .top, spacing: size * 0.05) {
+            nodeView(index)
+            nodeView(index + 1)
+          }
         }
       }
     }
@@ -340,6 +362,28 @@ private struct MathNodeView: View {
     case .calculus(let kind, let slots):
       calculus(kind, slots)
 
+    case .matrix(let rows, let columns, let cells):
+      // The rows and columns line up in a grid, with a square bracket at each side as tall as the whole.
+      Grid(horizontalSpacing: size * 0.8, verticalSpacing: size * 0.3) {
+        ForEach(0..<rows, id: \.self) { row in
+          GridRow {
+            ForEach(0..<columns, id: \.self) { column in
+              // Every cell is as tall as a line of text, so that the rows do not change height with the cursor.
+              slot(cells[row * columns + column], row * columns + column)
+                .frame(minWidth: size * 0.6, minHeight: size * 1.2)
+            }
+          }
+        }
+      }
+      .padding(.horizontal, size * 0.4)
+      .padding(.vertical, size * 0.1)
+      .overlay(alignment: .leading) {
+        BracketShape(opensRight: true).stroke(lineWidth: max(1, size * 0.05)).frame(width: size * 0.18)
+      }
+      .overlay(alignment: .trailing) {
+        BracketShape(opensRight: false).stroke(lineWidth: max(1, size * 0.05)).frame(width: size * 0.18)
+      }
+
     case .absolute(let content):
       slot(content, 0)
         .padding(.horizontal, size * 0.22)
@@ -401,6 +445,22 @@ private struct ParenShape: Shape {
     let far = opensRight ? rect.minX : rect.maxX
     path.move(to: CGPoint(x: near, y: rect.minY))
     path.addQuadCurve(to: CGPoint(x: near, y: rect.maxY), control: CGPoint(x: far, y: rect.midY))
+    return path
+  }
+}
+
+/// A square bracket: `[` when it opens to the right.
+private struct BracketShape: Shape {
+  let opensRight: Bool
+
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    let near = opensRight ? rect.maxX : rect.minX
+    let far = opensRight ? rect.minX : rect.maxX
+    path.move(to: CGPoint(x: near, y: rect.minY))
+    path.addLine(to: CGPoint(x: far, y: rect.minY))
+    path.addLine(to: CGPoint(x: far, y: rect.maxY))
+    path.addLine(to: CGPoint(x: near, y: rect.maxY))
     return path
   }
 }

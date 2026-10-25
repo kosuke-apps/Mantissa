@@ -188,6 +188,7 @@ struct ExprPropertyTests {
     case .postfix(let op, let operand): return .postfix(op, go(operand))
     case .call(let function, let arguments): return .call(function, arguments.map(go))
     case .radical(let index, let radicand): return .radical(index: index.map(go), radicand: go(radicand))
+    case .matrix(let rows): return .matrix(rows.map { $0.map(go) })
     }
   }
 }

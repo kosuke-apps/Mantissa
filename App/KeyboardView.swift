@@ -276,7 +276,9 @@ private struct HeldKey: View {
       .accessibilityAddTraits(.isButton)
       .accessibilityAction { perform(spec.actions) }
       .accessibilityActions {
-        ForEach(spec.alternates) { alternate in Button(alternate.title) { perform(alternate.actions) } }
+        ForEach(spec.alternates) { alternate in
+          Button(LocalizedStringKey(alternate.title)) { perform(alternate.actions) }
+        }
       }
   }
 
@@ -341,7 +343,7 @@ private struct HeldKey: View {
           if let glyph = option.glyph {
             GlyphView(glyph: glyph)
           } else {
-            Text(option.title ?? "").font(.system(size: 21)).lineLimit(1).minimumScaleFactor(0.7)
+            Text(LocalizedStringKey(option.title ?? "")).font(.system(size: 21)).lineLimit(1).minimumScaleFactor(0.7)
           }
         }
         .foregroundStyle(selected ? Color.white : Color.primary)
@@ -412,6 +414,25 @@ private struct GlyphView: View {
         box
         Text("|").font(.system(size: 24))
       }
+    case .matrix(let rows, let columns):
+      // Small boxes in a grid between square brackets; a vector is one column of them.
+      HStack(spacing: 2) {
+        Text("[").font(.system(size: 30, weight: .light))
+        VStack(spacing: 2) {
+          ForEach(0..<rows, id: \.self) { _ in
+            HStack(spacing: 2) {
+              ForEach(0..<columns, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 1.5)
+                  .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 1.5]))
+                  .frame(width: 7, height: 8)
+              }
+            }
+          }
+        }
+        Text("]").font(.system(size: 30, weight: .light))
+      }
+    case .word(let key):
+      Text(LocalizedStringKey(key)).font(.system(size: 16)).minimumScaleFactor(0.6).lineLimit(1)
     }
   }
 }
