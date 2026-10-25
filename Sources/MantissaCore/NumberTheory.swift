@@ -81,9 +81,13 @@ enum NumberTheory {
   /// Results beyond this many bits (about 21 000 digits) are refused: nobody can read them and they cost real time.
   static let maxExactBits = 70_000
 
+  /// The largest `n` whose factorial is within `maxExactBits` (6265! has 69 991 bits and 6266! has 70 003), so that a larger
+  /// argument (`(10!)!`) is refused without multiplying all the way up to the limit. A test checks it against `maxExactBits`.
+  static let largestFactorialArgument = 6265
+
   /// `n!`, or `nil` when `n` is negative or the result would be larger than `maxExactBits`.
   static func factorial(_ n: Int) -> BigInt? {
-    guard n >= 0 else { return nil }
+    guard n >= 0, n <= largestFactorialArgument else { return nil }
     var result = BigInt(1)
     if n >= 2 {
       for factor in 2...n {

@@ -56,6 +56,15 @@ struct NumberTheoryTests {
     #expect(NumberTheory.factorial(20) == BigInt("2432902008176640000"))
     #expect(NumberTheory.factorial(-1) == nil)
     #expect(NumberTheory.factorial(100_000) == nil)
+    // The edge the quick refusal uses is the real one: the last factorial within the limit, and the next one beyond it.
+    let edge = NumberTheory.largestFactorialArgument
+    let last = NumberTheory.factorial(edge)
+    #expect(last != nil)
+    #expect((last?.bitWidth ?? Int.max) <= NumberTheory.maxExactBits)
+    #expect(((last ?? BigInt(1)) * BigInt(edge + 1)).bitWidth > NumberTheory.maxExactBits)
+    #expect(NumberTheory.factorial(edge + 1) == nil)
+    // A factorial of a factorial is refused as soon as it is seen, whatever the first one is.
+    #expect(NumberTheory.factorial(Int.max) == nil)
     #expect(NumberTheory.combinations(5, 2) == BigInt(10))
     #expect(NumberTheory.combinations(52, 5) == BigInt(2_598_960))
     #expect(NumberTheory.combinations(10, 0) == BigInt(1))

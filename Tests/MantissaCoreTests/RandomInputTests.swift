@@ -106,10 +106,21 @@ struct RandomInputTests {
     return Double(time.tv_sec) + Double(time.tv_nsec) / 1e9
   }
 
-  /// How long one input may take. The tests run unoptimised, which is several times slower than the app, and under a
-  /// sanitizer slower again.
+  /// How long one input may take, in seconds of processor time. The tests run unoptimised, which is several times slower than the
+  /// app, and under a sanitizer slower again. `MANTISSA_TIME_LIMIT=n` sets it.
   private static var limit: Double {
-    let sanitized = ProcessInfo.processInfo.environment["DYLD_INSERT_LIBRARIES"]?.contains("san") ?? false
-    return sanitized ? 80 : 20
+    if let text = ProcessInfo.processInfo.environment["MANTISSA_TIME_LIMIT"], let seconds = Double(text) {
+      return seconds
+    }
+    return runsUnderSanitizer ? 80 : 20
+  }
+
+  /// Whether a sanitizer runtime is loaded into this process, found by looking for a symbol only it has; the environment
+  /// variable Xcode sets for its own runs is not there when `swift test --sanitize=…` runs the tests.
+  private static var runsUnderSanitizer: Bool {
+    guard let handle = dlopen(nil, RTLD_NOW) else { return false }
+    defer { dlclose(handle) }
+    let names: [String] = ["__asan_init", "__tsan_init", "__ubsan_handle_add_overflow"]
+    return names.contains(where: { name in dlsym(handle, name) != nil })
   }
 }
