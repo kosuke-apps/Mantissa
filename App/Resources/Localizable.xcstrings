@@ -1255,6 +1255,204 @@
           }
         }
       }
+    },
+    "Math keys": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数式キー"
+          }
+        }
+      }
+    },
+    "Latin letters": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英字"
+          }
+        }
+      }
+    },
+    "Greek letters": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ギリシャ文字"
+          }
+        }
+      }
+    },
+    "Symbols": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記号"
+          }
+        }
+      }
+    },
+    "Latin": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英字"
+          }
+        }
+      }
+    },
+    "Greek": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ギリシャ"
+          }
+        }
+      }
+    },
+    "Shift": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シフト"
+          }
+        }
+      }
+    },
+    "Open square bracket": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角括弧を開く"
+          }
+        }
+      }
+    },
+    "Close square bracket": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角括弧を閉じる"
+          }
+        }
+      }
+    },
+    "Open brace": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "波括弧を開く"
+          }
+        }
+      }
+    },
+    "Close brace": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "波括弧を閉じる"
+          }
+        }
+      }
+    },
+    "Vertical bar": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "縦線"
+          }
+        }
+      }
+    },
+    "Semicolon": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セミコロン"
+          }
+        }
+      }
+    },
+    "To the power of": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "べき乗"
+          }
+        }
+      }
+    },
+    "Slash": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スラッシュ"
+          }
+        }
+      }
+    },
+    "Squared": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2乗"
+          }
+        }
+      }
+    },
+    "Cubed": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3乗"
+          }
+        }
+      }
+    },
+    "Inverse": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逆数"
+          }
+        }
+      }
     }
   }
 }

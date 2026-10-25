@@ -4,16 +4,20 @@ import SwiftUI
 struct KeyboardView: View {
   @Environment(AppModel.self) private var model
   @State private var page = KeyboardPage.basic
+  @State private var textPage = TextPage.latin
+  /// Whether the letters keyboard is open in place of the maths pages.
   @State private var showsLetters = false
+  /// Capital letters for the next letter typed.
+  @State private var isShifted = false
 
   private let rowHeight: CGFloat = 54
 
   var body: some View {
     VStack(spacing: 0) {
       controlRow
-      if !showsLetters { pageTabs }
+      pageTabs
       Group {
-        if showsLetters { letterKeys } else { keys }
+        if showsLetters { textKeys } else { keys }
       }
       .padding(.horizontal, 6)
       .padding(.bottom, 6)
@@ -29,7 +33,12 @@ struct KeyboardView: View {
 
   private var controlRow: some View {
     HStack(spacing: 0) {
-      controlButton("abc", accessibility: "Letters") { showsLetters.toggle() }
+      // The one place that switches between the two keyboards, and it names the one it leads to.
+      if showsLetters {
+        controlButton("123", accessibility: "Math keys") { showsLetters = false }
+      } else {
+        controlButton("abc", accessibility: "Letters") { showsLetters = true }
+      }
       controlButton(systemImage: "arrow.left", accessibility: "Move left", repeats: true) { model.press(.left) }
       controlButton(systemImage: "arrow.right", accessibility: "Move right", repeats: true) { model.press(.right) }
       controlButton(systemImage: "return", accessibility: "New line") { model.press(.newLine) }
@@ -71,10 +80,20 @@ struct KeyboardView: View {
     .accessibilityLabel(accessibility)
   }
 
-  /// The pages of the keyboard, named in words, as one segmented control.
+  /// The pages of the keyboard, named in words, as one segmented control. The letters keyboard has its own pages, so that
+  /// the keyboard is the same height whichever is open.
+  @ViewBuilder
   private var pageTabs: some View {
-    Picker("Keyboard page", selection: $page) {
-      ForEach(KeyboardPage.allCases) { candidate in Text(candidate.title).tag(candidate) }
+    Group {
+      if showsLetters {
+        Picker("Keyboard page", selection: $textPage) {
+          ForEach(TextPage.allCases) { candidate in Text(candidate.title).tag(candidate) }
+        }
+      } else {
+        Picker("Keyboard page", selection: $page) {
+          ForEach(KeyboardPage.allCases) { candidate in Text(candidate.title).tag(candidate) }
+        }
+      }
     }
     .pickerStyle(.segmented)
     .padding(.horizontal, 10)
@@ -97,40 +116,44 @@ struct KeyboardView: View {
     }
   }
 
-  private var letterKeys: some View {
-    VStack(spacing: 1) {
-      ForEach(Array(KeyboardLayout.letterRows.enumerated()), id: \.offset) { _, row in
+  /// The letters, Greek letters and symbols: four rows on every page, as on the maths pages.
+  private var textKeys: some View {
+    let rows = KeyboardLayout.textRows(for: textPage, shifted: isShifted)
+    let columns = textPage.columns
+    return VStack(spacing: 1) {
+      ForEach(rows.indices, id: \.self) { index in
         HStack(spacing: 1) {
-          ForEach(row, id: \.self) { letter in
-            Button {
-              model.press(.symbol(letter))
-            } label: {
-              Text(letter).font(.system(size: 22)).frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemBackground))
+          ForEach(rows[index].indices, id: \.self) { position in
+            switch rows[index][position] {
+            case .key(let spec):
+              KeyView(spec: spec) { actions in
+                model.press(actions)
+                isShifted = false
+              }
+              .frame(height: rowHeight)
+            case .shift:
+              shiftKey
             }
-            .buttonStyle(.plain)
-            .frame(height: rowHeight)
           }
+          ForEach(0..<max(0, columns - rows[index].count), id: \.self) { _ in Color.clear.frame(height: rowHeight) }
         }
       }
-      HStack(spacing: 1) {
-        Button {
-          showsLetters = false
-        } label: {
-          Text("123").font(.system(size: 18)).frame(maxWidth: .infinity, maxHeight: .infinity).background(
-            Color(.systemBackground))
-        }
-        .buttonStyle(.plain)
-        Button {
-          model.press(.symbol(","))
-        } label: {
-          Text(",").font(.system(size: 22)).frame(maxWidth: .infinity, maxHeight: .infinity).background(
-            Color(.systemBackground))
-        }
-        .buttonStyle(.plain)
-      }
-      .frame(height: rowHeight)
     }
+    .onChange(of: textPage) { isShifted = false }
+  }
+
+  private var shiftKey: some View {
+    Button {
+      isShifted.toggle()
+    } label: {
+      Image(systemName: isShifted ? "shift.fill" : "shift").font(.system(size: 18))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(isShifted ? Color.accentColor.opacity(0.28) : Color(.systemGray5))
+    }
+    .buttonStyle(.plain)
+    .frame(height: rowHeight)
+    .accessibilityLabel("Shift")
+    .accessibilityAddTraits(isShifted ? .isSelected : [])
   }
 }
 

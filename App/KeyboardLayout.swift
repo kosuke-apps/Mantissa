@@ -76,6 +76,43 @@ enum KeyboardPage: CaseIterable, Identifiable {
   }
 }
 
+/// The pages of the letters keyboard, which replace the maths pages while it is open and are switched by the same tabs.
+enum TextPage: CaseIterable, Identifiable {
+  case latin
+  case greek
+  case symbols
+
+  var id: Self { self }
+
+  /// What VoiceOver says for the page.
+  var spokenName: LocalizedStringKey {
+    switch self {
+    case .latin: return "Latin letters"
+    case .greek: return "Greek letters"
+    case .symbols: return "Symbols"
+    }
+  }
+
+  /// The word on the page's tab.
+  var title: LocalizedStringKey {
+    switch self {
+    case .latin: return "Latin"
+    case .greek: return "Greek"
+    case .symbols: return "Symbols"
+    }
+  }
+
+  /// How many keys a row has, which sets how wide they are.
+  var columns: Int { self == .latin ? 10 : 8 }
+}
+
+/// A place in a row of the letters keyboard.
+enum TextKey {
+  case key(KeySpec)
+  /// Capital letters for the next letter typed.
+  case shift
+}
+
 /// The keys of each page, six to a row.
 enum KeyboardLayout {
   private static func symbol(
@@ -198,6 +235,45 @@ enum KeyboardLayout {
     }
   }
 
+  /// The keys of a page of the letters keyboard: always four rows, so that the keyboard is as tall as with the maths pages.
+  /// The Latin page is a number row and the three rows of a typewriter, with `shifted` for capitals; the Greek page is the
+  /// alphabet in order and, on the last row, the capitals that are not Latin letters in disguise.
+  static func textRows(for page: TextPage, shifted: Bool = false) -> [[TextKey]] {
+    func letter(_ text: String, tone: KeySpec.Tone = .plain) -> TextKey {
+      .key(KeySpec(text, [.symbol(text)], tone: tone))
+    }
+    func row(_ characters: String, shifted: Bool = false, tone: KeySpec.Tone = .plain) -> [TextKey] {
+      characters.map { letter(shifted ? String($0).uppercased() : String($0), tone: tone) }
+    }
+    switch page {
+    case .latin:
+      return [
+        row("1234567890", tone: .number),
+        row("qwertyuiop", shifted: shifted),
+        row("asdfghjkl", shifted: shifted) + [letter("=")],
+        [.shift] + row("zxcvbnm", shifted: shifted) + [letter(","), letter(".")],
+      ]
+    case .greek:
+      return [
+        row("αβγδεζηθ"),
+        row("ικλμνξοπ"),
+        row("ρστυφχψω"),
+        row("ΓΔΘΛΞΦΨΩ"),
+      ]
+    case .symbols:
+      func literal(_ text: String) -> TextKey { .key(KeySpec(text, [.literal(text)])) }
+      return [
+        [letter("("), letter(")"), literal("["), literal("]"), literal("{"), literal("}"), literal("|"), letter(",")],
+        [letter("="), letter("≠"), letter("<"), letter(">"), letter("≤"), letter("≥"), letter("."), letter(";")],
+        [letter("+"), letter("−"), letter("×"), letter("÷"), letter("!"), letter("%"), letter("°"), letter("∞")],
+        [
+          letter("π"), letter("e"), letter("i"), letter("^"), letter("/"), letter("²"), letter("³"),
+          .key(KeySpec("⁻¹", [.symbol("⁻"), .symbol("¹")])),
+        ],
+      ]
+    }
+  }
+
   /// What VoiceOver says for a key that is not plain text (or whose symbol is not read well).
   static func spokenName(for id: String) -> LocalizedStringKey? {
     switch id {
@@ -233,14 +309,18 @@ enum KeyboardLayout {
     case "d/dx": return "Derivative"
     case "∫": return "Integral"
     case "Σ": return "Sum"
+    case "[": return "Open square bracket"
+    case "]": return "Close square bracket"
+    case "{": return "Open brace"
+    case "}": return "Close brace"
+    case "|": return "Vertical bar"
+    case ";": return "Semicolon"
+    case "^": return "To the power of"
+    case "/": return "Slash"
+    case "²": return "Squared"
+    case "³": return "Cubed"
+    case "⁻¹": return "Inverse"
     default: return nil
     }
   }
-
-  /// The letter keys, for variables.
-  static let letterRows: [[String]] = [
-    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
-    ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
-    ["z", "x", "c", "v", "b", "n", "m"],
-  ]
 }

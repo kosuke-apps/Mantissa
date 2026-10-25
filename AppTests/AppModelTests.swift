@@ -549,4 +549,44 @@ final class AppModelTests: XCTestCase {
     XCTAssertTrue(model.editor.isEmpty)
     XCTAssertEqual(model.editor.lines.count, 1)
   }
+
+  func testEveryPageOfBothKeyboardsHasFourRowsSoTheKeyboardKeepsItsHeight() {
+    for page in KeyboardPage.allCases { XCTAssertEqual(KeyboardLayout.rows(for: page).count, 4, "\(page)") }
+    for page in TextPage.allCases {
+      for shifted in [false, true] {
+        let rows = KeyboardLayout.textRows(for: page, shifted: shifted)
+        XCTAssertEqual(rows.count, 4, "\(page)")
+        for row in rows { XCTAssertEqual(row.count, page.columns, "\(page)") }
+      }
+    }
+  }
+
+  func testShiftGivesCapitalsToTheLettersOnlyAndEveryKeyOfTheLettersKeyboardIsReadable() throws {
+    func labels(_ page: TextPage, shifted: Bool) -> [String] {
+      KeyboardLayout.textRows(for: page, shifted: shifted).flatMap { $0 }.compactMap {
+        if case .key(let spec) = $0 { return spec.id }
+        return nil
+      }
+    }
+    let plain = labels(.latin, shifted: false)
+    let capitals = labels(.latin, shifted: true)
+    XCTAssertTrue(plain.contains("q") && capitals.contains("Q") && !capitals.contains("q"))
+    XCTAssertTrue(capitals.contains("1") && capitals.contains("=") && capitals.contains(","))
+
+    // Whatever a key types, the parser must not meet a character it does not know.
+    for page in TextPage.allCases {
+      for case .key(let spec) in KeyboardLayout.textRows(for: page, shifted: true).flatMap({ $0 }) {
+        let model = makeModel()
+        model.press(.symbol("1"))  // a point on its own is no number yet, but after a digit it is
+        model.press(spec.actions)
+        do {
+          _ = try Calculator().evaluate(model.editor.text)
+        } catch {
+          if case .parse(let problem) = error, case .unexpectedCharacter(let character) = problem.reason {
+            XCTFail("\(spec.id): unknown \(character)")
+          }
+        }
+      }
+    }
+  }
 }
