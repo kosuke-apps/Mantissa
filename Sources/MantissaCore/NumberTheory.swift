@@ -88,14 +88,21 @@ enum NumberTheory {
   /// `n!`, or `nil` when `n` is negative or the result would be larger than `maxExactBits`.
   static func factorial(_ n: Int) -> BigInt? {
     guard n >= 0, n <= largestFactorialArgument else { return nil }
-    var result = BigInt(1)
-    if n >= 2 {
-      for factor in 2...n {
-        result *= BigInt(factor)
-        if result.bitWidth > maxExactBits { return nil }
-      }
+    return n < 2 ? BigInt(1) : product(from: 2, through: n)
+  }
+
+  /// The product of the whole numbers from `first` through `last`, found by halving the run, so that the numbers multiplied
+  /// together are about the same size (multiplying one factor at a time repeats the work on a number that keeps growing). A run of
+  /// four or fewer is multiplied as machine integers: every factor here is at most `largestFactorialArgument`, whose fourth power
+  /// is far below `Int.max`.
+  private static func product(from first: Int, through last: Int) -> BigInt {
+    if last - first < 4 {
+      var small = 1
+      for factor in first...last { small *= factor }
+      return BigInt(small)
     }
-    return result
+    let middle = first + (last - first) / 2
+    return product(from: first, through: middle) * product(from: middle + 1, through: last)
   }
 
   /// The number of ways to choose `r` of `n` things, or `nil` when the arguments are out of range or too large.

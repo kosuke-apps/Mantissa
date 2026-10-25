@@ -123,12 +123,13 @@ struct RandomInputTests {
   }
 
   /// How long one input may take, in seconds of processor time. The tests run unoptimised, which is several times slower than the
-  /// app, and under a sanitizer slower again. `MANTISSA_TIME_LIMIT=n` sets it.
+  /// app, and under a sanitizer, with the rest of the suite running beside it, slower again (an input that takes 6 s here took 80 s
+  /// of processor time there); what this looks for is an input that never ends. `MANTISSA_TIME_LIMIT=n` sets it.
   private static var limit: Double {
     if let text = ProcessInfo.processInfo.environment["MANTISSA_TIME_LIMIT"], let seconds = Double(text) {
       return seconds
     }
-    return runsUnderSanitizer ? 80 : 20
+    return runsUnderSanitizer ? 200 : 20
   }
 
   /// Whether a sanitizer runtime is loaded into this process, found by looking for a symbol only it has; the environment
