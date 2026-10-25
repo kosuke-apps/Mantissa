@@ -335,6 +335,7 @@ final class AppModel {
       let evaluation: Evaluation
       switch try calculator.compute(text) {
       case .matrix(let matrix): return answer(for: matrix, text: text, digits: digits)
+      case .lines(let lines): return worksheetAnswer(lines, text: text, digits: digits)
       case .number(let number): evaluation = number
       }
       var exact = Typesetter.nodes(for: evaluation.exact)
@@ -380,6 +381,13 @@ final class AppModel {
       case .math(let math): return failure(math)
       }
     }
+  }
+
+  /// Lines that give letters their values: an answer line for each letter that was worked out and each expression, and none for
+  /// a letter that was only given its value in numbers.
+  nonisolated private static func worksheetAnswer(_ lines: [WorkedLine], text: String, digits: Int) -> Outcome {
+    let display = SolutionsDisplay(lines, digits: digits)
+    return display.lines.isEmpty ? .empty : .solutions(display)
   }
 
   /// A matrix, with its decimals beneath it when some entry is not a whole number.

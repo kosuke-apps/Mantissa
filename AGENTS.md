@@ -85,8 +85,10 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   - `Sources/MantissaCore/Matrix/`: `Matrix` (exact entries, row by row, up to 10 × 10), `+Arithmetic` (sum, product, power, trace),
     `+Elimination` (determinant by cofactors for letters and elimination for numbers, inverse, rank, reduced row echelon form),
     `+Vectors` (dot, cross, length), `+Eigen` (eigenvalues from the characteristic polynomial by the equation solver, eigenvectors
-    from the null spaces), `Builder+Matrix` (`Value` is a number or a matrix; `Builder.value` works out a formula that has matrices in it
-    and hands everything else to `build`). `Calculator.compute` returns a `Computation` (a number or a matrix); `evaluate` is the
+    from the null spaces), `Builder+Matrix` (`Quantity` is a number or a matrix; `Builder.value` works out a formula that has matrices in it
+    and hands everything else to `build`; `Builder.environment` holds the letters that have values), `Worksheet` (lines that give
+    letters values: an equation with one unknown letter left is solved for it by undoing what is done to it, lines wait for each
+    other, and `Calculator.compute` returns them as `.lines`). `Calculator.compute` returns a `Computation` (a number or a matrix); `evaluate` is the
     number-only form.
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit; `Builder+Functions.swift`: the functions that
@@ -116,7 +118,7 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
    and structured ∫, Σ, lim and d/dx in the editor (`MathNode.calculus`, written as `int(…)`, `sum(…)`, `lim(…)`, `diff(…)`)
    (done).
 7. Matrices and vectors (`MathNode.matrix`, written `[[1,2],[3,4]]`; a comma in a cell goes to the next cell, return to the next row),
-   with a keyboard page that has the number pad (done).
+   with a keyboard page that has the number pad, and letters that stand for matrices (`A = …`, `A X = B`) (done).
 8. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
    accessibility; running on the author's iPhone.
 

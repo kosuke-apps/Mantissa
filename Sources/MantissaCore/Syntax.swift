@@ -30,16 +30,55 @@ extension Syntax {
     }
   }
 
-  /// Whether the text writes a matrix, or a function that gives or takes one, anywhere inside.
-  var involvesMatrix: Bool {
+  /// Whether the text writes a matrix, or a function that gives or takes one, anywhere inside, or a letter in `bound` (one that
+  /// stands for a matrix).
+  func involvesMatrix(bound: Set<String> = []) -> Bool {
     switch self {
     case .matrix: return true
-    case .number, .symbol, .constant, .infinity: return false
-    case .negate(let operand), .postfix(_, let operand): return operand.involvesMatrix
-    case .binary(_, let left, let right): return left.involvesMatrix || right.involvesMatrix
+    case .symbol(let name): return bound.contains(name)
+    case .number, .constant, .infinity: return false
+    case .negate(let operand), .postfix(_, let operand): return operand.involvesMatrix(bound: bound)
+    case .binary(_, let left, let right): return left.involvesMatrix(bound: bound) || right.involvesMatrix(bound: bound)
     case .call(let function, let arguments):
-      return function.isMatrixFunction || arguments.contains { $0.involvesMatrix }
-    case .radical(let index, let radicand): return (index?.involvesMatrix ?? false) || radicand.involvesMatrix
+      return function.isMatrixFunction || arguments.contains { $0.involvesMatrix(bound: bound) }
+    case .radical(let index, let radicand):
+      return (index?.involvesMatrix(bound: bound) ?? false) || radicand.involvesMatrix(bound: bound)
+    }
+  }
+
+  /// How many times each letter is written. The `T` of `A^T` is the mark of the transpose and not a letter.
+  func letterCounts() -> [String: Int] {
+    var counts: [String: Int] = [:]
+    collectLetters(into: &counts)
+    return counts
+  }
+
+  private func collectLetters(into counts: inout [String: Int]) {
+    switch self {
+    case .symbol(let name): counts[name, default: 0] += 1
+    case .number, .constant, .infinity: break
+    case .negate(let operand), .postfix(_, let operand): operand.collectLetters(into: &counts)
+    case .binary(let op, let left, let right):
+      left.collectLetters(into: &counts)
+      if op == .power, case .symbol("T") = right { break }
+      right.collectLetters(into: &counts)
+    case .call(_, let arguments): for argument in arguments { argument.collectLetters(into: &counts) }
+    case .radical(let index, let radicand):
+      index?.collectLetters(into: &counts)
+      radicand.collectLetters(into: &counts)
+    case .matrix(let rows): for row in rows { for cell in row { cell.collectLetters(into: &counts) } }
+    }
+  }
+}
+
+extension Statement {
+  /// Whether any line writes a matrix.
+  var involvesMatrix: Bool {
+    switch self {
+    case .expression(let syntax): return syntax.involvesMatrix()
+    case .relation(let chain):
+      return chain.first.involvesMatrix() || chain.links.contains { $0.operand.involvesMatrix() }
+    case .system(let parts): return parts.contains { $0.involvesMatrix }
     }
   }
 }

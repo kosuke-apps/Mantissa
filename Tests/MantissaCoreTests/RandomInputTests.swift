@@ -20,6 +20,9 @@ struct RandomInputTests {
     "re", "im", "conj",
     "det", "inverse", "transpose", "trace", "rank", "rref", "norm", "identity",
   ]
+  private static let matrices = [
+    "[[1,2],[3,4]]", "[[x,1],[0,y]]", "[[1],[2],[3]]", "[[0,0],[0,0]]", "[[a,b,c]]", "[[2,0],[0,2]]",
+  ]
   private static let operators = ["+", "-", "*", "/", "^"]
   private static let relations = ["=", "<", ">", "<=", ">=", "≠"]
 
@@ -48,9 +51,15 @@ struct RandomInputTests {
     }
 
     mutating func statement() -> String {
-      switch generator.next() % 6 {
+      switch generator.next() % 7 {
       case 0, 1: return expression(3) + pick(RandomInputTests.relations) + expression(3)
       case 2: return expression(3) + "=" + expression(2) + "\n" + expression(3) + "=" + expression(2)
+      // Letters given matrices, and an equation or an expression to work out from them.
+      case 3:
+        return "A=" + pick(RandomInputTests.matrices) + "\nB=" + pick(RandomInputTests.matrices) + "\n"
+          + pick(["A", "B", "X", "a", "x"]) + pick(["", "*", "+", "-"]) + pick(["A", "B", "X", "(A+B)", "A^2", "A^T"])
+          + "="
+          + pick(["B", "A", "X", "A*B", "[[1,2],[3,4]]", "A^(-1)"])
       default: return expression(4)
       }
     }
@@ -80,6 +89,13 @@ struct RandomInputTests {
           _ = nodes.parserText
           _ = nodes.plainText
           _ = matrix.approximations(precision: 20)
+        case .lines(let lines):
+          for line in lines {
+            switch line.quantity {
+            case .scalar(let number): _ = Typesetter.nodes(for: number).plainText
+            case .matrix(let matrix): _ = Typesetter.nodes(for: matrix).plainText
+            }
+          }
         }
       } catch {
         if case .unsupported = error { _ = try? calculator.solve(text) }

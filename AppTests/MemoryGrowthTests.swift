@@ -66,6 +66,23 @@ final class MemoryGrowthTests: XCTestCase {
     }
   }
 
+  func testALetterForAMatrixAndAnEquationInItDoesNotGrowTheProcess() async {
+    let model = makeModel()
+    await assertSteady("worksheet of matrices") {
+      type(model, "A=")
+      model.press(.matrix(rows: 2, columns: 2))
+      for (index, digit) in "1234".enumerated() {
+        model.press(.symbol(String(digit)))
+        if index < 3 { model.press(.symbol(",")) }
+      }
+      model.press(.right)
+      model.press(.newLine)
+      type(model, "AX=A")
+      await settle(model)
+      model.clearAll()
+    }
+  }
+
   func testAnEquationWithItsGraphDoesNotGrowTheProcess() async {
     let model = makeModel()
     await assertSteady("equation and graph") {

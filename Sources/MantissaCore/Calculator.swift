@@ -54,6 +54,8 @@ public enum CalculatorError: Error, Equatable, Sendable {
 public enum Computation: Sendable, Equatable {
   case number(Evaluation)
   case matrix(Matrix)
+  /// Several lines that give letters their values (`A = …`, `A X = B`), each line's answer in the order written.
+  case lines([WorkedLine])
 }
 
 /// The entry point: text in, exact and decimal answer out.
@@ -69,7 +71,7 @@ public struct Calculator: Sendable {
   public func evaluate(_ text: String) throws(CalculatorError) -> Evaluation {
     switch try compute(text) {
     case .number(let evaluation): return evaluation
-    case .matrix: throw .unsupported(.matrix)
+    case .matrix, .lines: throw .unsupported(.matrix)
     }
   }
 
@@ -83,7 +85,7 @@ public struct Calculator: Sendable {
     }
     switch statement {
     case .expression(let syntax):
-      let value: Value
+      let value: Quantity
       do {
         value = try Builder(angleUnit: settings.angleUnit).value(syntax)
       } catch {
@@ -99,8 +101,13 @@ public struct Calculator: Sendable {
       if case .call(.int, let arguments) = syntax, arguments.count <= 2 { result.isAntiderivative = true }
       result.otherForms = result.exact.otherForms()
       return .number(result)
-    case .relation: throw .unsupported(.equation)
-    case .system: throw .unsupported(.system)
+    case .relation:
+      // Equations in matrices are worked out as a worksheet, and the rest are the solver's.
+      if statement.involvesMatrix { return .lines(try worksheet(statement)) }
+      throw .unsupported(.equation)
+    case .system:
+      if statement.involvesMatrix { return .lines(try worksheet(statement)) }
+      throw .unsupported(.system)
     }
   }
 

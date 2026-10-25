@@ -11,8 +11,8 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.26.0"
-    CURRENT_PROJECT_VERSION: "30"
+    MARKETING_VERSION: "0.27.0"
+    CURRENT_PROJECT_VERSION: "31"
 packages:
   Mantissa:
     path: .

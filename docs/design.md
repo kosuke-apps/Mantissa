@@ -456,3 +456,26 @@ there is `unsupported(.matrix)`).
   `MathEditor.change(matrix:)` adds or removes a row or column of the innermost matrix the cursor is in. `parserText` is
   `[[a,b],[c,d]]`, so an empty cell is an unfinished formula. The view draws a grid between square brackets, and an exponent that
   follows a matrix sits at its top.
+
+### Letters for matrices (worksheets)
+
+An input with a matrix in it that is several lines, or one line with an equals sign, is a worksheet (`Calculator.worksheet`; with no
+matrix the lines are equations for the solver, as before, and the two are told apart by `Statement.involvesMatrix`). Each line is an
+equation or an expression. A letter is *known* when it is in `Builder.environment`; an equation with exactly one unknown letter
+gives that letter its value, and one with two waits until another line has settled one of them, so the order of the lines does not
+matter. Expressions are worked out last, with whatever was found; a letter nothing settled stays a symbol there.
+
+To solve `left = right` for the letter (`Builder.solve`), the letter has to be written exactly once in the equation, and the side
+that has it is taken apart from the outside in (`peel`): the last operation applied to the letter is undone on the other side. Matrices do
+not commute, so `X·b = t` is `X = t·b⁻¹` and `a·X = t` is `X = a⁻¹·t`; a sum or difference moves across by subtraction or
+addition; `Xᵀ = t`, `X⁻¹ = t` and `inverse(X) = t` turn the target over; a negation, a division by a known number and an exponent of 1 are
+undone too. Anything else (`X²`, the letter on both sides, a function of it) is `unsupported`, and the line is left out of the answer
+without a word, since nothing is guessed. A matrix with no inverse (`singular`) or of the wrong size (`dimensionMismatch`) stops the
+worksheet with that message: the equation had an answer to give and cannot.
+
+A letter that stands for a number works the same way (`a = 2`, `3k = 12`), but only in a worksheet that has a matrix in it, since
+`a = 2, b = 3` without one is a system for the solver. The variable of an integral or a derivative hides a letter of the same name
+(`x = 2` does not make `∫ x² dx` into `∫ 4 dx`). The `T` of `Aᵀ` is the mark of the transpose and is not counted as a letter.
+
+The answer has a line for each letter that was worked out, in the order written, and for each expression; a letter that was only given its
+value in numbers (`A = [[1,2],[3,4]]`) is on the screen above the answer already and is not repeated (`WorkedLine.isGiven`).

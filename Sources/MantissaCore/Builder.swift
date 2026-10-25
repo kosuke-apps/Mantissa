@@ -13,6 +13,16 @@ public enum AngleUnit: Sendable, Equatable {
 /// angle in radians, so degree mode leaves it alone rather than reading π/6 as π/6 degrees.
 struct Builder {
   var angleUnit: AngleUnit
+  /// Letters that have been given a value (by a line `A = [[1,2],[3,4]]` of a worksheet) and stand for it.
+  var environment: [String: Quantity] = [:]
+
+  /// The letters that stand for a matrix.
+  var matrixNames: Set<String> {
+    Set(
+      environment.compactMap { name, value in
+        if case .matrix = value { return name } else { return nil }
+      })
+  }
 
   static let degreesToRadians = Expr.fraction(1, 180) * .pi
 
@@ -27,7 +37,10 @@ struct Builder {
   func build(_ syntax: Syntax) throws(MathError) -> Expr {
     switch syntax {
     case .number(let value): return .number(value)
-    case .symbol(let name): return .symbol(name)
+    case .symbol(let name):
+      guard let bound = environment[name] else { return .symbol(name) }
+      guard case .scalar(let number) = bound else { throw .unsupported }  // a matrix where a number is wanted
+      return number
     case .infinity: throw .domain  // ∞ is only an argument of a limit, an integral or a sum
     case .constant(let constant): return .constant(constant)
     case .negate(let operand): return -(try build(operand))
@@ -43,7 +56,10 @@ struct Builder {
       }
     case .postfix(let op, let operand): return try postfix(op, try build(operand))
     case .call(let function, let arguments) where function.isCalculus:
-      return try Calculus(builder: self).evaluate(function, arguments)
+      // The variable of an integral or a derivative is not the number a letter of the same name may stand for.
+      var inner = self
+      if arguments.count > 1, case .symbol(let variable) = arguments[1] { inner.environment[variable] = nil }
+      return try Calculus(builder: inner).evaluate(function, arguments)
     case .call(let function, let arguments):
       var built: [Expr] = []
       for argument in arguments { built.append(try build(argument)) }

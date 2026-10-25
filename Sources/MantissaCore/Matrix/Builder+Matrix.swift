@@ -3,13 +3,13 @@
 // `Builder.build` makes an `Expr` and so cannot hold a matrix. `value` works out what a formula comes to, an `Expr` or a
 // matrix, and hands everything that has no matrix in it to `build`.
 
-/// What a formula comes to.
-enum Value {
+/// What a formula comes to: a number (or an expression with letters in it) or a matrix.
+public enum Quantity: Sendable, Equatable {
   case scalar(Expr)
   case matrix(Matrix)
 
   /// A 1×1 matrix is the number in it.
-  static func collapsing(_ matrix: Matrix) -> Value {
+  static func collapsing(_ matrix: Matrix) -> Quantity {
     matrix.entries.count == 1 ? .scalar(matrix.entries[0]) : .matrix(matrix)
   }
 
@@ -21,15 +21,37 @@ enum Value {
   var asScalar: Expr? { if case .scalar(let value) = self { return value } else { return nil } }
 }
 
+extension Quantity {
+  /// What multiplies to 1 with this one: the reciprocal of a number, the inverse of a matrix.
+  func inverse() throws(MathError) -> Quantity {
+    switch self {
+    case .scalar(let number): return .scalar(try Expr.one.divided(by: number))
+    case .matrix(let matrix): return .collapsing(try matrix.inverse())
+    }
+  }
+
+  /// The quantity with `transform` applied to every number in it.
+  func mapped(_ transform: (Expr) -> Expr) -> Quantity {
+    switch self {
+    case .scalar(let number): return .scalar(transform(number))
+    case .matrix(let matrix): return .matrix(matrix.mapped(transform))
+    }
+  }
+}
+
 extension Matrix {
   init(scalar: Expr) { self.init(rowCount: 1, columnCount: 1, entries: [scalar]) }
 }
 
 extension Builder {
-  func value(_ syntax: Syntax) throws(MathError) -> Value {
-    guard syntax.involvesMatrix else { return .scalar(try build(syntax)) }
+  func value(_ syntax: Syntax) throws(MathError) -> Quantity {
+    guard syntax.involvesMatrix(bound: matrixNames) else { return .scalar(try build(syntax)) }
     switch syntax {
-    case .number, .symbol, .constant, .infinity: return .scalar(try build(syntax))
+    case .symbol(let name):
+      // Only a letter that stands for a matrix gets here: the others are numbers, which `build` knows.
+      guard let bound = environment[name] else { throw .unsupported }
+      return bound
+    case .number, .constant, .infinity: return .scalar(try build(syntax))
 
     case .matrix(let rows):
       var built: [[Expr]] = []
@@ -69,7 +91,7 @@ extension Builder {
       return .scalar(try radical(index: builtIndex, number))
 
     case .call(let function, let arguments):
-      var values: [Value] = []
+      var values: [Quantity] = []
       if !function.isCalculus { for argument in arguments { values.append(try value(argument)) } }
       return try call(function, arguments, values)
     }
@@ -77,7 +99,7 @@ extension Builder {
 
   // MARK: Operators
 
-  private func binary(_ op: BinaryOperator, _ left: Value, _ right: Value) throws(MathError) -> Value {
+  func binary(_ op: BinaryOperator, _ left: Quantity, _ right: Quantity) throws(MathError) -> Quantity {
     switch (left, right) {
     case (.scalar(let a), .scalar(let b)):
       switch op {
@@ -111,7 +133,7 @@ extension Builder {
   }
 
   /// A matrix to a power: a whole number, or `T` for the transpose.
-  private func power(_ matrix: Matrix, _ exponent: Expr) throws(MathError) -> Value {
+  private func power(_ matrix: Matrix, _ exponent: Expr) throws(MathError) -> Quantity {
     if case .symbol("T") = exponent { return .collapsing(matrix.transposed()) }
     guard let value = exponent.rational, value.isInteger, let whole = value.numerator.asInt else { throw .unsupported }
     return .collapsing(try matrix.raised(to: whole))
@@ -119,7 +141,8 @@ extension Builder {
 
   // MARK: Functions
 
-  private func call(_ function: FunctionName, _ arguments: [Syntax], _ values: [Value]) throws(MathError) -> Value {
+  private func call(_ function: FunctionName, _ arguments: [Syntax], _ values: [Quantity]) throws(MathError) -> Quantity
+  {
     if function.isCalculus {
       // The calculus of matrices is not here: a matrix inside `build` is reported as unsupported.
       return .scalar(try build(.call(function, arguments)))
@@ -136,7 +159,7 @@ extension Builder {
     return .scalar(try call(function, numbers, argumentMentionsPi: arguments.contains { $0.mentionsPi }))
   }
 
-  private func matrixCall(_ function: FunctionName, _ values: [Value]) throws(MathError) -> Value {
+  private func matrixCall(_ function: FunctionName, _ values: [Quantity]) throws(MathError) -> Quantity {
     switch function {
     case .identity:
       guard let size = values[0].asScalar?.rational, size.isInteger, let count = size.numerator.asInt,

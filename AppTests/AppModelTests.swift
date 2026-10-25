@@ -673,4 +673,61 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(matrix?.actions, [.matrix(rows: 2, columns: 2)])
     XCTAssertEqual(matrix?.alternates.map(\.title), ["3×3", "2×3", "3×2", "Iₙ"])
   }
+
+  /// Types `name = ` and then a matrix, and goes to a new line.
+  private func typeDefinition(_ model: AppModel, _ name: String, _ rows: [[String]]) {
+    for character in name + "=" { model.press(.symbol(String(character))) }
+    typeMatrix(model, rows)
+    model.press(.right)
+    model.press(.newLine)
+  }
+
+  func testLettersGivenMatricesAreWorkedOutAndOnlyTheDerivedOnesAreShown() async {
+    let model = makeModel()
+    typeDefinition(model, "A", [["1", "2"], ["3", "4"]])
+    typeDefinition(model, "B", [["5", "6"], ["7", "8"]])
+    for character in "AX=B" { model.press(.symbol(String(character))) }
+    let outcome = await answer(model)
+    guard case .solutions(let solutions) = outcome else { return XCTFail("expected solutions, got \(outcome)") }
+    // A and B were typed out in numbers, and are above; X is what was worked out: A⁻¹B.
+    XCTAssertEqual(solutions.lines.map { $0.exact.plainText }, ["X = [[−3, −4], [4, 5]]"])
+    XCTAssertNil(solutions.lines[0].decimal)
+    XCTAssertEqual(solutions.summary.plainText, "X = [[−3, −4], [4, 5]]")
+  }
+
+  func testAnExpressionLineAndItsDecimalsAreShownBeneathTheDefinitions() async {
+    let model = makeModel()
+    typeDefinition(model, "A", [["1", "2"], ["3", "4"]])
+    for character in "A" { model.press(.symbol(String(character))) }
+    model.press([.power, .symbol("−"), .symbol("1")])
+    let outcome = await answer(model)
+    guard case .solutions(let solutions) = outcome else { return XCTFail("expected solutions, got \(outcome)") }
+    XCTAssertEqual(solutions.lines.count, 1)
+    XCTAssertEqual(solutions.lines[0].exact.plainText, "[[−2, 1], [3/2, −1/2]]")
+    XCTAssertEqual(solutions.lines[0].decimal?.plainText, "[[−2, 1], [1.5, −0.5]]")
+  }
+
+  func testAWorksheetWithNothingNewInItShowsNoAnswer() async {
+    let model = makeModel()
+    for character in "A=" { model.press(.symbol(String(character))) }
+    typeMatrix(model, [["1", "2"], ["3", "4"]])
+    let outcome = await answer(model, timeout: 0.3)
+    XCTAssertEqual(outcome, .empty)
+  }
+
+  func testAMatrixEquationWithNoInverseOrTheWrongSizeSaysWhy() async {
+    let model = makeModel()
+    typeDefinition(model, "A", [["1", "2"], ["2", "4"]])
+    typeDefinition(model, "B", [["1"], ["1"]])
+    for character in "AX=B" { model.press(.symbol(String(character))) }
+    var outcome = await answer(model)
+    XCTAssertEqual(outcome, .failure(.noInverse))
+
+    model.clearAll()
+    typeDefinition(model, "A", [["1", "2"], ["3", "4"]])
+    typeDefinition(model, "B", [["1", "2", "3"]])
+    for character in "AX=B" { model.press(.symbol(String(character))) }
+    outcome = await answer(model)
+    XCTAssertEqual(outcome, .failure(.sizesDoNotFit))
+  }
 }

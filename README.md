@@ -20,7 +20,7 @@
   <img src="docs/screenshots/04-matrix.png" width="23%" alt="The inverse of a 2 by 2 matrix, in fractions and in decimals">
 </p>
 
-> **Status: early release (0.26).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
+> **Status: early release (0.27).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
 > is not on the App Store: install it as described under [Installing](#installing). Expect rough edges and answers the
 > solver cannot give yet (it says so rather than guessing).
 
@@ -100,6 +100,10 @@ or from below.
   products and the length of a vector, with numbers, roots, `i` or letters in the entries. A Matrix page of the keyboard
   places a matrix of any size up to 10 × 10 with a cell for each entry (a comma moves to the next cell, return to the next row),
   and adds or removes rows and columns. A matrix written as text, `[[1,2],[3,4]]`, is read too.
+- Letters for matrices: write `A = [[1,2],[3,4]]`, `B = …` and `C = A²B + A⁻¹` on separate lines and every letter that can be worked
+  out is, whatever the order of the lines. An unknown matrix is found when it is only multiplied, added or turned over
+  (`A X = B` gives `X = A⁻¹B`, `X A = B` gives `X = BA⁻¹`, `A X + B = C`, `Xᵀ = A`); a matrix with no inverse or of the wrong size is
+  said so, and what cannot be undone (`X² = A`) is left alone.
 - The letters keyboard (`abc`) has Latin letters with a number row and shift, the Greek alphabet and a page of symbols, and is as tall
   as the maths keyboard, so the formula does not move when it opens.
 - Tap the formula to put the cursor there, also inside a fraction or an exponent.

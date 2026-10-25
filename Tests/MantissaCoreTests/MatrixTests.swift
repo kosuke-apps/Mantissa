@@ -201,6 +201,12 @@ struct MatrixTests {
   func apiShape() {
     #expect(throws: (any Error).self) { try Calculator().evaluate("[[1,2]]") }
     #expect(throws: (any Error).self) { try Calculator().solve("[[1,2]] = [[1,2]]") }
+    // An equation with a matrix in it is a worksheet, which `compute` answers.
+    if case .lines(let lines)? = try? Calculator().compute("A = [[1,2]]") {
+      #expect(lines.count == 1)
+    } else {
+      Issue.record("not a worksheet")
+    }
   }
 
   @Test("Eigenvalues, each as often as it is a root, smallest first")

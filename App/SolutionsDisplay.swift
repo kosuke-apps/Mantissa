@@ -95,6 +95,37 @@ struct SolutionsDisplay: Equatable {
     }
   }
 
+  // MARK: Worksheets
+
+  /// The lines of a worksheet of matrices: `A = […]`, one for each letter that was worked out and one for each expression, with the
+  /// decimals beneath a value that has some. A letter that was only given its value in numbers is not repeated: it is on the
+  /// screen above.
+  init(_ worked: [WorkedLine], digits: Int) {
+    let lines = worked.filter { !$0.isGiven }.map { line -> Line in
+      var exact: [MathNode] = line.name.map { [MathNode.symbol($0), .symbol("=")] } ?? []
+      var decimal: [MathNode]?
+      switch line.quantity {
+      case .scalar(let number):
+        exact += Typesetter.nodes(for: number)
+        // The same rule as for a single number: a decimal when the value is not a whole number.
+        if number.freeSymbols.isEmpty, number.rational?.isInteger != true, !number.isGaussianInteger,
+          let value = try? number.approximation(precision: digits)
+        {
+          decimal = Typesetter.nodes(for: value, significantDigits: digits)
+        }
+      case .matrix(let matrix):
+        exact += Typesetter.nodes(for: matrix)
+        if matrix.entries.contains(where: { $0.rational?.isInteger != true }),
+          let values = matrix.approximations(precision: digits)
+        {
+          decimal = Typesetter.nodes(for: matrix, decimals: values, significantDigits: digits)
+        }
+      }
+      return Line(exact: exact, decimal: decimal)
+    }
+    self.init(kind: .values, lines: lines)
+  }
+
   // MARK: Equations
 
   /// `x = 2` or `x = 3, y = 4`, with the decimals beneath when some value is not a whole number or has no exact form.
