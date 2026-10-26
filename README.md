@@ -1,19 +1,58 @@
-# Mantissa
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="Mantissa app icon">
+</p>
 
-A free scientific and graphing calculator for iPhone. It works entirely offline, shows exact results (fractions,
-roots, π), solves equations and keeps a history. No ads, no accounts, no network access.
+<h1 align="center">Mantissa</h1>
+
+<p align="center"><b>A scientific and graphing calculator that gives exact answers, solves equations and works fully offline.</b></p>
+
+<p align="center">
+  <a href="https://github.com/kosuke-apps/Mantissa/releases/latest"><b>Download</b></a> &nbsp;·&nbsp;
+  <a href="#install">Install</a> &nbsp;·&nbsp;
+  <a href="PRIVACY.md">Privacy</a> &nbsp;·&nbsp;
+  <a href="https://github.com/kosuke-apps">More apps</a>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/01-equation.png" width="23%" alt="Solving x² − 5x + 6 = 0: the two solutions and the graph with its roots marked">
+  <img src="docs/screenshots/02-factored-form.png" width="23%" alt="The answer x² − 5x + 6 with its factored form (x − 2)(x − 3)">
+  <img src="docs/screenshots/03-integral.png" width="23%" alt="The integral of x² with its answer x³/3 + C and the graph of the answer">
+  <img src="docs/screenshots/04-matrix.png" width="23%" alt="The inverse of a 2 by 2 matrix, in fractions and in decimals">
+</p>
 
 > **Status: early release (0.26).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
 > is not on the App Store: install it as described under [Installing](#installing). Expect rough edges and answers the
 > solver cannot give yet (it says so rather than guessing).
 
-<p>
-  <img src="docs/screenshots/equation.png" width="240" alt="Solving x² − 5x + 6 = 0, with its graph">
-  <img src="docs/screenshots/factored-form.png" width="240" alt="The factored form of x² − 5x + 6">
-  <img src="docs/screenshots/integral.png" width="240" alt="An integral, with the graph of its answer">
-</p>
+## What it does
 
-Everything is worked out on the phone and nothing is sent anywhere; see [PRIVACY.md](PRIVACY.md).
+- **Exact answers.** `√12 + √3` is `3√3`, `sin(15°)` is `(√6 − √2)/4`, `1/3 + 1/6` is `1/2`, with the decimal value beneath
+  when that helps.
+- **Equations, systems and inequalities.** Exact solutions where there is a closed form (`x² − 5x + 6 = 0`, `sin x = 1/2`,
+  `x² + y² = 10` with `xy = 3`), with the graph under the answer and its roots marked.
+- **Calculus.** Derivatives, integrals, limits and sums, with exact answers (`∫ x eˣ dx`, `lim (1 + 1/x)ˣ = e`).
+- **Matrices and vectors.** Sums, products, powers, the inverse, determinant, rank, eigenvalues, and the dot and cross products,
+  all exact, on a keyboard page of their own.
+- **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
+- **History, English and Japanese.** Everything is worked out on the phone: no ads, no accounts, no network access.
+
+## Install
+
+Mantissa is not in the App Store. Each release is an unsigned `.ipa`, on purpose: sign it with your own Apple ID through a
+sideloading tool such as AltStore or Sideloadly.
+
+1. Download `Mantissa-x.y.z-unsigned.ipa` and its `.sha256` from the [latest release](https://github.com/kosuke-apps/Mantissa/releases/latest).
+2. Check the file: `shasum -a 256 -c Mantissa-x.y.z-unsigned.ipa.sha256`.
+3. Open the `.ipa` in the sideloading tool and install it on your iPhone.
+
+More about signing and its limits is under [Installing](#installing). To build it yourself, see
+[Building from source](#building-from-source).
+
+## Privacy
+
+Mantissa works out everything on your iPhone. It has no server, no account, no advertising and no analytics, and asks for no
+permission. Your history and settings stay in the app's own storage on the phone. Nothing is sent anywhere. Details:
+[PRIVACY.md](PRIVACY.md).
 
 ## Features
 
