@@ -43,6 +43,7 @@ struct HistoryView: View {
 /// history" in a header of its own instead of a sheet's bars.
 struct HistoryColumn: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.windowControlsInset) private var controlsInset
   @State private var showsSavedOnly = false
   @State private var confirmsClearing = false
 
@@ -66,7 +67,8 @@ struct HistoryColumn: View {
         .disabled(model.history.entries.isEmpty)
       }
       .buttonStyle(.plain)
-      .padding(.horizontal, 16)
+      .padding(.leading, 16 + controlsInset)
+      .padding(.trailing, 16)
       .frame(height: 48)
       HistoryList(showsSavedOnly: showsSavedOnly)
     }

@@ -21,6 +21,8 @@ enum KeyAction: Hashable {
   /// A row or column added to, or removed from, the matrix the cursor is in.
   case matrixChange(MathEditor.MatrixChange)
   case left, right, newLine, backspace
+  /// To the next or the previous cell of the matrix the cursor is in (Tab and Shift-Tab on a hardware keyboard).
+  case nextCell, previousCell
 }
 
 /// The state of the calculator screen: what has been typed, and what it comes to.
@@ -215,6 +217,13 @@ final class AppModel {
     }
   }
 
+  /// The command-C of a hardware keyboard: the answer as text, or what is typed when there is no answer to copy.
+  func copyAnswerOrInput() {
+    let text = copyable?.exact ?? inputText
+    guard !text.isEmpty else { return }
+    copy(text)
+  }
+
   func copy(_ text: String) {
     UIPasteboard.general.string = text
     feedback.impactOccurred()
@@ -253,6 +262,8 @@ final class AppModel {
     case .right: editor.moveRight()
     case .newLine: editor.newLine()
     case .backspace: editor.backspace()
+    case .nextCell: editor.moveToNextCell()
+    case .previousCell: editor.moveToPreviousCell()
     }
   }
 

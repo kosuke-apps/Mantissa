@@ -1,6 +1,8 @@
 # The screens
 
-How Mantissa looks and behaves on the phone, and what it leaves out. The engine behind it is described in `design.md`.
+How Mantissa looks and behaves on the phone, and what it leaves out. The engine behind it is described in `design.md`. The iPad
+(and a resizable window) uses the same views with the layouts chosen by the width of the window; they are in `ipad-design.md`, and what
+this file says about the screen is the iPhone layout, which they leave as it is.
 
 ## Scope
 

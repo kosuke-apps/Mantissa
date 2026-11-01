@@ -104,16 +104,37 @@ public struct MathEditor: Equatable, Sendable {
 
   // MARK: Typing
 
-  /// Types one character. `(` opens parentheses (with the cursor inside), `)` closes them, that is, steps out of the
-  /// parentheses, function or bars the cursor is in; anything else is inserted as a symbol.
+  /// Types one character. `(` opens parentheses (with the cursor inside), or the function whose name the letters before it
+  /// spell; `)` closes them, that is, steps out of the parentheses, function or bars the cursor is in; anything else is inserted
+  /// as a symbol.
   public mutating func insert(_ text: String) {
     switch text {
-    case "(": insertGroup()
+    case "(": openBracket()
     case ")": closeEnclosing()
     // A comma in the cell of a matrix goes on to the next cell.
     case "," where goToNextCell(): break
     default: insertNode(.symbol(text))
     }
+  }
+
+  /// `(` after the letters of a function's name (`s`, `i`, `n`) makes that function with the cursor in its argument, as its key
+  /// does; after anything else it is a pair of parentheses. Letters before the name are left (`xsin(` is x times sin), and
+  /// the calculus functions, which have their own structures and keys, are not made this way.
+  private mutating func openBracket() {
+    var letters = ""
+    for node in currentSequence[..<cursor.offset].reversed() {
+      guard case .symbol(let text) = node, text.count == 1, let letter = text.first, letter.isASCII, letter.isLetter
+      else { break }
+      letters.insert(letter, at: letters.startIndex)
+    }
+    // The spellings are longest first, so `asin` is read as that and not as `sin` after an `a`.
+    guard let name = FunctionName.spellings.first(where: { !$0.function.isCalculus && letters.hasSuffix($0.text) })
+    else { return insertGroup() }
+    edit { sequence, offset in
+      sequence.removeSubrange((offset - name.text.count)..<offset)
+      offset -= name.text.count
+    }
+    insertFunction(name.text)
   }
 
   /// Puts one symbol at the cursor exactly as it is. For `(` and `)` that means a single bracket, not a pair with the cursor

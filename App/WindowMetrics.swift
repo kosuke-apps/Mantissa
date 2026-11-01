@@ -48,3 +48,16 @@ extension EnvironmentValues {
     set { self[WindowMetricsKey.self] = newValue }
   }
 }
+
+private struct WindowControlsInsetKey: EnvironmentKey {
+  static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+  /// How far the leftmost content of the window keeps from its left edge so as not to lie under the window controls of an iPad window;
+  /// 0 where there are none.
+  var windowControlsInset: CGFloat {
+    get { self[WindowControlsInsetKey.self] }
+    set { self[WindowControlsInsetKey.self] = newValue }
+  }
+}

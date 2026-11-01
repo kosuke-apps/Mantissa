@@ -1,4 +1,5 @@
 import MantissaCore
+import SwiftUI
 import XCTest
 
 @testable import Mantissa
@@ -729,5 +730,179 @@ final class AppModelTests: XCTestCase {
     for character in "AX=B" { model.press(.symbol(String(character))) }
     outcome = await answer(model)
     XCTAssertEqual(outcome, .failure(.sizesDoNotFit))
+  }
+
+  // MARK: Window sizes
+
+  func testTheLayoutFollowsTheWidthOfTheWindowAndNotTheDevice() {
+    func kind(_ width: CGFloat) -> WindowClass { WindowMetrics(size: CGSize(width: width, height: 900)).kind }
+    XCTAssertEqual(kind(320), .compact)
+    XCTAssertEqual(kind(402), .compact, "an iPhone")
+    XCTAssertEqual(kind(639.5), .compact, "a window just under 640 is still the iPhone layout")
+    XCTAssertEqual(kind(640), .regular)
+    XCTAssertEqual(kind(744), .regular, "an iPad mini in portrait")
+    XCTAssertEqual(kind(899), .regular)
+    XCTAssertEqual(kind(900), .wide)
+    XCTAssertEqual(kind(1376), .wide)
+  }
+
+  func testTheHistoryColumnNeedsAWideAndTallWindow() {
+    func shows(_ width: CGFloat, _ height: CGFloat) -> Bool {
+      WindowMetrics(size: CGSize(width: width, height: height)).showsHistoryColumn
+    }
+    XCTAssertTrue(shows(1376, 1032), "an iPad Pro in landscape")
+    XCTAssertTrue(shows(1180, 600))
+    XCTAssertFalse(shows(1179, 900))
+    XCTAssertFalse(shows(1376, 599), "a wide but short window has no room for a column and the keyboard")
+    XCTAssertFalse(shows(1032, 1376), "an iPad Pro in portrait")
+    XCTAssertFalse(shows(402, 874))
+  }
+
+  func testTheKeysAreAsTallAsOnTheIPhoneInTheIPhoneLayoutAndScaleWithTheHeightOtherwise() {
+    XCTAssertEqual(WindowMetrics(size: CGSize(width: 402, height: 874)).keyRowHeight, 54)
+    XCTAssertEqual(WindowMetrics(size: CGSize(width: 900, height: 700)).keyRowHeight, 700 * 0.085, accuracy: 0.001)
+    XCTAssertEqual(WindowMetrics(size: CGSize(width: 800, height: 300)).keyRowHeight, 46, "never smaller than 46")
+    XCTAssertEqual(WindowMetrics(size: CGSize(width: 800, height: 2000)).keyRowHeight, 68, "never larger than 68")
+  }
+
+  func testTheMatrixPageOfAWideKeyboardHasNoNumberPadOfItsOwnAndStillFourRows() {
+    let narrow = KeyboardLayout.rows(for: .matrix, withNumberPad: true)
+    let wide = KeyboardLayout.rows(for: .matrix, withNumberPad: false)
+    XCTAssertEqual(narrow.count, 4)
+    XCTAssertEqual(wide.count, 4)
+    let narrowIDs = Set(narrow.flatMap { $0 }.map(\.id))
+    let wideIDs = Set(wide.flatMap { $0 }.map(\.id))
+    for digit in "0123456789" { XCTAssertTrue(narrowIDs.contains(String(digit)), "the iPhone's page has \(digit)") }
+    XCTAssertFalse(wideIDs.contains("5"), "the number pad is beside it on a wide keyboard")
+    for id in ["matrix", "vector", "det", "A⁻¹", "dot", "eigvals"] {
+      XCTAssertTrue(wideIDs.contains(id), "\(id) is on both")
+      XCTAssertTrue(narrowIDs.contains(id), "\(id) is on both")
+    }
+  }
+
+  // MARK: Hardware keyboard
+
+  /// Presses a key of a hardware keyboard the way the screen's handler does; returns whether the calculator took it.
+  @discardableResult
+  private func hardware(
+    _ model: AppModel, _ characters: String, key: KeyEquivalent? = nil, modifiers: EventModifiers = []
+  ) -> Bool {
+    let key = key ?? KeyEquivalent(characters.first ?? " ")
+    guard
+      let actions = HardwareKeys.actions(
+        key: key, characters: characters, modifiers: modifiers, inMatrix: model.editor.isInMatrix)
+    else { return false }
+    model.press(actions)
+    return true
+  }
+
+  private func hardwareType(_ model: AppModel, _ text: String) {
+    for character in text { hardware(model, String(character)) }
+  }
+
+  func testTypingOnAHardwareKeyboardWritesAFormulaThatIsReadWithTheRightPrecedence() async {
+    let model = makeModel()
+    hardwareType(model, "2*(3+4)-1")
+    XCTAssertEqual(model.editor.text, "2×(3+4)−1")
+    var outcome = await answer(model)
+    guard case .answer(let thirteen) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(thirteen.exact.plainText, "13")
+
+    // A slash and a caret are the characters they are, so what is typed after them is not swallowed.
+    model.clearAll()
+    hardwareType(model, "1/2+3")
+    outcome = await answer(model)
+    guard case .answer(let sevenHalves) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(sevenHalves.exact.parserText, "((7)/(2))")
+
+    model.clearAll()
+    hardwareType(model, "2^3+1")
+    outcome = await answer(model)
+    guard case .answer(let nine) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(nine.exact.plainText, "9")
+
+    model.clearAll()
+    hardwareType(model, "cos(0)")
+    outcome = await answer(model)
+    guard case .answer(let one) = outcome else { return XCTFail("expected an answer, got \(outcome)") }
+    XCTAssertEqual(one.exact.plainText, "1")
+  }
+
+  func testTheSpecialKeysOfAHardwareKeyboardEditTheFormula() {
+    let model = makeModel()
+    hardwareType(model, "12")
+    hardware(model, "", key: .delete)
+    XCTAssertEqual(model.editor.text, "1")
+    hardware(model, "", key: .leftArrow)
+    hardwareType(model, "5")
+    hardware(model, "", key: .rightArrow)
+    hardwareType(model, "7")
+    XCTAssertEqual(model.editor.text, "517")
+    hardware(model, "\r", key: .return)
+    hardwareType(model, "x")
+    XCTAssertEqual(model.editor.lines.count, 2, "return starts a new line")
+  }
+
+  func testTabGoesThroughTheCellsOfAMatrixAndIsLeftAloneOutsideOne() {
+    let model = makeModel()
+    XCTAssertFalse(hardware(model, "\t", key: .tab), "outside a matrix Tab is for the system")
+    model.press(.matrix(rows: 2, columns: 2))
+    hardwareType(model, "1")
+    XCTAssertTrue(hardware(model, "\t", key: .tab))
+    hardwareType(model, "2")
+    hardware(model, "\t", key: .tab)
+    hardwareType(model, "3")
+    hardware(model, "\t", key: .tab)
+    hardwareType(model, "4")
+    XCTAssertEqual(model.editor.text, "[[1,2],[3,4]]")
+    hardware(model, "\t", key: .tab, modifiers: .shift)
+    hardware(model, "\t", key: .tab, modifiers: .shift)
+    hardware(model, "\t", key: .tab, modifiers: .shift)
+    hardwareType(model, "9")
+    XCTAssertEqual(model.editor.text, "[[91,2],[3,4]]")
+  }
+
+  func testAHardwareKeyboardLeavesWhatItHasNoUseForAlone() {
+    let model = makeModel()
+    XCTAssertFalse(hardware(model, "c", modifiers: .command), "command-C is the copy command's")
+    XCTAssertFalse(hardware(model, "v", modifiers: .command))
+    XCTAssertFalse(hardware(model, "a", modifiers: .control))
+    XCTAssertFalse(hardware(model, " "))
+    XCTAssertFalse(hardware(model, "é"))
+    XCTAssertFalse(hardware(model, "あ"), "kana from an input method are not typed into a formula")
+    XCTAssertFalse(hardware(model, "", key: .escape))
+    XCTAssertTrue(model.editor.isEmpty)
+    // What an Option key gives, when it is a mathematical character, is typed.
+    XCTAssertTrue(hardware(model, "π", modifiers: .option))
+    XCTAssertTrue(hardware(model, "θ"))
+    XCTAssertEqual(model.editor.text, "π*θ")
+    // Both minus signs, and a star for times, are the calculator's own.
+    model.clearAll()
+    hardwareType(model, "5-3*2")
+    XCTAssertEqual(model.editor.text, "5−3×2")
+  }
+
+  func testEveryPrintableAsciiCharacterIsEitherTypedOrDeliberatelyLeftOut() {
+    let left = Set(" \"#$&'@\\_`~:?")
+    for value in 0x21...0x7E {
+      let character = Character(Unicode.Scalar(UInt8(value)))
+      let action = HardwareKeys.action(for: character)
+      XCTAssertEqual(action == nil, left.contains(character), "\(character)")
+    }
+  }
+
+  func testTheCopyCommandTakesTheAnswerOrElseWhatIsTyped() async {
+    let model = makeModel()
+    UIPasteboard.general.string = "unchanged"
+    model.copyAnswerOrInput()
+    XCTAssertEqual(UIPasteboard.general.string, "unchanged", "nothing typed, nothing copied")
+    hardwareType(model, "1+1")
+    _ = await answer(model)
+    model.copyAnswerOrInput()
+    XCTAssertEqual(UIPasteboard.general.string, "2")
+    model.clearAll()
+    hardwareType(model, "3+")  // not a formula yet, so there is no answer
+    model.copyAnswerOrInput()
+    XCTAssertEqual(UIPasteboard.general.string, "3 +")
   }
 }

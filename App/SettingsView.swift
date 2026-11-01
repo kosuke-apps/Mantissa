@@ -47,7 +47,7 @@ struct SettingsView: View {
           Text("About")
         } footer: {
           Text(
-            "Everything is worked out on this phone. Nothing is sent anywhere, and there are no accounts, ads or tracking."
+            "Everything is worked out on this device. Nothing is sent anywhere, and there are no accounts, ads or tracking."
           )
         }
       }

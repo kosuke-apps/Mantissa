@@ -1,8 +1,9 @@
 # Mantissa on iPad: design note
 
-Status: a plan, not yet built. It says, screen by screen, what the iPad layout is and why, what stays as it is on the iPhone,
-and what could go wrong. The aim is an iPad app, not the iPhone screen stretched: the same `.ipa` runs on both, the iPhone layout
-does not change, and the extra room is spent on a bigger workspace, a bigger two-part keyboard and a persistent history.
+Status: built for 0.28.0, except what "Not built" below lists. It says, screen by screen, what the iPad layout is and why, what
+stays as it is on the iPhone, and what went wrong on the way. The aim is an iPad app, not the iPhone screen stretched: the same
+`.ipa` runs on both, the iPhone layout does not change, and the extra room is spent on a bigger workspace, a bigger two-part
+keyboard and a persistent history.
 
 ## What the iPad has that the iPhone does not
 
@@ -100,30 +101,37 @@ regular (portrait, 640 to 900 pt)           wide, with the history column (1180 
 
 ## Hardware keyboard
 
-A focusable container receives key presses (`onKeyPress`); there is no text field, so no software keyboard ever opens. Menu
-commands (`commands`) list the shortcuts in the overlay shown by holding ⌘ on the iPad and in the menu bar on the Mac.
+A focusable root view receives key presses (`onKeyPress`, `HardwareKeys.swift`); there is no text field, so no software keyboard
+opens. Focus is taken again when a sheet or a popover closes. Menu commands (`commands`, in `MantissaApp.swift`) list the shortcuts in
+the overlay shown by holding ⌘ on the iPad and in the menu bar on the Mac.
+
+Built:
 
 | Keys | Does |
 |---|---|
-| digits, letters, `.`, `,`, `+`, `-`, `*`, `=`, `<`, `>`, `!`, `%` | types the symbol (`*` is ×, `-` is −) |
-| `/` | the fraction key (the operand before the cursor becomes the numerator) |
-| `^` | the power key |
-| `(`, `)` | the brackets key and closing the bracket; `[` and `]` are single brackets |
-| `\` | the square-root key |
-| the vertical bar | the absolute-value key |
+| digits, letters, `.`, `,`, `;`, `+`, `=`, `<`, `>`, `!`, `%`, `^`, `/` | types the character (a slash and a caret are the characters, not a fraction or a power to fill in: `1/2+3` must not become `1/(2+3)`) |
+| `-`, `*` | types − and × |
+| `(`, `)` | the brackets: `(` opens a pair, `)` steps out of it; after the letters of a function's name (`cos`) it makes that function |
+| `[`, `]`, `{`, `}`, `\|` | single characters |
+| π, θ and other Greek letters, `°`, `∞`, `≤`, `≥`, `≠`, `²`, `³` | typed when the keyboard makes them (Option-P is π on a US keyboard) |
 | Return | new line; in a matrix, the first cell of the next row |
-| Tab, Shift-Tab | in a matrix, the next or the previous cell; elsewhere the next slot of the formula |
+| Tab, Shift-Tab | in a matrix, the next or the previous cell (from inside a fraction in a cell too); outside a matrix left to the system |
 | ← → | move through the formula |
-| Delete | delete one step; ⌘⌫ and Esc clear everything (AC) |
-| ⌘C, ⌥⌘C, ⌘V | copy the exact answer, copy the decimal, paste a formula |
-| ⌘Y, ⌘, | history, settings |
-| ⌘1 … ⌘4, ⌘L | the pages Functions, Trig, Calculus, Matrix; the letters keyboard |
-| ⌘+, ⌘−, ⌘0 | zoom the graph, reset it |
+| Delete | delete one step (it repeats when held) |
+| ⌘C | copy the answer as text, or what is typed when there is no answer |
+| ⌘V | paste a formula |
+| ⌘Y, ⌘, | history (a popover or sheet; with the history column it is already there), settings |
 
-Not planned now: ↑ and ↓ (the editor has no vertical movement between lines or matrix rows yet), undo and redo (the editor keeps no
+Anything else is ignored (it is left to the system): space, other scripts such as kana from an input method, Command and Control
+combinations that are not listed.
+
+Not built: ⌘1 … ⌘4 and ⌘L (the key pages and the letters keyboard), ⌘+, ⌘− and ⌘0 (zoom the graph), ⌘⌫ and Esc (clear), ⌥⌘C (copy the
+decimal), ↑ and ↓ (the editor has no vertical movement between lines or matrix rows yet), undo and redo (the editor keeps no
 history of edits). Drag and drop: the app has nothing to drag today, so none is added.
 
-## Pointer
+## Pointer (not built in 0.28.0)
+
+The plan, if it is built:
 
 - Hover states on the keys, the page tabs and the two small graph buttons (`hoverEffect`).
 - The answer's context menu (copy, use as input) opens on right-click as it does on a long press.
@@ -138,17 +146,44 @@ history of edits). Drag and drop: the app has nothing to drag today, so none is 
   answer are in `AppModel` and survive a change of layout.
 - A window shorter than about 520 pt (a small Stage Manager window) keeps its layout, with the smallest keys; the workspace scrolls.
 - The app asks for a minimum window size of 320 × 480 pt (`UIWindowScene.sizeRestrictions`), so the window cannot be made too small to
-  use; this matters on the Mac.
+  use; this matters on the Mac. The iPad simulator of iOS 27 stopped at 375 pt wide.
+- **Window controls.** An iPad window that is not the size of the screen has the three window dots over its top-left corner, on the
+  content. The top bar (and the history column's title) start 64 pt further right then (`windowControlsInset`, from comparing the
+  scene's size with the screen's; 0 on an iPhone and on a Mac, which has a title bar of its own). Found by looking at a resized
+  window: the angle-unit button was under the dots.
+- **Larger text.** From the accessibility sizes up the history column is dropped (it would be too narrow to read) and the workspace
+  scrolls as on the iPhone, so that nothing is left behind the keyboard.
+- **The answer's height.** In the stacked layout the answer is as tall as it is, up to 45 % of the workspace, and scrolls beyond that
+  (`AnswerBox`); `ViewThatFits` had made it as tall as the space it was offered and left a gap round it.
+
+### What was measured
+
+The simulator of iOS 27 has no Split View in the sense of the older iPadOS; windows are resized freely (windowed apps, with a corner
+handle), and that is how the widths below were made: a drag of the handle, then the width measured from a screenshot. They are near,
+not equal to, a third, a half and two thirds.
+
+| iPad Pro 13-inch simulator | Width (pt) | Layout |
+|---|---|---|
+| portrait, full screen | 1032 | `wide`, answer and graph side by side |
+| portrait window | 678 | `regular`, answer above the graph, two key blocks |
+| portrait window | 518 | `compact` |
+| portrait window, the narrowest allowed | 375 | `compact` |
+| landscape, full screen | 1376 | `wide` with the history column |
+| landscape window | 876 | `regular` |
+| landscape window | 692 | `regular` |
+| landscape window | 470 | `compact` |
+
+The iPad mini simulator (744 × 1133 pt) was looked at full screen in portrait (`regular`) and landscape (`wide`).
 
 ## Risks, and how they are met
 
 | Risk | Where it shows | Plan |
 |---|---|---|
-| `UIScreen.main.bounds` in the key popup | wrong side for the popup row in Split View, in a Mac window | measure the keyboard's own width |
+| `UIScreen.main.bounds` in the key popup | wrong side for the popup row in Split View, in a Mac window | measure the keyboard's own width (done) |
 | Orientation list is portrait only | iPad stuck in portrait, Split View refused | `~ipad` key with all four; iPhone key unchanged |
 | The iPhone layout changes by accident | regression on the phone | the `compact` path is the old code; before/after screenshots compared by pixel difference |
-| A hardware keyboard in a Japanese input mode | kana characters arrive from `onKeyPress` and the parser rejects them | keys map by the ASCII character when there is one and the rest are ignored; the README says to use the English (ABC) input source, as for the Mac |
-| Focus is lost after a popover or a sheet closes | shortcuts stop working until a tap | the container takes focus again when a presentation ends |
+| A hardware keyboard in a Japanese input mode | kana characters arrive from `onKeyPress` and the parser rejects them | only ASCII and a few mathematical characters are typed and the rest are ignored (unit-tested); **not tried with a Japanese input source** |
+| Focus is lost after a popover or a sheet closes | typing stops working until a tap | the root takes focus again when a presentation ends (written; **not tried**) |
 | Two sizes of keyboard in one codebase | duplicated key code | one `KeyView` and one layout table; only the grid frame and the page set differ by `WindowMetrics` |
 | Dynamic Type at the largest sizes | columns too narrow | side by side only when each column is 380 pt or more; otherwise stacked, and the workspace scrolls |
 | Paste: `UIPasteboard` asks permission on the iPhone | prompt on first paste, may differ on the Mac | to be seen on each; the paste check (`canPaste`) is not called while drawing |
@@ -169,7 +204,7 @@ no supported way to install that on a Mac, so no Mac download is promised; the M
 - The history file and the settings are in the app's own container, as on the iPad; nothing leaves the machine.
 - To be written down after the run: what was missing or different, in the release notes (only what was checked).
 
-## Order of work
+## Order of work (all of it done for 0.28.0 except the Mac run and the pointer; see "Not built")
 
 1. Plumbing: `TARGETED_DEVICE_FAMILY: "1,2"`, the `~ipad` orientations, `WindowMetrics` from the root width, the popup width fix, the History and
    Settings presentation. The iPhone screenshots must not change. The first iPad build can already be run.

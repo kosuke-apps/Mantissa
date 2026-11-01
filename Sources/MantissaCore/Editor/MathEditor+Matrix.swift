@@ -104,6 +104,26 @@ extension MathEditor {
     return true
   }
 
+  /// Moves to the start of the next cell of the matrix the cursor is in, at any depth (it may be inside a fraction in a cell),
+  /// along the row and on to the next. At the last cell the cursor stays. Returns whether the cursor was in a matrix. This is
+  /// what Tab does.
+  @discardableResult
+  public mutating func moveToNextCell() -> Bool { moveToCell(offsetBy: 1) }
+
+  /// Moves to the start of the previous cell of the matrix the cursor is in; in the first cell it stays. Shift-Tab.
+  @discardableResult
+  public mutating func moveToPreviousCell() -> Bool { moveToCell(offsetBy: -1) }
+
+  private mutating func moveToCell(offsetBy delta: Int) -> Bool {
+    guard let (position, rows, columns, _, _) = enclosingMatrix else { return false }
+    let slot = cursor.path[position].slot + delta
+    guard (0..<rows * columns).contains(slot) else { return true }
+    cursor.path.removeSubrange((position + 1)...)
+    cursor.path[position].slot = slot
+    cursor.offset = 0
+    return true
+  }
+
   /// In a cell of a matrix, moves to the start of the first cell of the next row; in the last row it stays. Returns whether the
   /// cursor was in a cell.
   mutating func goToNextRow() -> Bool {

@@ -4,12 +4,18 @@ import SwiftUI
 /// The calculator: what you type, what it comes to, and the keyboard.
 struct CalculatorScreen: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.dynamicTypeSize) private var textSize
   @State private var showsFullGraph = false
   /// The whole window; `window` below is what is left for the calculator itself once the history column has taken its share.
   @State private var fullWindow = WindowMetrics.firstGuess
+  /// The room the window controls of an iPad window take at its top-left corner; they lie over the content.
+  @State private var controlsInset: CGFloat = 0
 
   private let historyColumnWidth: CGFloat = 300
-  private var showsHistoryColumn: Bool { fullWindow.showsHistoryColumn }
+  /// At the accessibility text sizes a column of earlier problems would be too narrow to read, and the workspace scrolls as it does
+  /// on the iPhone, so that nothing is left behind the keyboard.
+  private var usesLargeText: Bool { textSize >= .accessibility1 }
+  private var showsHistoryColumn: Bool { fullWindow.showsHistoryColumn && !usesLargeText }
   private var window: WindowMetrics {
     showsHistoryColumn
       ? WindowMetrics(size: CGSize(width: fullWindow.width - historyColumnWidth - 1, height: fullWindow.height))
@@ -26,15 +32,19 @@ struct CalculatorScreen: View {
       calculator
     }
     .background(Color(.systemBackground))
+    .takesHardwareKeyboardInput()
     .onGeometryChange(for: CGSize.self) {
       $0.size
     } action: {
       fullWindow = WindowMetrics(size: $0)
+      controlsInset = Self.windowControlsInset()
     }
     .environment(\.window, window)
+    .environment(\.windowControlsInset, controlsInset)
     .task { Self.setMinimumWindowSize() }
     // The history column replaces the history button, so what that button opened is closed.
     .onChange(of: showsHistoryColumn) { _, shown in if shown { model.showsHistory = false } }
+    .onChange(of: model.showsHistory) { _, shown in if shown && showsHistoryColumn { model.showsHistory = false } }
     .fullScreenCover(isPresented: $showsFullGraph) {
       if let graph = model.graph {
         GraphCard(
@@ -54,7 +64,7 @@ struct CalculatorScreen: View {
   private var calculator: some View {
     VStack(spacing: 0) {
       topBar
-      if window.kind == .compact {
+      if window.kind == .compact || usesLargeText {
         ScrollView {
           VStack(alignment: .leading, spacing: 0) {
             InputView()
@@ -85,6 +95,16 @@ struct CalculatorScreen: View {
     Binding(
       get: { model[keyPath: flag] && (window.kind == .compact) == inCompactWindow },
       set: { model[keyPath: flag] = $0 })
+  }
+
+  /// The window controls (the three dots) of an iPad window lie over its top-left corner whenever the window is not the size of the
+  /// screen, and what is there has to keep clear of them. A Mac window has a title bar of its own, and an iPhone has none.
+  private static func windowControlsInset() -> CGFloat {
+    guard UIDevice.current.userInterfaceIdiom == .pad, !ProcessInfo.processInfo.isiOSAppOnMac else { return 0 }
+    for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+      return scene.coordinateSpace.bounds.size == scene.screen.bounds.size ? 0 : 64
+    }
+    return 0
   }
 
   /// A window cannot be made too small to use: a Stage Manager window on the iPad, a window on the Mac.
@@ -151,7 +171,8 @@ struct CalculatorScreen: View {
           }
         }
       }
-      .padding(.horizontal, 20)
+      .padding(.leading, showsHistoryColumn ? 20 : 20 + controlsInset)
+      .padding(.trailing, 20)
     }
     .frame(height: 48)
   }
@@ -188,11 +209,7 @@ private struct Workspace: View {
           } else {
             VStack(spacing: 14) {
               // The answer as tall as it is, up to a share of the height, and then it scrolls.
-              ViewThatFits(in: .vertical) {
-                answer
-                ScrollView { answer }
-              }
-              .frame(maxHeight: room.size.height * 0.45)
+              AnswerBox(maxHeight: room.size.height * 0.45) { answer }
               GraphCard(graph: graph, height: nil).frame(minHeight: 220)
             }
             .frame(maxHeight: .infinity)
@@ -210,6 +227,26 @@ private struct Workspace: View {
 
   private var answer: some View {
     ResultView(outcome: model.outcome).frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+/// The answer, as tall as it is and no taller than `maxHeight`, scrolling when it is more. (`ViewThatFits` would pick the answer
+/// that fits but then be as tall as the room it was offered, leaving a gap round it.)
+private struct AnswerBox<Content: View>: View {
+  let maxHeight: CGFloat
+  @ViewBuilder var content: Content
+  @State private var naturalHeight: CGFloat = 0
+
+  var body: some View {
+    ScrollView {
+      content.onGeometryChange(for: CGFloat.self) {
+        $0.size.height
+      } action: {
+        naturalHeight = $0
+      }
+    }
+    .scrollBounceBehavior(.basedOnSize)
+    .frame(height: min(naturalHeight, maxHeight))
   }
 }
 

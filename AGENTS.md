@@ -1,6 +1,6 @@
 # Mantissa
 
-A free, fully offline scientific and graphing calculator for iPhone that shows exact results and solves equations.
+A free, fully offline scientific and graphing calculator for iPhone and iPad that shows exact results and solves equations.
 Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific to this project.
 
 ## Product
@@ -31,14 +31,17 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
   dependencies. Tests use Swift Testing. UI strings in English with a maintained Japanese String Catalog.
 - Bundle identifier (planned): `dev.kosuke.mantissa`, as for Headway.
 - Layout:
-  - `Package.swift`: the engine as a Swift package. `App/` is the iPhone app on top of it, generated into
+  - `Package.swift`: the engine as a Swift package. `App/` is the iPhone and iPad app on top of it, generated into
     `Mantissa.xcodeproj` by XcodeGen from `project.yml` (the project file is not committed; Swift 5 mode for the app,
     Swift 6 for the package). `App/AppModel.swift` holds the editor and the latest answer (computed off the main
     thread); `MathView.swift` draws a `MathNode` tree; `GraphView.swift` the graph (canvas, pan, pinch, tap a point);
     `History.swift` and `HistoryView.swift` the saved problems; `Settings.swift` and `SettingsView.swift` the angle unit,
     digits and in-app language (kept in `UserDefaults`; `Localizer` looks up strings that are not views);
     `SolutionsDisplay.swift` an equation's answer typeset; `KeyboardLayout.swift` and `KeyboardView.swift` are the keys
-    and pages; `CalculatorScreen.swift` the screen; strings in `Resources/Localizable.xcstrings` (English, Japanese).
+    and pages; `CalculatorScreen.swift` the screen; `WindowMetrics.swift` the measured width of the window, which decides the
+    layout (iPhone layout under 640 pt, whatever the device; two key blocks and a workspace above; a history column from
+    1180 × 600 pt); `HardwareKeys.swift` what the keys of a hardware keyboard do (`docs/ipad-design.md`); strings in
+    `Resources/Localizable.xcstrings` (English, Japanese).
   - `Sources/MantissaCore/BigInt.swift`: arbitrary-precision integer (sign and magnitude, 32-bit limbs, Knuth D
     division). Own implementation so there is no dependency.
   - `Sources/MantissaCore/Rational.swift`: exact fraction in lowest terms; parses decimal literals exactly.

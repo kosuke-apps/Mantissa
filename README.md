@@ -34,7 +34,7 @@
 - **Matrices and vectors.** Sums, products, powers, the inverse, determinant, rank, eigenvalues, and the dot and cross products,
   all exact, on a keyboard page of their own.
 - **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
-- **History, English and Japanese.** Everything is worked out on the phone: no ads, no accounts, no network access.
+- **History, English and Japanese.** Everything is worked out on the device: no ads, no accounts, no network access.
 
 ## Install
 
@@ -43,15 +43,15 @@ sideloading tool such as AltStore or Sideloadly.
 
 1. Download `Mantissa-x.y.z-unsigned.ipa` and its `.sha256` from the [latest release](https://github.com/kosuke-apps/Mantissa/releases/latest).
 2. Check the file: `shasum -a 256 -c Mantissa-x.y.z-unsigned.ipa.sha256`.
-3. Open the `.ipa` in the sideloading tool and install it on your iPhone.
+3. Open the `.ipa` in the sideloading tool and install it on your iPhone or iPad.
 
 More about signing and its limits is under [Installing](#installing). To build it yourself, see
 [Building from source](#building-from-source).
 
 ## Privacy
 
-Mantissa works out everything on your iPhone. It has no server, no account, no advertising and no analytics, and asks for no
-permission. Your history and settings stay in the app's own storage on the phone. Nothing is sent anywhere. Details:
+Mantissa works out everything on your iPhone or iPad. It has no server, no account, no advertising and no analytics, and asks for no
+permission. Your history and settings stay in the app's own storage on the device. Nothing is sent anywhere. Details:
 [PRIVACY.md](PRIVACY.md).
 
 ## Features
@@ -68,8 +68,8 @@ What it does (the maths is in the `MantissaCore` package, which has no dependenc
   (`3√3`, `√6/4 - √2/4`, `-1 + √2`, `2x + 2`, `120`) and a decimal approximation to any precision. Radians, or degrees
   with the ° sign (`sin(15°)`); English or Japanese full-width input.
 
-- An iPhone app on top of the engine: a maths keyboard with stacked fractions and roots, a live exact and decimal
-  answer, a history of solved problems (saved on the phone), and graphs of functions of x with their roots, extrema and
+- An iPhone and iPad app on top of the engine: a maths keyboard with stacked fractions and roots, a live exact and decimal
+  answer, a history of solved problems (saved on the device), and graphs of functions of x with their roots, extrema and
   crossings marked, solutions of equations (exact where there is a closed form, complex ones included, the rest as
   decimals), equations with roots, absolute values, exponentials, logarithms and trigonometric functions (`sin x = 1/2`
   is `π/6 + 2πn` or `5π/6 + 2πn`), systems of equations, and inequalities in one unknown (`x² > 4` is `x < −2 or x > 2`).
@@ -149,8 +149,11 @@ The engine alone builds and tests without Xcode projects: `swift build` and `swi
 ### Where it has been run
 
 Checked by the author on the iOS 27.0 simulator (Xcode 27.1, macOS 26.6), which is where the automated app tests run, and
-installed and started on one iPhone 12 Pro with iOS 18.6.2. Nothing else has been tried: other devices and iOS versions
-should work (the deployment target is iOS 17) but are not verified. It is for iPhone, in portrait.
+installed and started on one iPhone 12 Pro with iOS 18.6.2. The iPad layouts have been looked at on the iPad Pro 13-inch and iPad
+mini simulators (portrait and landscape, windows resized down to 375 pt wide, the largest text sizes); the app has been built for
+a Mac as "Designed for iPad" but not run there, and no real iPad has been used. Nothing else has been tried: other devices and iOS
+versions should work (the deployment target is iOS 17) but are not verified. The iPhone is used in portrait, the iPad in any
+orientation.
 
 ## Accuracy
 

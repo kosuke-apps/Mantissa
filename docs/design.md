@@ -154,7 +154,10 @@ forms. It also showed that the evaluator itself needed 120 digits to be a fair j
   all of it is empty).
 - **The text written for the parser is exact, not pretty.** A fraction is `((n)/(d))`, an exponent `^(e)`, a root
   `√(r)` or `root(r,n)`; letters typed one by one are joined with `*` so that s, i, n are three variables and "a" before a
-  `sin` key is `a*sin(…)`, not `asin`. An empty slot gives empty parentheses, which the parser rejects, so an unfinished
+  `sin` key is `a*sin(…)`, not `asin`. The exception is an opening parenthesis typed after the letters of a function's name
+  (`c`, `o`, `s`, `(`): that makes the function, as its key does, taking the longest name the letters end with (`xsin(` is
+  x times sin, `asin(` is arcsin); it is how typing on a hardware keyboard reaches `cos(0)`. The calculus names are left out, since
+  their keys make structures. An empty slot gives empty parentheses, which the parser rejects, so an unfinished
   formula is reported as unfinished instead of guessed.
 - **Checked by reading back.** Typeset text of random expressions (40 000 across seeds) parses back to the same
   expression. That found a defect in the shared-radical rule (`√(−7)` lost its sign); it is fixed in both the text

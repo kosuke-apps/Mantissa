@@ -260,6 +260,46 @@ struct MathEditorTests {
     #expect(constants.text == "e*x*p")
   }
 
+  @Test("An opening bracket after the letters of a function's name makes that function, as its key does")
+  func lettersThenABracket() throws {
+    var cosine = MathEditor()
+    cosine.type("cos(0)+1")
+    #expect(cosine.text == "cos(0)+1")
+    #expect(try evaluate(cosine) == "2")
+    #expect(cosine.cursor.path.isEmpty)
+    var key = MathEditor()
+    key.insertFunction("cos")
+    key.type("0)+1")
+    #expect(cosine.lines == key.lines, "the same structure as the function key makes")
+
+    var product = MathEditor()
+    product.type("xsin(0)")
+    #expect(product.text == "x*sin(0)", "letters before the name stay what they were")
+
+    var inverse = MathEditor()
+    inverse.type("asin(1)")
+    #expect(inverse.text == "asin(1)", "the longest name the letters end with, not `sin` after an `a`")
+    #expect(try evaluate(inverse) == "π/2")
+
+    var named = MathEditor()
+    named.type("nCr(5,2)+mod(7,3)")
+    #expect(try evaluate(named) == "11")
+
+    var plain = MathEditor()
+    plain.type("a(b+c)")
+    #expect(plain.text == "a(b+c)", "a letter that is no function stays what it was, and the group is its factor")
+
+    var calculus = MathEditor()
+    calculus.type("int(")
+    #expect(
+      calculus.lines[0].allSatisfy { if case .function = $0 { false } else { true } }, "calculus has its own keys")
+
+    var inside = MathEditor()
+    inside.insertMatrix(rows: 1, columns: 2)
+    inside.type("sin(0),max(1,3)")
+    #expect(inside.text == "[[sin(0),max(1,3)]]", "a comma between the cells and a comma in an argument are told apart")
+  }
+
   @Test("The cursor moves through structures in reading order and back")
   func movement() {
     var editor = MathEditor()

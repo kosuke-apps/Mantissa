@@ -618,13 +618,13 @@
         }
       }
     },
-    "Everything is worked out on this phone. Nothing is sent anywhere, and there are no accounts, ads or tracking.": {
+    "Everything is worked out on this device. Nothing is sent anywhere, and there are no accounts, ads or tracking.": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "計算はすべてこの iPhone の中で行います．何も送信せず，アカウント・広告・トラッキングもありません．"
+            "value": "計算はすべてこの端末の中で行います．何も送信せず，アカウント・広告・トラッキングもありません．"
           }
         }
       }
