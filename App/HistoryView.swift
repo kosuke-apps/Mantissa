@@ -1,12 +1,89 @@
 import MantissaCore
 import SwiftUI
 
-/// The list of earlier problems, newest first, grouped by day. Tapping one puts it back into the calculator.
+/// The list of earlier problems in a sheet or a popover. Tapping one puts it back into the calculator.
 struct HistoryView: View {
   @Environment(AppModel.self) private var model
   @Environment(\.dismiss) private var dismiss
   @State private var showsSavedOnly = false
   @State private var confirmsClearing = false
+
+  var body: some View {
+    NavigationStack {
+      HistoryList(showsSavedOnly: showsSavedOnly)
+        .navigationTitle(Localizer.string("History"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .topBarLeading) {
+            Button {
+              showsSavedOnly.toggle()
+            } label: {
+              Image(systemName: showsSavedOnly ? "star.fill" : "star")
+            }
+            .accessibilityLabel("Show saved problems only")
+          }
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("Done") { dismiss() }
+          }
+          ToolbarItem(placement: .bottomBar) {
+            Button("Clear history", role: .destructive) { confirmsClearing = true }
+              .disabled(model.history.entries.isEmpty)
+          }
+        }
+        .confirmationDialog("Clear the history?", isPresented: $confirmsClearing, titleVisibility: .visible) {
+          Button("Clear history", role: .destructive) { model.history.clear() }
+        } message: {
+          Text("Saved problems are kept.")
+        }
+    }
+  }
+}
+
+/// The history as a column beside the calculator, when the window is wide enough: the same list, with its star filter and "Clear
+/// history" in a header of its own instead of a sheet's bars.
+struct HistoryColumn: View {
+  @Environment(AppModel.self) private var model
+  @State private var showsSavedOnly = false
+  @State private var confirmsClearing = false
+
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack {
+        Text("History").font(.headline)
+        Spacer()
+        Button {
+          showsSavedOnly.toggle()
+        } label: {
+          Image(systemName: showsSavedOnly ? "star.fill" : "star").frame(width: 32, height: 32)
+        }
+        .accessibilityLabel("Show saved problems only")
+        Button {
+          confirmsClearing = true
+        } label: {
+          Image(systemName: "trash").frame(width: 32, height: 32)
+        }
+        .accessibilityLabel("Clear history")
+        .disabled(model.history.entries.isEmpty)
+      }
+      .buttonStyle(.plain)
+      .padding(.horizontal, 16)
+      .frame(height: 48)
+      HistoryList(showsSavedOnly: showsSavedOnly)
+    }
+    .background(Color(.systemGroupedBackground))
+    .confirmationDialog("Clear the history?", isPresented: $confirmsClearing, titleVisibility: .visible) {
+      Button("Clear history", role: .destructive) { model.history.clear() }
+    } message: {
+      Text("Saved problems are kept.")
+    }
+  }
+}
+
+/// The problems, newest first, grouped by day, or what stands in for them when there are none.
+private struct HistoryList: View {
+  @Environment(AppModel.self) private var model
+  @Environment(\.dismiss) private var dismiss
+  let showsSavedOnly: Bool
 
   private var entries: [HistoryEntry] {
     showsSavedOnly ? model.history.entries.filter(\.isSaved) : model.history.entries
@@ -20,40 +97,14 @@ struct HistoryView: View {
   }
 
   var body: some View {
-    NavigationStack {
-      Group {
-        if entries.isEmpty {
-          ContentUnavailableView(
-            showsSavedOnly ? "Nothing saved yet" : "No history yet", systemImage: showsSavedOnly ? "star" : "clock",
-            description: Text(
-              showsSavedOnly ? "Tap the star on a problem to keep it here." : "Problems you work out show up here."))
-        } else {
-          list
-        }
-      }
-      .navigationTitle(Localizer.string("History"))
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .topBarLeading) {
-          Button {
-            showsSavedOnly.toggle()
-          } label: {
-            Image(systemName: showsSavedOnly ? "star.fill" : "star")
-          }
-          .accessibilityLabel("Show saved problems only")
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-          Button("Done") { dismiss() }
-        }
-        ToolbarItem(placement: .bottomBar) {
-          Button("Clear history", role: .destructive) { confirmsClearing = true }
-            .disabled(model.history.entries.isEmpty)
-        }
-      }
-      .confirmationDialog("Clear the history?", isPresented: $confirmsClearing, titleVisibility: .visible) {
-        Button("Clear history", role: .destructive) { model.history.clear() }
-      } message: {
-        Text("Saved problems are kept.")
+    Group {
+      if entries.isEmpty {
+        ContentUnavailableView(
+          showsSavedOnly ? "Nothing saved yet" : "No history yet", systemImage: showsSavedOnly ? "star" : "clock",
+          description: Text(
+            showsSavedOnly ? "Tap the star on a problem to keep it here." : "Problems you work out show up here."))
+      } else {
+        list
       }
     }
   }

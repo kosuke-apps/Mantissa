@@ -140,7 +140,9 @@ enum KeyboardLayout {
 
   private static func alternate(_ text: String) -> KeySpec.Alternate { .init(title: text, actions: [.symbol(text)]) }
 
-  static func rows(for page: KeyboardPage) -> [[KeySpec]] {
+  /// The keys of a page. A window with room shows the basic keys beside the other pages, so the Matrix page then leaves its number
+  /// pad out (`withNumberPad: false`) and has the operations as keys of their own, where the iPhone's has them under a long press.
+  static func rows(for page: KeyboardPage, withNumberPad: Bool = true) -> [[KeySpec]] {
     switch page {
     case .basic:
       return [
@@ -237,6 +239,46 @@ enum KeyboardLayout {
           // After the point of a limit: approaching it from above (x → a⁺) or from below (x → a⁻).
           KeySpec("above", .text("a⁺"), [.symbol("⁺")]), KeySpec("below", .text("a⁻"), [.symbol("⁻")]),
           digit("0"), digit("1"), digit("2"), KeySpec("power", .power, [.power]),
+        ],
+      ]
+
+    case .matrix where !withNumberPad:
+      return [
+        [
+          KeySpec(
+            "matrix", .matrix(rows: 2, columns: 2), [.matrix(rows: 2, columns: 2)],
+            alternates: [
+              .init(title: "2×3", actions: [.matrix(rows: 2, columns: 3)]),
+              .init(title: "3×2", actions: [.matrix(rows: 3, columns: 2)]),
+              .init(title: "4×4", actions: [.matrix(rows: 4, columns: 4)]),
+            ]),
+          KeySpec("matrix3", .matrix(rows: 3, columns: 3), [.matrix(rows: 3, columns: 3)]),
+          KeySpec(
+            "vector", .matrix(rows: 3, columns: 1), [.matrix(rows: 3, columns: 1)],
+            alternates: [
+              .init(title: "2×1", actions: [.matrix(rows: 2, columns: 1)]),
+              .init(title: "4×1", actions: [.matrix(rows: 4, columns: 1)]),
+              .init(title: "1×2", actions: [.matrix(rows: 1, columns: 2)]),
+              .init(title: "1×3", actions: [.matrix(rows: 1, columns: 3)]),
+            ]),
+          KeySpec("identity", .text("Iₙ"), [.function("identity")]),
+          KeySpec("addRow", .word("+ row"), [.matrixChange(.addRow)]),
+          KeySpec("addColumn", .word("+ col"), [.matrixChange(.addColumn)]),
+        ],
+        [
+          function("det"), function("trace"), function("rank"), function("rref"),
+          KeySpec("A⁻¹", [.power, .symbol("−"), .symbol("1"), .right]),
+          KeySpec("Aᵀ", [.power, .symbol("T"), .right]),
+        ],
+        [
+          function("dot"), function("cross"), function("norm"),
+          KeySpec("eigvals", .text("λ"), [.function("eigvals")]), function("eigvecs"),
+          KeySpec("abs", .absolute, [.absolute]),
+        ],
+        [
+          KeySpec("removeRow", .word("− row"), [.matrixChange(.removeRow)]),
+          KeySpec("removeColumn", .word("− col"), [.matrixChange(.removeColumn)]),
+          symbol(","), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), KeySpec("power", .power, [.power]),
         ],
       ]
 
@@ -368,6 +410,11 @@ enum KeyboardLayout {
     case "Aᵀ": return "Transpose"
     case "dot": return "Dot product"
     case "eigvals": return "Eigenvalues"
+    case "eigvecs": return "Eigenvectors"
+    case "matrix3": return "Matrix, 3 by 3"
+    case "identity": return "Identity matrix"
+    case "removeRow": return "Remove the row"
+    case "removeColumn": return "Remove the column"
     case "[": return "Open square bracket"
     case "]": return "Close square bracket"
     case "{": return "Open brace"

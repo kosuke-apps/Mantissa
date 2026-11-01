@@ -23,6 +23,9 @@ struct WindowMetrics: Equatable {
 
   var kind: WindowClass { width < 640 ? .compact : (width < 900 ? .regular : .wide) }
 
+  /// How much larger than on the iPhone the formula and the answer are drawn.
+  var contentScale: CGFloat { kind == .compact ? 1 : 1.25 }
+
   /// A column of earlier problems fits beside the calculator.
   var showsHistoryColumn: Bool { width >= 1180 && height >= 600 }
 

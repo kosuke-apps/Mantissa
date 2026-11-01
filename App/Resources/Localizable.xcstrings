@@ -1629,6 +1629,61 @@
           }
         }
       }
+    },
+    "Eigenvectors": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固有ベクトル"
+          }
+        }
+      }
+    },
+    "Matrix, 3 by 3": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3×3 の行列"
+          }
+        }
+      }
+    },
+    "Identity matrix": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "単位行列"
+          }
+        }
+      }
+    },
+    "Remove the row": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行を削除"
+          }
+        }
+      }
+    },
+    "Remove the column": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列を削除"
+          }
+        }
+      }
     }
   }
 }

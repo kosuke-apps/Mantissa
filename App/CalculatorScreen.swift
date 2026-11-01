@@ -5,40 +5,36 @@ import SwiftUI
 struct CalculatorScreen: View {
   @Environment(AppModel.self) private var model
   @State private var showsFullGraph = false
-  @State private var window = WindowMetrics.firstGuess
+  /// The whole window; `window` below is what is left for the calculator itself once the history column has taken its share.
+  @State private var fullWindow = WindowMetrics.firstGuess
+
+  private let historyColumnWidth: CGFloat = 300
+  private var showsHistoryColumn: Bool { fullWindow.showsHistoryColumn }
+  private var window: WindowMetrics {
+    showsHistoryColumn
+      ? WindowMetrics(size: CGSize(width: fullWindow.width - historyColumnWidth - 1, height: fullWindow.height))
+      : fullWindow
+  }
 
   var body: some View {
     @Bindable var model = model
-    VStack(spacing: 0) {
-      topBar
-      ScrollView {
-        VStack(alignment: .leading, spacing: 0) {
-          InputView()
-          Divider().padding(.vertical, 10)
-          ResultView(outcome: model.outcome)
-          if let graph = model.graph {
-            GraphCard(
-              graph: graph,
-              expand: ("arrow.up.left.and.arrow.down.right", "Show the graph larger", { showsFullGraph = true })
-            )
-            .padding(.top, 16)
-          }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 24)
-        .frame(maxWidth: .infinity, alignment: .leading)
+    HStack(spacing: 0) {
+      if showsHistoryColumn {
+        HistoryColumn().frame(width: historyColumnWidth)
+        Divider()
       }
-      KeyboardView()
+      calculator
     }
     .background(Color(.systemBackground))
     .onGeometryChange(for: CGSize.self) {
       $0.size
     } action: {
-      window = WindowMetrics(size: $0)
+      fullWindow = WindowMetrics(size: $0)
     }
     .environment(\.window, window)
     .task { Self.setMinimumWindowSize() }
+    // The history column replaces the history button, so what that button opened is closed.
+    .onChange(of: showsHistoryColumn) { _, shown in if shown { model.showsHistory = false } }
     .fullScreenCover(isPresented: $showsFullGraph) {
       if let graph = model.graph {
         GraphCard(
@@ -54,6 +50,36 @@ struct CalculatorScreen: View {
     .sheet(isPresented: presented(\.showsSettings, inCompactWindow: true)) { SettingsView() }
   }
 
+  /// The top bar, the workspace and the keyboard.
+  private var calculator: some View {
+    VStack(spacing: 0) {
+      topBar
+      if window.kind == .compact {
+        ScrollView {
+          VStack(alignment: .leading, spacing: 0) {
+            InputView()
+            Divider().padding(.vertical, 10)
+            ResultView(outcome: model.outcome)
+            if let graph = model.graph {
+              GraphCard(
+                graph: graph,
+                expand: ("arrow.up.left.and.arrow.down.right", "Show the graph larger", { showsFullGraph = true })
+              )
+              .padding(.top, 16)
+            }
+          }
+          .padding(.horizontal, 20)
+          .padding(.top, 14)
+          .padding(.bottom, 24)
+          .frame(maxWidth: .infinity, alignment: .leading)
+        }
+      } else {
+        Workspace(showsFullGraph: $showsFullGraph)
+      }
+      KeyboardView()
+    }
+  }
+
   /// Whether something that is a sheet in a compact window and a popover in a larger one is showing as the one asked for.
   private func presented(_ flag: ReferenceWritableKeyPath<AppModel, Bool>, inCompactWindow: Bool) -> Binding<Bool> {
     Binding(
@@ -66,6 +92,17 @@ struct CalculatorScreen: View {
     for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
       scene.sizeRestrictions?.minimumSize = CGSize(width: 320, height: 480)
     }
+    #if DEBUG
+      // `-MantissaOrientation landscape` (or `portrait`) turns an iPad to that orientation, for checking a screen without the
+      // Simulator's menu.
+      let arguments = ProcessInfo.processInfo.arguments
+      if let index = arguments.firstIndex(of: "-MantissaOrientation"), index + 1 < arguments.count {
+        let mask: UIInterfaceOrientationMask = arguments[index + 1] == "landscape" ? .landscapeRight : .portrait
+        for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+          scene.requestGeometryUpdate(.iOS(interfaceOrientations: mask))
+        }
+      }
+    #endif
   }
 
   /// The title, the angle unit (tap to switch) and Settings.
@@ -86,17 +123,19 @@ struct CalculatorScreen: View {
         .accessibilityLabel("Angle unit")
         Spacer()
         HStack(spacing: 22) {
-          Button {
-            model.showsHistory = true
-          } label: {
-            Image(systemName: "clock").scaledFont(size: 18).foregroundStyle(.primary)
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("History")
-          .popover(isPresented: presented(\.showsHistory, inCompactWindow: false), arrowEdge: .top) {
-            HistoryView()
-              .frame(minWidth: 380, idealWidth: 420, minHeight: 480, idealHeight: 620)
-              .presentationCompactAdaptation(.sheet)
+          if !showsHistoryColumn {
+            Button {
+              model.showsHistory = true
+            } label: {
+              Image(systemName: "clock").scaledFont(size: 18).foregroundStyle(.primary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("History")
+            .popover(isPresented: presented(\.showsHistory, inCompactWindow: false), arrowEdge: .top) {
+              HistoryView()
+                .frame(minWidth: 380, idealWidth: 420, minHeight: 480, idealHeight: 620)
+                .presentationCompactAdaptation(.sheet)
+            }
           }
           Button {
             model.showsSettings = true
@@ -118,10 +157,67 @@ struct CalculatorScreen: View {
   }
 }
 
+/// The workspace of a window with room. The formula goes across the top. In a regular window the answer is under it and the graph
+/// takes what is left; in a wide one the answer and the graph are side by side. The graph is never behind the keyboard, and
+/// without one the answer has the room.
+private struct Workspace: View {
+  @Environment(AppModel.self) private var model
+  @Environment(\.window) private var window
+  @Environment(\.dynamicTypeSize) private var textSize
+  @Binding var showsFullGraph: Bool
+
+  private let margin: CGFloat = 28
+  private let gap: CGFloat = 20
+
+  /// Side by side only when each of the two has room to be read; at a very large text size the answer needs the width.
+  private var isSideBySide: Bool { window.kind == .wide && textSize < .accessibility1 }
+
+  var body: some View {
+    GeometryReader { room in
+      VStack(alignment: .leading, spacing: 0) {
+        InputView()
+        Divider().padding(.vertical, 10)
+        if let graph = model.graph {
+          if isSideBySide {
+            HStack(alignment: .top, spacing: gap) {
+              ScrollView { answer }
+                .frame(width: min(max((room.size.width - 2 * margin) * 0.42, 380), 560))
+              GraphCard(graph: graph, height: nil)
+            }
+            .frame(maxHeight: .infinity)
+          } else {
+            VStack(spacing: 14) {
+              // The answer as tall as it is, up to a share of the height, and then it scrolls.
+              ViewThatFits(in: .vertical) {
+                answer
+                ScrollView { answer }
+              }
+              .frame(maxHeight: room.size.height * 0.45)
+              GraphCard(graph: graph, height: nil).frame(minHeight: 220)
+            }
+            .frame(maxHeight: .infinity)
+          }
+        } else {
+          ScrollView { answer.frame(maxWidth: 720, alignment: .leading) }
+        }
+      }
+      .padding(.horizontal, margin)
+      .padding(.top, 14)
+      .padding(.bottom, 16)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+  }
+
+  private var answer: some View {
+    ResultView(outcome: model.outcome).frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
 private struct InputView: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.window) private var window
 
-  private let size: CGFloat = 30
+  private var size: CGFloat { 30 * window.contentScale }
   @State private var spots: [CaretSpot] = []
 
   var body: some View {
@@ -147,8 +243,10 @@ private struct InputView: View {
           }
           .overlay(alignment: .leading) {
             if editor.isEmpty && index == 0 {
-              Text("Enter an expression or an equation…").scaledFont(size: 24).foregroundStyle(.tertiary)
-                .allowsHitTesting(false)
+              Text("Enter an expression or an equation…").scaledFont(size: 24 * window.contentScale).foregroundStyle(
+                .tertiary
+              )
+              .allowsHitTesting(false)
             }
           }
         }
@@ -188,7 +286,11 @@ private struct InputView: View {
 
 private struct ResultView: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.window) private var window
   let outcome: AppModel.Outcome
+
+  /// 1 on the iPhone, larger in a window with room.
+  private var k: CGFloat { window.contentScale }
 
   var body: some View {
     content.contextMenu {
@@ -227,20 +329,20 @@ private struct ResultView: View {
         VStack(alignment: .leading, spacing: 8) {
           if !answer.exact.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
-              MathLine(nodes: answer.exact, size: 34)
+              MathLine(nodes: answer.exact, size: 34 * k)
             }
           }
           if let decimal = answer.decimal {
             HStack(spacing: 6) {
-              Text("≈").scaledFont(size: 22).foregroundStyle(.secondary)
-              ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 24) }
+              Text("≈").scaledFont(size: 22 * k).foregroundStyle(.secondary)
+              ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 24 * k) }
             }
           }
           if answer.hasNoRealValue { Text("This has no real value.").font(.footnote).foregroundStyle(.secondary) }
           ForEach(Array(answer.forms.enumerated()), id: \.offset) { _, form in
             VStack(alignment: .leading, spacing: 2) {
               Text(Self.title(of: form.kind)).font(.footnote).foregroundStyle(.secondary)
-              ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: form.nodes, size: 26) }
+              ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: form.nodes, size: 26 * k) }
             }
             .padding(.top, 6)
           }
@@ -261,7 +363,7 @@ private struct ResultView: View {
 
   private func warning(_ message: LocalizedStringKey) -> some View {
     Label {
-      Text(message).scaledFont(size: 14).foregroundStyle(.secondary)
+      Text(message).scaledFont(size: 14 * k).foregroundStyle(.secondary)
     } icon: {
       Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.accentColor)
     }
@@ -271,7 +373,10 @@ private struct ResultView: View {
 /// The answer to an equation: one line for each solution, or a sentence when there is none or every number works.
 private struct SolutionsView: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.window) private var window
   let solutions: AppModel.Solutions
+
+  private var k: CGFloat { window.contentScale }
 
   /// "Solve for  x  a  b": the letters of an equation, the one in use filled.
   private var choices: some View {
@@ -303,26 +408,26 @@ private struct SolutionsView: View {
         case .values:
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .none:
-          Text("No solution").scaledFont(size: 28)
+          Text("No solution").scaledFont(size: 28 * k)
         case .everything:
           Text(solutions.lines.isEmpty ? "Every number is a solution." : "Every number is a solution, except:")
-            .scaledFont(size: 20)
+            .scaledFont(size: 20 * k)
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .truth(let value):
-          Text(value ? "True" : "False").scaledFont(size: 28)
+          Text(value ? "True" : "False").scaledFont(size: 28 * k)
         case .periodic(let integer):
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
-          Text("\(integer) is any integer").scaledFont(size: 18).foregroundStyle(.secondary)
+          Text("\(integer) is any integer").scaledFont(size: 18 * k).foregroundStyle(.secondary)
         case .dependent(let free):
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
-          Text("\(free.joined(separator: ", ")) can be any number").scaledFont(size: 18).foregroundStyle(.secondary)
+          Text("\(free.joined(separator: ", ")) can be any number").scaledFont(size: 18 * k).foregroundStyle(.secondary)
         case .intervals:
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { index, line in
-            if index > 0 { Text("or").scaledFont(size: 18).foregroundStyle(.secondary) }
+            if index > 0 { Text("or").scaledFont(size: 18 * k).foregroundStyle(.secondary) }
             row(line)
           }
           if let notation = solutions.notation {
-            ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: notation, size: 24) }
+            ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: notation, size: 24 * k) }
               .foregroundStyle(.secondary)
           }
         }
@@ -333,11 +438,11 @@ private struct SolutionsView: View {
 
   private func row(_ line: AppModel.Solutions.Line) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: 32) }
+      ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: 32 * k) }
       if let decimal = line.decimal {
         HStack(spacing: 6) {
-          if !line.decimalIsLabelled { Text("≈").scaledFont(size: 20).foregroundStyle(.secondary) }
-          ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22) }
+          if !line.decimalIsLabelled { Text("≈").scaledFont(size: 20 * k).foregroundStyle(.secondary) }
+          ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22 * k) }
         }
       }
     }

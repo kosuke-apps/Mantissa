@@ -13,16 +13,42 @@ struct KeyboardView: View {
 
   private var rowHeight: CGFloat { window.keyRowHeight }
 
+  /// With room, the basic keys stay in view at the right and the other pages take turns at the left.
+  private var hasTwoBlocks: Bool { window.kind != .compact && !showsLetters }
+
+  /// The page shown at the left of two blocks: the basic page is the right-hand block, so it is never the left one.
+  private var leftPage: KeyboardPage { page == .basic ? .functions : page }
+
   var body: some View {
     VStack(spacing: 0) {
-      controlRow
-      pageTabs
-      Group {
-        if showsLetters { textKeys } else { keys }
+      if hasTwoBlocks {
+        controlRow
+        HStack(alignment: .top, spacing: 8) {
+          VStack(spacing: 0) {
+            leftTabs
+            grid(KeyboardLayout.rows(for: leftPage, withNumberPad: false))
+          }
+          VStack(spacing: 0) {
+            // The same height as the tabs, so that the rows of the two blocks line up.
+            leftTabs.hidden().accessibilityHidden(true)
+            grid(KeyboardLayout.rows(for: .basic))
+          }
+        }
+        .padding(.horizontal, 6)
+        .padding(.bottom, 6)
+      } else {
+        controlRow
+        pageTabs
+        Group {
+          if showsLetters { textKeys } else { keys }
+        }
+        .padding(.horizontal, 6)
+        .padding(.bottom, 6)
       }
-      .padding(.horizontal, 6)
-      .padding(.bottom, 6)
     }
+    // Keys are not stretched across a very wide window.
+    .frame(maxWidth: window.kind == .compact ? .infinity : 900)
+    .frame(maxWidth: .infinity)
     .background {
       UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20)
         .fill(Color(.secondarySystemBackground))
@@ -101,12 +127,26 @@ struct KeyboardView: View {
     .padding(.bottom, 6)
   }
 
+  /// The tabs of the left block: every page but the basic one, which is always the right block.
+  private var leftTabs: some View {
+    Picker(
+      "Keyboard page",
+      selection: Binding(get: { leftPage }, set: { page = $0 })
+    ) {
+      ForEach(KeyboardPage.allCases.filter { $0 != .basic }) { candidate in Text(candidate.title).tag(candidate) }
+    }
+    .pickerStyle(.segmented)
+    .padding(.horizontal, 4)
+    .padding(.bottom, 6)
+  }
+
   // MARK: Keys
 
-  private var keys: some View {
-    // Every page is four rows of six, so the keyboard keeps its height when the page changes.
-    let rows = KeyboardLayout.rows(for: page)
-    return VStack(spacing: 1) {
+  private var keys: some View { grid(KeyboardLayout.rows(for: page)) }
+
+  /// Four rows of six keys; a page with fewer leaves the rest empty, so the keyboard keeps its height when the page changes.
+  private func grid(_ rows: [[KeySpec]]) -> some View {
+    VStack(spacing: 1) {
       ForEach(0..<4, id: \.self) { index in
         let row = index < rows.count ? rows[index] : []
         HStack(spacing: 1) {
