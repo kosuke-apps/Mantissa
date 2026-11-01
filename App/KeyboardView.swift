@@ -3,6 +3,7 @@ import SwiftUI
 /// The maths keyboard: a row of controls, the tabs that switch pages, and six columns of keys.
 struct KeyboardView: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.window) private var window
   @State private var page = KeyboardPage.basic
   @State private var textPage = TextPage.latin
   /// Whether the letters keyboard is open in place of the maths pages.
@@ -10,7 +11,7 @@ struct KeyboardView: View {
   /// Capital letters for the next letter typed.
   @State private var isShifted = false
 
-  private let rowHeight: CGFloat = 54
+  private var rowHeight: CGFloat { window.keyRowHeight }
 
   var body: some View {
     VStack(spacing: 0) {
@@ -208,6 +209,7 @@ private struct KeyView: View {
 }
 
 private struct HeldKey: View {
+  @Environment(\.window) private var window
   let spec: KeySpec
   let perform: ([KeyAction]) -> Void
 
@@ -286,7 +288,7 @@ private struct HeldKey: View {
 
   private func show() {
     let total = widths.reduce(0, +)
-    let screen = UIScreen.main.bounds.width
+    let screen = window.width
     // The row runs towards the side with room for it.
     let direction: CGFloat = frame.minX + total <= screen - 6 ? 1 : -1
     popup = Popup(direction: direction, highlighted: 0)

@@ -5,6 +5,7 @@ import SwiftUI
 struct CalculatorScreen: View {
   @Environment(AppModel.self) private var model
   @State private var showsFullGraph = false
+  @State private var window = WindowMetrics.firstGuess
 
   var body: some View {
     @Bindable var model = model
@@ -31,6 +32,13 @@ struct CalculatorScreen: View {
       KeyboardView()
     }
     .background(Color(.systemBackground))
+    .onGeometryChange(for: CGSize.self) {
+      $0.size
+    } action: {
+      window = WindowMetrics(size: $0)
+    }
+    .environment(\.window, window)
+    .task { Self.setMinimumWindowSize() }
     .fullScreenCover(isPresented: $showsFullGraph) {
       if let graph = model.graph {
         GraphCard(
@@ -41,8 +49,23 @@ struct CalculatorScreen: View {
         .background(Color(.systemBackground))
       }
     }
-    .sheet(isPresented: $model.showsHistory) { HistoryView() }
-    .sheet(isPresented: $model.showsSettings) { SettingsView() }
+    // On the iPhone, and in a narrow window, History and Settings are sheets; with more room they are popovers from their buttons.
+    .sheet(isPresented: presented(\.showsHistory, inCompactWindow: true)) { HistoryView() }
+    .sheet(isPresented: presented(\.showsSettings, inCompactWindow: true)) { SettingsView() }
+  }
+
+  /// Whether something that is a sheet in a compact window and a popover in a larger one is showing as the one asked for.
+  private func presented(_ flag: ReferenceWritableKeyPath<AppModel, Bool>, inCompactWindow: Bool) -> Binding<Bool> {
+    Binding(
+      get: { model[keyPath: flag] && (window.kind == .compact) == inCompactWindow },
+      set: { model[keyPath: flag] = $0 })
+  }
+
+  /// A window cannot be made too small to use: a Stage Manager window on the iPad, a window on the Mac.
+  private static func setMinimumWindowSize() {
+    for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+      scene.sizeRestrictions?.minimumSize = CGSize(width: 320, height: 480)
+    }
   }
 
   /// The title, the angle unit (tap to switch) and Settings.
@@ -70,6 +93,11 @@ struct CalculatorScreen: View {
           }
           .buttonStyle(.plain)
           .accessibilityLabel("History")
+          .popover(isPresented: presented(\.showsHistory, inCompactWindow: false), arrowEdge: .top) {
+            HistoryView()
+              .frame(minWidth: 380, idealWidth: 420, minHeight: 480, idealHeight: 620)
+              .presentationCompactAdaptation(.sheet)
+          }
           Button {
             model.showsSettings = true
           } label: {
@@ -77,6 +105,11 @@ struct CalculatorScreen: View {
           }
           .buttonStyle(.plain)
           .accessibilityLabel("Settings")
+          .popover(isPresented: presented(\.showsSettings, inCompactWindow: false), arrowEdge: .top) {
+            SettingsView()
+              .frame(minWidth: 380, idealWidth: 420, minHeight: 480, idealHeight: 600)
+              .presentationCompactAdaptation(.sheet)
+          }
         }
       }
       .padding(.horizontal, 20)

@@ -16,7 +16,7 @@ does not change, and the extra room is spent on a bigger workspace, a bigger two
 ## Rules
 
 1. **The layout follows the width the calculator is given, not the device.** A `GeometryReader` at the root measures it, and one
-   value, `Layout`, is put into the environment: `compact` (under 640 pt), `regular` (640 to under 900 pt) or `wide` (900 pt and
+   value, `WindowMetrics` (its `kind` is a `WindowClass`), is put into the environment: `compact` (under 640 pt), `regular` (640 to under 900 pt) or `wide` (900 pt and
    more). Size classes are not used: they say "compact" for different widths on different iPads, and the app also runs in Split
    View, Slide Over, Stage Manager windows and a resizable window on the Mac. The same rule makes an iPad in a narrow Split View
    look like an iPhone.
@@ -74,7 +74,7 @@ regular (portrait, 640 to 900 pt)           wide, with the history column (1180 
   sheet it is today. The list code is split from its `NavigationStack` and its `dismiss` so that one list serves all three. This is the
   one piece of the plan that adds a persistent area; if it proves fiddly it can be dropped to the popover without touching the rest.
 - **Settings** is a popover from the gear in `regular` and `wide`, a sheet in `compact` (as now).
-- **Dividers and spacing** use the iPhone's values, scaled by `Layout` (20 pt side margins on the iPhone, 28 on the iPad).
+- **Dividers and spacing** use the iPhone's values, scaled by `WindowMetrics` (20 pt side margins on the iPhone, 28 on the iPad).
 
 ## The keyboard
 
@@ -149,7 +149,7 @@ history of edits). Drag and drop: the app has nothing to drag today, so none is 
 | The iPhone layout changes by accident | regression on the phone | the `compact` path is the old code; before/after screenshots compared by pixel difference |
 | A hardware keyboard in a Japanese input mode | kana characters arrive from `onKeyPress` and the parser rejects them | keys map by the ASCII character when there is one and the rest are ignored; the README says to use the English (ABC) input source, as for the Mac |
 | Focus is lost after a popover or a sheet closes | shortcuts stop working until a tap | the container takes focus again when a presentation ends |
-| Two sizes of keyboard in one codebase | duplicated key code | one `KeyView` and one layout table; only the grid frame and the page set differ by `Layout` |
+| Two sizes of keyboard in one codebase | duplicated key code | one `KeyView` and one layout table; only the grid frame and the page set differ by `WindowMetrics` |
 | Dynamic Type at the largest sizes | columns too narrow | side by side only when each column is 380 pt or more; otherwise stacked, and the workspace scrolls |
 | Paste: `UIPasteboard` asks permission on the iPhone | prompt on first paste, may differ on the Mac | to be seen on each; the paste check (`canPaste`) is not called while drawing |
 | `LazyVGrid`-style layout on a very wide window | oversized keys | cap the keyboard at 900 pt and centre it |
@@ -171,7 +171,7 @@ no supported way to install that on a Mac, so no Mac download is promised; the M
 
 ## Order of work
 
-1. Plumbing: `TARGETED_DEVICE_FAMILY: "1,2"`, the `~ipad` orientations, `Layout` from the root width, the popup width fix, the History and
+1. Plumbing: `TARGETED_DEVICE_FAMILY: "1,2"`, the `~ipad` orientations, `WindowMetrics` from the root width, the popup width fix, the History and
    Settings presentation. The iPhone screenshots must not change. The first iPad build can already be run.
 2. The workspace: `regular` stacked, `wide` side by side, the full-height graph, the hidden expand button.
 3. The two-block keyboard, the Matrix page, the key sizes; the letters keyboard across the width.
