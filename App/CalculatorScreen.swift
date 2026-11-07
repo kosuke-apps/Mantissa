@@ -98,9 +98,11 @@ struct CalculatorScreen: View {
   }
 
   /// The window controls (the three dots) of an iPad window lie over its top-left corner whenever the window is not the size of the
-  /// screen, and what is there has to keep clear of them. A Mac window has a title bar of its own, and an iPhone has none.
+  /// screen, and what is there has to keep clear of them. A Mac window has a title bar of its own, an iPhone has none, and iPadOS
+  /// before 26 has no window controls (a Split View there is not a window with them).
   private static func windowControlsInset() -> CGFloat {
-    guard UIDevice.current.userInterfaceIdiom == .pad, !ProcessInfo.processInfo.isiOSAppOnMac else { return 0 }
+    guard #available(iOS 26, *), UIDevice.current.userInterfaceIdiom == .pad, !ProcessInfo.processInfo.isiOSAppOnMac
+    else { return 0 }
     for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
       return scene.coordinateSpace.bounds.size == scene.screen.bounds.size ? 0 : 64
     }

@@ -149,7 +149,8 @@ The plan, if it is built:
   use; this matters on the Mac. The iPad simulator of iOS 27 stopped at 375 pt wide.
 - **Window controls.** An iPad window that is not the size of the screen has the three window dots over its top-left corner, on the
   content. The top bar (and the history column's title) start 64 pt further right then (`windowControlsInset`, from comparing the
-  scene's size with the screen's; 0 on an iPhone and on a Mac, which has a title bar of its own). Found by looking at a resized
+  scene's size with the screen's; 0 on an iPhone, on a Mac, which has a title bar of its own, and before iPadOS 26, which has no window
+  controls; that last case is not tried, the simulators here being iOS 27). Found by looking at a resized
   window: the angle-unit button was under the dots.
 - **Larger text.** From the accessibility sizes up the history column is dropped (it would be too narrow to read) and the workspace
   scrolls as on the iPhone, so that nothing is left behind the keyboard.
