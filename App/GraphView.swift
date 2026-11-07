@@ -95,10 +95,28 @@ struct GraphCard: View {
   /// What the button in the corner does to show the graph larger (or to close it again), when there is one.
   var expand: (symbol: String, label: LocalizedStringKey, action: () -> Void)?
 
-  @State private var panStart: PlotViewport?
-  @State private var zoomStart: PlotViewport?
+  // A gesture that is cut short (a second finger turns a drag into a pinch) may never report that it ended, so none of this is
+  // trusted past the touch it belongs to: each piece remembers where its touch began, and a touch that begins somewhere else
+  // starts afresh.
+  @State private var panStartLocation: CGPoint?
+  @State private var panBase: PanBase?
+  @State private var zoomBase: ZoomBase?
   /// A finger is down on the graph following a curve, so the drag is not a pan.
   @State private var isTracing = false
+
+  /// The window a drag moves from, and how far the finger had moved when that window was taken (0 unless a pinch changed the window
+  /// while the drag was going on).
+  private struct PanBase {
+    var viewport: PlotViewport
+    var origin: CGSize
+  }
+
+  /// The window a pinch scales from, and when it last changed.
+  private struct ZoomBase {
+    var startLocation: CGPoint
+    var viewport: PlotViewport
+    var lastChange: Date
+  }
 
   var body: some View {
     GeometryReader { proxy in
@@ -153,18 +171,37 @@ struct GraphCard: View {
   private func pan(in size: CGSize) -> some Gesture {
     DragGesture(minimumDistance: 4)
       .onChanged { value in
-        guard zoomStart == nil, !isTracing else { return }
-        if panStart == nil { graph.trace = nil }
-        let start = panStart ?? graph.viewport
-        panStart = start
-        graph.viewport = start.panned(
-          dx: -Double(value.translation.width / size.width) * start.width,
-          dy: Double(value.translation.height / size.height) * start.height)
+        let isNewDrag = panStartLocation != value.startLocation
+        if isNewDrag {
+          // A drag that begins somewhere else is a new touch, whether or not the last one reported its end: it moves from the
+          // window as it is now, and is not following a curve (yet).
+          panStartLocation = value.startLocation
+          panBase = PanBase(viewport: graph.viewport, origin: .zero)
+          isTracing = false
+        }
+        guard !isPinching, !isTracing else { return }
+        if isNewDrag {
+          graph.trace = nil
+        } else if panBase == nil {
+          // The same drag carrying on after a pinch changed the window under it.
+          panBase = PanBase(viewport: graph.viewport, origin: value.translation)
+        }
+        guard let base = panBase else { return }
+        graph.viewport = base.viewport.panned(
+          dx: -Double((value.translation.width - base.origin.width) / size.width) * base.viewport.width,
+          dy: Double((value.translation.height - base.origin.height) / size.height) * base.viewport.height)
       }
       .onEnded { _ in
-        panStart = nil
+        panBase = nil
+        panStartLocation = nil
         graph.findPoints()
       }
+  }
+
+  /// A pinch is going on: it has changed the window a moment ago, and has not reported its end.
+  private var isPinching: Bool {
+    guard let zoomBase else { return false }
+    return Date().timeIntervalSince(zoomBase.lastChange) < 0.5
   }
 
   /// Holding a finger on the graph and then moving it follows the nearest curve, showing the point under the finger.
@@ -184,13 +221,19 @@ struct GraphCard: View {
   private func zoom(in size: CGSize) -> some Gesture {
     MagnifyGesture()
       .onChanged { value in
-        let start = zoomStart ?? graph.viewport
-        zoomStart = start
-        let anchor = graphPoint(value.startLocation, in: size, of: start)
-        graph.viewport = start.zoomed(by: Double(value.magnification), aboutX: anchor.x, y: anchor.y)
+        if zoomBase?.startLocation != value.startLocation {
+          zoomBase = ZoomBase(startLocation: value.startLocation, viewport: graph.viewport, lastChange: Date())
+        }
+        guard var base = zoomBase else { return }
+        base.lastChange = Date()
+        zoomBase = base
+        // A drag that is still down carries on from the new window.
+        panBase = nil
+        let anchor = graphPoint(value.startLocation, in: size, of: base.viewport)
+        graph.viewport = base.viewport.zoomed(by: Double(value.magnification), aboutX: anchor.x, y: anchor.y)
       }
       .onEnded { _ in
-        zoomStart = nil
+        zoomBase = nil
         graph.findPoints()
       }
   }
