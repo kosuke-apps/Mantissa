@@ -156,12 +156,13 @@ The engine alone builds and tests without Xcode projects: `swift build` and `swi
 
 ### Where it has been run
 
-Checked by the author on the iOS 27.0 simulator (Xcode 27.2, macOS 26.6), which is where the automated app tests run, and
-installed and started on one iPhone 12 Pro with iOS 18.6.2. The iPad layouts have been looked at on the iPad Pro 13-inch and iPad
-mini simulators (portrait and landscape, windows resized down to 375 pt wide, the largest text sizes); the app has been built for
-a Mac as "Designed for iPad" but not run there, and no real iPad has been used. Nothing else has been tried: other devices and iOS
-versions should work (the deployment target is iOS 17) but are not verified. The iPhone is used in portrait, the iPad in any
-orientation.
+Checked by the author on the iOS 27.0 simulator (Xcode 27.2, macOS 26.6), which is where the automated app tests run, and, for
+0.28.0, on an iPhone 12 Pro with iOS 18.6.2 (the screens and the graph) and an iPad Pro 11-inch (2nd generation) with iPadOS 18.7.2
+(starting, portrait and landscape, history and settings, the two blocks of keys, Split View and Slide Over, the graph; a hardware
+keyboard was not tried on it). The iPad layouts were also looked at on the iPad Pro 13-inch and iPad mini simulators (portrait and
+landscape, windows resized down to 375 pt wide, the largest text sizes). The app has been built for a Mac as "Designed for iPad" but
+not run there. Nothing else has been tried: other devices and iOS versions should work (the deployment target is iOS 17) but are not
+verified. The iPhone is used in portrait, the iPad in any orientation.
 
 ## Accuracy
 
