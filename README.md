@@ -142,7 +142,7 @@ shasum -a 256 -c Mantissa-<version>-unsigned.ipa.sha256
 
 ### Building from source
 
-Needs a Mac with a recent Xcode (Swift 6; it was built with Xcode 27.1) and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+Needs a Mac with a recent Xcode (Swift 6; it was built with Xcode 27.2) and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 The app targets iOS 17 or later.
 
 ```bash
@@ -156,7 +156,7 @@ The engine alone builds and tests without Xcode projects: `swift build` and `swi
 
 ### Where it has been run
 
-Checked by the author on the iOS 27.0 simulator (Xcode 27.1, macOS 26.6), which is where the automated app tests run, and
+Checked by the author on the iOS 27.0 simulator (Xcode 27.2, macOS 26.6), which is where the automated app tests run, and
 installed and started on one iPhone 12 Pro with iOS 18.6.2. The iPad layouts have been looked at on the iPad Pro 13-inch and iPad
 mini simulators (portrait and landscape, windows resized down to 375 pt wide, the largest text sizes); the app has been built for
 a Mac as "Designed for iPad" but not run there, and no real iPad has been used. Nothing else has been tried: other devices and iOS
