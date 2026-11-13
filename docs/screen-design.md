@@ -10,7 +10,9 @@ Mantissa is the calculator its author wanted on the phone: a scientific calculat
 with a history, working entirely offline. It has no camera, no steps and explanations, no ads, no accounts and no network access
 of any kind. Order of work: arithmetic and functions → the editor and the screen → history → graphs → equations, inequalities and
 systems → derivatives, integrals, limits, sums → whatever the author misses. Complex numbers came early, because quadratics
-need them. Matrices, vectors, geometry, differential equations and polar coordinates are not planned.
+need them. Matrices and vectors came later (0.26), and geometry, differential equations, polar coordinates and more are now planned: the scope
+was widened on 2026-11-13 and the order is in `roadmap.md`. What this file says about the screen still holds; the first screen stays as
+simple as it is.
 
 ## The calculator screen
 

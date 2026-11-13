@@ -5,19 +5,26 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
 
 ## Product
 
-- Purpose: the calculator its author wants to use every day: a scientific calculator, a function grapher and an equation
-  solver, with a history, entirely offline. The alternatives are plain calculators, imitations of a physical scientific
-  calculator, or large graphing and geometry suites that are heavy to use. The system calculator app is not enough for the
-  author.
+- Purpose: the calculator its author wants to use every day, and the most capable one that can be made: everything the
+  scientific, graphing and computer-algebra calculators do, exact and offline, and more (decided 2026-11-13; the order is in
+  `docs/roadmap.md`). The alternatives are plain calculators, imitations of a physical scientific calculator, or large suites
+  that are heavy to use: the aim is their breadth with the ease of a plain calculator, so the first screen stays simple and
+  new abilities come as typed function names, editor structures and keyboard pages of their own. The system calculator app is
+  not enough for the author.
 - Intended users: the author first; students and anyone who wants a normal scientific calculator that is pleasant.
 - Core user journey: open the app, type a problem in ordinary maths notation on a maths keyboard (stacked fractions,
   roots, powers), see the exact answer (fraction, root, π) with a switch to the decimal, tap to see the graph, find
   it again in the history.
 - In scope (all of it must work offline): scientific functions; exact results; solving equations, inequalities and
-  systems; simplifying and expanding; derivatives, integrals, limits and sums as far as they can be done reliably;
-  graphs with zoom, pan, trace and the points that matter (roots, intersections, extremes); history.
-- Out of scope, permanently: camera or photo input, ads, step-by-step explanations, accounts, analytics, any network
-  access, subscriptions, textbook content.
+  systems; simplifying and expanding; derivatives, integrals, limits, sums and series as far as they can be done reliably;
+  matrices and vectors; graphs with zoom, pan, trace and the points that matter (roots, intersections, extremes); history;
+  and, in the order of `docs/roadmap.md`: statistics and probability, parametric, polar and 3D graphs, differential equations,
+  number theory and bases, units, user-defined functions and sequences, geometry, larger linear algebra.
+- Out of scope, permanently: camera or photo input, ads, step-by-step explanations (the cost of explanations that are always
+  right is out of proportion; an expression rewritten, such as expanded or factored, is not a step-by-step explanation),
+  accounts, analytics, any network access, subscriptions, textbook content.
+- Versions: `1.MINOR.PATCH` from the release after 0.28.0 (1.0.0 is that release); features raise the minor number, fixes
+  alone the patch number (`docs/roadmap.md`).
 - Precision target: scientific-calculator grade. Exact when the result is exact; otherwise at least 12 correct
   digits, and never a result like `sin(π) = 1.2e-16` where the exact answer is 0.
 - Mantissa has its own name, icon, wording and code, all written for it. Other apps may be studied for ideas and conventions like
@@ -123,7 +130,9 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 7. Matrices and vectors (`MathNode.matrix`, written `[[1,2],[3,4]]`; a comma in a cell goes to the next cell, return to the next row),
    with a keyboard page that has the number pad, and letters that stand for matrices (`A = …`, `A X = B`) (done).
 8. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
-   accessibility; running on the author's iPhone.
+   accessibility (1.0.0); running on the author's iPhone and iPad (done for 0.28.0).
+9. Beyond the first plan: `docs/roadmap.md` (statistics, graphs, differential equations, integers and units, definitions,
+   geometry, 3D, linear algebra).
 
 ## Commands
 
