@@ -47,7 +47,9 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     `SolutionsDisplay.swift` an equation's answer typeset; `KeyboardLayout.swift` and `KeyboardView.swift` are the keys
     and pages; `CalculatorScreen.swift` the screen; `WindowMetrics.swift` the measured width of the window, which decides the
     layout (iPhone layout under 640 pt, whatever the device; two key blocks and a workspace above; a history column from
-    1180 × 600 pt); `HardwareKeys.swift` what the keys of a hardware keyboard do (`docs/ipad-design.md`); strings in
+    1180 × 600 pt); `HardwareKeys.swift` what the keys of a hardware keyboard do (`docs/ipad-design.md`); `SpokenMath.swift`, `GraphAccessibility.swift` and
+    `GraphGestures.swift` what VoiceOver is told and the graph's touch state (`docs/accessibility.md`); `AppUITests/` the accessibility audit
+    and label tests (the `MantissaUITests` scheme); strings in
     `Resources/Localizable.xcstrings` (English, Japanese).
   - `Sources/MantissaCore/BigInt.swift`: arbitrary-precision integer (sign and magnitude, 32-bit limbs, Knuth D
     division). Own implementation so there is no dependency.
@@ -130,7 +132,7 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 7. Matrices and vectors (`MathNode.matrix`, written `[[1,2],[3,4]]`; a comma in a cell goes to the next cell, return to the next row),
    with a keyboard page that has the number pad, and letters that stand for matrices (`A = …`, `A X = B`) (done).
 8. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
-   accessibility (1.0.0); running on the author's iPhone and iPad (done for 0.28.0).
+   accessibility (done for 1.0.0, `docs/accessibility.md`); running on the author's iPhone and iPad (done for 0.28.0).
 9. Beyond the first plan: `docs/roadmap.md` (statistics, graphs, differential equations, integers and units, definitions,
    geometry, 3D, linear algebra).
 

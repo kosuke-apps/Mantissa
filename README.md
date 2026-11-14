@@ -25,7 +25,7 @@
   <img src="docs/screenshots/ipad-02-matrix.png" width="29%" alt="On an iPad in portrait: the inverse of a 2 by 2 matrix, and the matrix page of keys beside the number pad">
 </p>
 
-> **Status: early release (0.28).** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
+> **Status: 1.0.** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
 > is not on the App Store: install it as described under [Installing](#installing). Expect rough edges and answers the
 > solver cannot give yet (it says so rather than guessing).
 
@@ -39,6 +39,9 @@
 - **Matrices and vectors.** Sums, products, powers, the inverse, determinant, rank, eigenvalues, and the dot and cross products,
   all exact, on a keyboard page of their own.
 - **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
+- **For everyone.** VoiceOver reads formulas as words (fractions, roots and matrices included, in English and Japanese), describes the graph and
+  plays it as an audio graph, and can move and zoom it; the controls are large enough to hit; larger text and the setting that tells curves
+  apart without colour are followed. See [docs/accessibility.md](docs/accessibility.md).
 - **On the iPad.** The layout follows the width of the window, so it works full screen, in a resized window and in narrow ones
   (under 640 pt wide it is the iPhone layout): two pages of keys at once, the answer beside the graph, and a column of earlier
   problems. A hardware keyboard types formulas (Tab goes from cell to cell of a matrix; ⌘C, ⌘V, ⌘Y and ⌘, are in the menus).
