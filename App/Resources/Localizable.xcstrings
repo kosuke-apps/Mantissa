@@ -1684,6 +1684,985 @@
           }
         }
       }
+    },
+    "empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空"
+          }
+        }
+      }
+    },
+    "minus": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マイナス"
+          }
+        }
+      }
+    },
+    "plus": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プラス"
+          }
+        }
+      }
+    },
+    "times": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "かける"
+          }
+        }
+      }
+    },
+    "divided by": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "わる"
+          }
+        }
+      }
+    },
+    "equals": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "イコール"
+          }
+        }
+      }
+    },
+    "is less than": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "より小さい"
+          }
+        }
+      }
+    },
+    "is greater than": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "より大きい"
+          }
+        }
+      }
+    },
+    "is less than or equal to": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以下"
+          }
+        }
+      }
+    },
+    "is greater than or equal to": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以上"
+          }
+        }
+      }
+    },
+    "is not equal to": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "イコールではない"
+          }
+        }
+      }
+    },
+    "pi": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パイ"
+          }
+        }
+      }
+    },
+    "infinity": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無限大"
+          }
+        }
+      }
+    },
+    "degrees": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "度"
+          }
+        }
+      }
+    },
+    "factorial": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "階乗"
+          }
+        }
+      }
+    },
+    "percent": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パーセント"
+          }
+        }
+      }
+    },
+    "comma": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カンマ"
+          }
+        }
+      }
+    },
+    "semicolon": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セミコロン"
+          }
+        }
+      }
+    },
+    "to the power": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "べき乗"
+          }
+        }
+      }
+    },
+    "over": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スラッシュ"
+          }
+        }
+      }
+    },
+    "bar": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "縦線"
+          }
+        }
+      }
+    },
+    "open bracket": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角かっこ開き"
+          }
+        }
+      }
+    },
+    "close bracket": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "角かっこ閉じ"
+          }
+        }
+      }
+    },
+    "open brace": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "波かっこ開き"
+          }
+        }
+      }
+    },
+    "close brace": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "波かっこ閉じ"
+          }
+        }
+      }
+    },
+    "open parenthesis": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "かっこ開き"
+          }
+        }
+      }
+    },
+    "close parenthesis": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "かっこ閉じ"
+          }
+        }
+      }
+    },
+    "squared": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2乗"
+          }
+        }
+      }
+    },
+    "cubed": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3乗"
+          }
+        }
+      }
+    },
+    "sine": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイン"
+          }
+        }
+      }
+    },
+    "cosine": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コサイン"
+          }
+        }
+      }
+    },
+    "tangent": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タンジェント"
+          }
+        }
+      }
+    },
+    "arcsine": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アークサイン"
+          }
+        }
+      }
+    },
+    "arccosine": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アークコサイン"
+          }
+        }
+      }
+    },
+    "arctangent": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アークタンジェント"
+          }
+        }
+      }
+    },
+    "hyperbolic sine": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハイパボリックサイン"
+          }
+        }
+      }
+    },
+    "hyperbolic cosine": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハイパボリックコサイン"
+          }
+        }
+      }
+    },
+    "hyperbolic tangent": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハイパボリックタンジェント"
+          }
+        }
+      }
+    },
+    "natural log": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自然対数"
+          }
+        }
+      }
+    },
+    "exponential": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指数関数"
+          }
+        }
+      }
+    },
+    "square root": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平方根"
+          }
+        }
+      }
+    },
+    "cube root": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立方根"
+          }
+        }
+      }
+    },
+    "absolute value": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絶対値"
+          }
+        }
+      }
+    },
+    "floor": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "床関数"
+          }
+        }
+      }
+    },
+    "ceiling": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天井関数"
+          }
+        }
+      }
+    },
+    "round": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四捨五入"
+          }
+        }
+      }
+    },
+    "determinant": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行列式"
+          }
+        }
+      }
+    },
+    "inverse": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逆行列"
+          }
+        }
+      }
+    },
+    "transpose": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "転置"
+          }
+        }
+      }
+    },
+    "trace": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トレース"
+          }
+        }
+      }
+    },
+    "rank": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランク"
+          }
+        }
+      }
+    },
+    "%@ squared": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の2乗"
+          }
+        }
+      }
+    },
+    "%@ cubed": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の3乗"
+          }
+        }
+      }
+    },
+    "%1$@ to the power %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の%2$@乗"
+          }
+        }
+      }
+    },
+    "%1$@ over %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@分の%1$@"
+          }
+        }
+      }
+    },
+    "the fraction %@, end of fraction": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分数 %@ 分数終わり"
+          }
+        }
+      }
+    },
+    "square root of %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の平方根"
+          }
+        }
+      }
+    },
+    "the square root of %@, end of root": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平方根 %@ 平方根終わり"
+          }
+        }
+      }
+    },
+    "root %1$@ of %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@の%1$@乗根"
+          }
+        }
+      }
+    },
+    "open parenthesis %@ close parenthesis": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "かっこ開き %@ かっこ閉じ"
+          }
+        }
+      }
+    },
+    "%1$@ of %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "absolute value of %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の絶対値"
+          }
+        }
+      }
+    },
+    "log base %1$@ of %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "底%1$@の%2$@の対数"
+          }
+        }
+      }
+    },
+    "integral of %1$@ with respect to %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@を%2$@で積分"
+          }
+        }
+      }
+    },
+    "integral from %3$@ to %4$@ of %1$@ with respect to %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@を%2$@で%3$@から%4$@まで積分"
+          }
+        }
+      }
+    },
+    "sum of %1$@ for %2$@ from %3$@ to %4$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@を%3$@から%4$@まで動かしたときの%1$@の和"
+          }
+        }
+      }
+    },
+    "limit of %1$@ as %2$@ approaches %3$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@を%3$@に近づけたときの%1$@の極限"
+          }
+        }
+      }
+    },
+    "derivative of %1$@ with respect to %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の%2$@による微分"
+          }
+        }
+      }
+    },
+    "vector with %1$@ entries: %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@個の成分のベクトル：%2$@"
+          }
+        }
+      }
+    },
+    "matrix with %1$@ rows and %2$@ columns. %3$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@行%2$@列の行列．%3$@"
+          }
+        }
+      }
+    },
+    "row %1$@: %2$@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@行目：%2$@．"
+          }
+        }
+      }
+    },
+    ", ": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "，"
+          }
+        }
+      }
+    },
+    "Zoom in": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拡大"
+          }
+        }
+      }
+    },
+    "Zoom out": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "縮小"
+          }
+        }
+      }
+    },
+    "Move the graph left": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフを左へ動かす"
+          }
+        }
+      }
+    },
+    "Move the graph right": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフを右へ動かす"
+          }
+        }
+      }
+    },
+    "Move the graph up": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフを上へ動かす"
+          }
+        }
+      }
+    },
+    "Move the graph down": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフを下へ動かす"
+          }
+        }
+      }
+    },
+    "Graph with one curve.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曲線が 1 本のグラフ．"
+          }
+        }
+      }
+    },
+    "Graph with %@ curves.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曲線が %@ 本のグラフ．"
+          }
+        }
+      }
+    },
+    "The graph shows x from %1$@ to %2$@ and y from %3$@ to %4$@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示範囲は，x が %1$@ から %2$@，y が %3$@ から %4$@ です．"
+          }
+        }
+      }
+    },
+    "Root at %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解は %@．"
+          }
+        }
+      }
+    },
+    "x-intercept at %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "x 切片は %@．"
+          }
+        }
+      }
+    },
+    "y-intercept at %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "y 切片は %@．"
+          }
+        }
+      }
+    },
+    "Minimum at %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "極小は %@．"
+          }
+        }
+      }
+    },
+    "Maximum at %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "極大は %@．"
+          }
+        }
+      }
+    },
+    "Intersection at %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交点は %@．"
+          }
+        }
+      }
+    },
+    "(%1$@, %2$@)": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(%1$@，%2$@)"
+          }
+        }
+      }
+    },
+    "Curve %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曲線 %@"
+          }
+        }
+      }
     }
   }
 }

@@ -181,9 +181,9 @@ struct MathLine: View {
         }
       }
     }
-    // Read as one piece of text (`(√6 − √2)/4`) rather than a glyph at a time.
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(nodes.plainText)
+    // Read as one piece of speech ("square root of 6 minus square root of 2, over 4") rather than a glyph at a time.
+    // (A representation, not `.accessibilityElement(children: .ignore)`: the glyphs showed up in the accessibility tree under it.)
+    .accessibilityRepresentation { Text(SpokenMath.text(of: nodes)) }
   }
 }
 

@@ -103,6 +103,16 @@ struct GraphCard: View {
       let size = proxy.size
       Canvas { context, size in draw(in: &context, size: size) }
         .onAppear { graph.fit(to: size) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Graph")
+        .accessibilityValue(graph.spokenSummary)
+        .accessibilityChartDescriptor(GraphChart(graph: graph))
+        .accessibilityAction(named: Text("Zoom in")) { graph.zoom(by: 1.5) }
+        .accessibilityAction(named: Text("Zoom out")) { graph.zoom(by: 1 / 1.5) }
+        .accessibilityAction(named: Text("Move the graph left")) { graph.pan(byFractionX: -0.25, y: 0) }
+        .accessibilityAction(named: Text("Move the graph right")) { graph.pan(byFractionX: 0.25, y: 0) }
+        .accessibilityAction(named: Text("Move the graph up")) { graph.pan(byFractionX: 0, y: 0.25) }
+        .accessibilityAction(named: Text("Move the graph down")) { graph.pan(byFractionX: 0, y: -0.25) }
         .contentShape(Rectangle())
         .gesture(pan(in: size))
         .simultaneousGesture(zoom(in: size))
