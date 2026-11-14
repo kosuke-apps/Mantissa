@@ -144,8 +144,8 @@ struct CalculatorScreen: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Angle unit")
         Spacer()
-        // Each icon has a 44 pt target; the spacing and the trailing padding are what they were, less the extra room round the icons.
-        HStack(spacing: -4) {
+        // Each icon has a 44 pt target; the icons are drawn where they were (their centres 44 pt apart, the last 31.3 pt from the edge).
+        HStack(spacing: -0.4) {
           if !showsHistoryColumn {
             Button {
               model.showsHistory = true
@@ -177,7 +177,7 @@ struct CalculatorScreen: View {
         }
       }
       .padding(.leading, showsHistoryColumn ? 20 : 20 + controlsInset)
-      .padding(.trailing, 7)
+      .padding(.trailing, 9.3)
     }
     .frame(height: 48)
   }
