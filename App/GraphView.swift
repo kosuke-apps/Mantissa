@@ -97,6 +97,8 @@ struct GraphCard: View {
 
   /// What the drag, the pinch and the held finger remember between touch events (see `GraphGestureState`).
   @State private var gestures = GraphGestureState()
+  /// With "Differentiate Without Color" on, the curves differ by their line as well as their colour.
+  @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
   var body: some View {
     GeometryReader { proxy in
@@ -225,6 +227,9 @@ struct GraphCard: View {
 
   // MARK: Drawing
 
+  /// The line patterns of the first curves when colour alone is not to tell them apart: solid, dashed, dotted, dash and dot.
+  private static let curveDashes: [[CGFloat]] = [[], [9, 6], [1, 6], [10, 5, 1, 5]]
+
   private func draw(in context: inout GraphicsContext, size: CGSize) {
     drawGrid(in: &context, size: size)
     let first = graph.functions.count
@@ -240,7 +245,9 @@ struct GraphCard: View {
           if offset == 0 { path.move(to: point) } else { path.addLine(to: point) }
         }
       }
-      context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+      let dash = differentiateWithoutColor ? Self.curveDashes[index % Self.curveDashes.count] : []
+      context.stroke(
+        path, with: .color(color), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round, dash: dash))
     }
     for (index, relation) in graph.content.relations.enumerated() {
       drawBoundary(of: relation, color: curveColors[(first + index) % curveColors.count], in: &context, size: size)
