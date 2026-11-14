@@ -65,7 +65,26 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.kosuke.mantissa.tests
         GENERATE_INFOPLIST_FILE: YES
+  MantissaUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - AppUITests
+    dependencies:
+      - target: Mantissa
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.kosuke.mantissa.uitests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
+  MantissaUITests:
+    build:
+      targets:
+        Mantissa: all
+        MantissaUITests: [test]
+    test:
+      targets:
+        - MantissaUITests
   Mantissa:
     build:
       targets:

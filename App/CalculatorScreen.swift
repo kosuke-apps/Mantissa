@@ -144,12 +144,14 @@ struct CalculatorScreen: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Angle unit")
         Spacer()
-        HStack(spacing: 22) {
+        // Each icon has a 44 pt target; the spacing and the trailing padding are what they were, less the extra room round the icons.
+        HStack(spacing: -4) {
           if !showsHistoryColumn {
             Button {
               model.showsHistory = true
             } label: {
               Image(systemName: "clock").scaledFont(size: 18).foregroundStyle(.primary)
+                .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("History")
@@ -163,6 +165,7 @@ struct CalculatorScreen: View {
             model.showsSettings = true
           } label: {
             Image(systemName: "gearshape").scaledFont(size: 18).foregroundStyle(.primary)
+              .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
           }
           .buttonStyle(.plain)
           .accessibilityLabel("Settings")
@@ -174,7 +177,7 @@ struct CalculatorScreen: View {
         }
       }
       .padding(.leading, showsHistoryColumn ? 20 : 20 + controlsInset)
-      .padding(.trailing, 20)
+      .padding(.trailing, 7)
     }
     .frame(height: 48)
   }
@@ -283,8 +286,9 @@ private struct InputView: View {
           .overlay(alignment: .leading) {
             if editor.isEmpty && index == 0 {
               Text("Enter an expression or an equation…").scaledFont(size: 24 * window.contentScale).foregroundStyle(
-                .tertiary
+                .secondary
               )
+              .lineLimit(3).fixedSize(horizontal: false, vertical: true)
               .allowsHitTesting(false)
             }
           }

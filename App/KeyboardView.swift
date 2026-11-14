@@ -88,6 +88,8 @@ struct KeyboardView: View {
       Text(title).font(.system(size: 17, weight: tint == .primary ? .regular : .semibold))
         .foregroundStyle(tint)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // A plain button answers only where something is drawn; the whole cell should.
+        .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
     .accessibilityLabel(accessibility)
@@ -101,6 +103,7 @@ struct KeyboardView: View {
   {
     Button(action: action) {
       Image(systemName: systemImage).font(.system(size: 18)).frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
     .buttonRepeatBehavior(repeats ? .enabled : .disabled)
