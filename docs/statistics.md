@@ -1,7 +1,7 @@
 # Statistics and probability
 
-Design note for the 1.1 line of `docs/roadmap.md`, written 2026-11-15 before any code. Nothing here is built yet; when a slice is built, its
-section is edited to say what was delivered and how it was checked.
+Design note for the 1.1 line of `docs/roadmap.md`, written 2026-11-15 before any code, and edited as the slices were built: the last section says
+what was delivered, how it was checked, and what was left out.
 
 The aim is what a statistics calculator does (one- and two-variable statistics, regressions, the usual distributions), with Mantissa's own
 rules: **exact when the answer is exact** (the mean of fractions is a fraction, a standard deviation is a root, a binomial probability is a
@@ -139,16 +139,29 @@ vectors: identities (cdf of `inv` is p, the cdfs rise from 0 to 1, pdf is the de
 shifts and scales mean and standard deviation), the random-input tests (`RandomInputTests`) extended to the new functions, and the
 sanitizers.
 
-## Slices, in the order they are built
+## What was built (branch `feat/statistics`, for 1.1.0)
 
-1. **Descriptive statistics and the data editor**: the row limit, the data forms, the one- and two-variable functions, `stats`; the report
-   answer card; the Stats keyboard page. Exact.
-2. **Regression**: `linreg`, `polyreg`, then `expreg`, `powreg`, `logreg`; points and the fit on the graph.
-3. **Discrete and simple continuous distributions** (all exact): binomial, Poisson, geometric, hypergeometric, uniform, exponential.
-4. **Special functions** and the **normal** distribution through them.
-5. **t, χ² and F**, and the inverses.
-6. Later in the line, not decided here: random numbers (they need an answer that stays the same when a history entry is opened again),
-   hypothesis tests and confidence intervals, histograms and box plots, a typed list `{…}`.
+| Slice | Delivered | Checked against |
+|---|---|---|
+| Descriptive statistics, the data editor | every function of the table above except `scatter`; `stats`; data as numbers, a vector, a table, or values and frequencies; matrices of up to 200 rows; the report answer card; the **Stats** keyboard page | Python `fractions` (54 one-variable and 24 two-variable data sets, each written in every form), by hand |
+| Regression | `linreg`, `polyreg` (degree 1 to 6, exact), `expreg`, `powreg`, `logreg` (60 digits, decimals); the points and the fit drawn | `fractions` (the residual of a polynomial fit is exactly orthogonal to every power of x) and `decimal` at 100 digits |
+| Exact distributions | binomial, Poisson, geometric, hypergeometric, uniform, exponential: `pdf`, `cdf`, `inv`; the **Prob** keyboard page | `fractions`, and `decimal` for the Poisson and exponential values; the discrete inverses against a brute-force search |
+| Normal distribution | `erf`, `erfc`, `probit` as functions of the expression engine, to any number of digits, `normalpdf`, `normalcdf`, `normalinv`; they differentiate (d/dx `normalcdf(x)` is `normalpdf(x)`) and are drawn | an independent Taylor series in `decimal` (up to 800 digits), 45 digits, `erf` from 0.001 to 27.5, the quantile from 10⁻¹⁰⁰ to 1 − 10⁻¹² |
+| t, χ² and F | `tpdf`/`tcdf`/`tinv`, `chisqpdf`/`chisqcdf`/`chisqinv`, `fpdf`/`fcdf`/`finv` with any positive degrees of freedom, on `gamma`, `beta`, `gammainc`, `gammaincinv`, `betainc` and `betaincinv` (Stirling's series with exact Bernoulli numbers, series and continued fractions on the side where each keeps its digits, Newton's method for the inverses) | Spouge's approximation of Γ, the power series of the incomplete functions summed termwise in `decimal`, and for whole degrees of freedom Abramowitz and Stegun 26.7.3 and 26.7.4; 40 to 45 digits |
 
-A slice is merged when it is exact, tested against its oracle and checked on the simulators; the release is cut from a set of finished
-slices (`docs/roadmap.md`).
+How the design changed while it was built:
+
+- **Exact only where exactness is not paid for in digits.** The cdf of χ² with even degrees of freedom is a finite sum, 1 − e^(−x/2)(1 + x/2 + …), and is given as one where P is not tiny; where P is tiny the
+  difference of nearly equal numbers would lose as many digits as P has zeros (P(15, 0.0005) is 2·10⁻⁶²), so the call `gammainc(a, x)` is kept and worked out without the loss. The
+  same holds for the beta function with a whole first parameter. A letter in the argument keeps the call, which is also what is drawn and differentiated.
+- **The tail of the normal distribution** is written with `erfc` (the lower half as ½ erfc(−z/√2)), so that Φ(−30) has all its digits.
+- **Limits that were set:** 200 rows and 10 columns in a matrix (a row of data holds 10), 100 numbers written out one by one, 2000 terms in an exact discrete sum, `gamma` of 100 000 at most,
+  `erf` up to ±300, 1 000 000 terms of a series (then "too large").
+- **Not built:** `scatter` (a plot of points alone), random numbers, hypothesis tests and confidence intervals, histograms and box plots, a typed list `{…}`. They stay on the list below.
+- **Found on the way:** the inequality `exp(e^7!) ≤ 0.5` took over a minute to give up (it computed a logarithm to thousands of digits before the exponential turned out too large); the size
+  of y ln b is now looked at first. The random-input test writes statistics and distributions now.
+
+## Still to do in this line
+
+Random numbers (they need an answer that stays the same when a history entry is opened again), hypothesis tests and confidence intervals (z, t and χ², one and two samples), histograms and
+box plots (graph types), `scatter`, a typed list `{…}` and lists as values (`docs/roadmap.md` 1.5).

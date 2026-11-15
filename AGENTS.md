@@ -48,7 +48,8 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     and pages; `CalculatorScreen.swift` the screen; `WindowMetrics.swift` the measured width of the window, which decides the
     layout (iPhone layout under 640 pt, whatever the device; two key blocks and a workspace above; a history column from
     1180 × 600 pt); `HardwareKeys.swift` what the keys of a hardware keyboard do (`docs/ipad-design.md`); `SpokenMath.swift`, `GraphAccessibility.swift` and
-    `GraphGestures.swift` what VoiceOver is told and the graph's touch state (`docs/accessibility.md`); `AppUITests/` the accessibility audit
+    `GraphGestures.swift` what VoiceOver is told and the graph's touch state (`docs/accessibility.md`); `ReportLabels.swift` the captions of a report
+    (shown by `SolutionsDisplay`, which also draws the heading of a regression); the keyboard has seven pages, Basic, f(x), Trig, Calc, Matrix, Stats and Prob; `AppUITests/` the accessibility audit
     and label tests (the `MantissaUITests` scheme); strings in
     `Resources/Localizable.xcstrings` (English, Japanese).
   - `Sources/MantissaCore/BigInt.swift`: arbitrary-precision integer (sign and magnitude, 32-bit limbs, Knuth D
@@ -102,6 +103,17 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     letters values: an equation with one unknown letter left is solved for it by undoing what is done to it, lines wait for each
     other, and `Calculator.compute` returns them as `.lines`). `Calculator.compute` returns a `Computation` (a number or a matrix); `evaluate` is the
     number-only form.
+  - `Sources/MantissaCore/Statistics/` (`docs/statistics.md`): `DataSet` (values with frequencies, sorted, exact sums, order statistics, quartiles by the
+    median of the halves) and `PairedData` (two variables: covariance, correlation, the line), `Builder+Statistics` (the functions `mean`, `stdev`,
+    `quartile`, `cov`, `stats`, … on numbers, vectors and tables; `Builder.quantities` says which arguments were written as matrices),
+    `Regression` (a polynomial exactly, the exponential, power and logarithmic fits to 60 digits; the points and the curve to draw), `Report` (a block of
+    labelled values, `Quantity.report`, `Computation.report`), `Distributions` (binomial, Poisson, geometric, hypergeometric, uniform, exponential,
+    normal, t, χ² and F as expressions). `Matrix.maxRows` (200) and `maxColumns` (10) are the sizes of a matrix; a product of more than
+    `maxProductEntries` is refused.
+  - `Sources/MantissaCore/SpecialFunctions.swift` (erf, erfc and the normal quantile to any number of digits), `SpecialFunctions+Gamma.swift` (ln Γ by
+    Stirling's series, Γ, the regularised incomplete gamma and beta functions and their inverses) and `SpecialDouble.swift` (the same on machine numbers,
+    for plotting and as the start of Newton's method). `MathFunction` has `erf`, `erfc`, `probit`, `gamma`, `gammainc`, `gammaincinv`, `betainc`,
+    `betaincinv`; the finite exact forms are in `Expr+Functions.swift` and are written only where they lose no digits.
   - `Sources/MantissaCore/Syntax.swift`, `Lexer.swift`, `Parser.swift`: text to syntax tree (grammar in the comment on
     `Parser`). `Builder.swift`: syntax to `Expr`, applying the angle unit; `Builder+Functions.swift`: the functions that
     are written with others (`mod`, `min`, `max`, `sign`, `re`, `im`, `conj`, `arg`, `acot`, `coth`, …). `Calculator.swift`: `evaluate(_:)` returns the
@@ -134,7 +146,8 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
 8. Settings (angle unit, digits, language), `cot sec csc`, expanded and factored forms of an answer (done). Polish:
    accessibility (done for 1.0.0, `docs/accessibility.md`); running on the author's iPhone and iPad (done for 0.28.0).
 9. Beyond the first plan: `docs/roadmap.md` (statistics, graphs, differential equations, integers and units, definitions,
-   geometry, 3D, linear algebra).
+   geometry, 3D, linear algebra). Statistics and probability (1.1) is built on the branch `feat/statistics`: descriptive statistics, regressions, the
+   exact distributions, the normal, t, χ² and F distributions, the Stats and Prob keyboard pages (`docs/statistics.md`).
 
 ## Commands
 
@@ -145,7 +158,7 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
   `xcrun swift-format lint --strict -r Sources Tests Package.swift` (config in `.swift-format`).
 - If a command fails because `xcode-select` points at the Command Line Tools, prefix it with
   `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
-- Regenerate the test vectors: `python3 tools/gen_number_vectors.py` and `python3 tools/gen_decimal_vectors.py`
+- Regenerate the test vectors: `python3 tools/gen_number_vectors.py`, `python3 tools/gen_decimal_vectors.py` and `python3 tools/gen_statistics_vectors.py`
   (need only Python 3; the files in `Tests/MantissaCoreTests/Resources` must not change when you rerun them).
 - App: `xcodegen generate`, then
   `xcodebuild -project Mantissa.xcodeproj -scheme Mantissa -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath build/DerivedData build CODE_SIGNING_ALLOWED=NO`;

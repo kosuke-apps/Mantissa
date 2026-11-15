@@ -38,6 +38,11 @@
 - **Calculus.** Derivatives, integrals, limits and sums, with exact answers (`∫ x eˣ dx`, `lim (1 + 1/x)ˣ = e`).
 - **Matrices and vectors.** Sums, products, powers, the inverse, determinant, rank, eigenvalues, and the dot and cross products,
   all exact, on a keyboard page of their own.
+- **Statistics and probability.** Mean, median, mode, quartiles, variance and standard deviation of numbers, a column or a table of data
+  (with frequencies), correlation, and linear, polynomial, exponential, power and logarithmic regressions drawn with their data (`stats(…)`,
+  `linreg(…)`); the binomial, Poisson, geometric, hypergeometric, uniform, exponential, normal, Student's t, χ² and F distributions
+  (`binomcdf(10, 0.3, 4)`, `normalinv(0.975)`, `tcdf(2.1, 12)`), exact where they are exact, and `erf`, `Γ` and the incomplete gamma
+  and beta functions to any number of digits. On keyboard pages of their own (Stats, Prob); see [docs/statistics.md](docs/statistics.md).
 - **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
 - **For everyone.** Formulas are given to VoiceOver as words (fractions, roots and matrices included, in English and Japanese), the graph
   is described and offered as an audio graph, and it can be moved and zoomed by actions; the controls are large enough to hit; larger
