@@ -364,6 +364,9 @@ private struct ResultView: View {
       case .tooLarge: warning("This is too large to work out.")
       case .notSupportedYet: warning("This isn't supported yet.")
       case .doesNotExist: warning("This does not exist: it diverges, or the two sides of a limit disagree.")
+      case .needsMoreData: warning("This needs more values.")
+      case .noMode: warning("Every value occurs equally often, so there is no mode.")
+      case .noSpread: warning("The values do not vary, so this has no answer.")
       }
     case .solutions(let solutions):
       SolutionsView(solutions: solutions)
@@ -456,6 +459,17 @@ private struct SolutionsView: View {
           Text(solutions.lines.isEmpty ? "Every number is a solution." : "Every number is a solution, except:")
             .scaledFont(size: 20 * k)
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
+        case .report:
+          // A report has many rows, so the values are set smaller than a single answer is.
+          Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
+            ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in
+              GridRow {
+                Text(line.caption ?? "").scaledFont(size: 16 * k).foregroundStyle(.secondary).gridColumnAlignment(.leading)
+                  .padding(.top, 4 * k)
+                value(line, size: 26 * k, decimalSize: 18 * k)
+              }
+            }
+          }
         case .truth(let value):
           Text(value ? "True" : "False").scaledFont(size: 28 * k)
         case .periodic(let integer):
@@ -481,11 +495,19 @@ private struct SolutionsView: View {
 
   private func row(_ line: AppModel.Solutions.Line) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: 32 * k) }
+      if let caption = line.caption { Text(caption).scaledFont(size: 17 * k).foregroundStyle(.secondary) }
+      value(line)
+    }
+  }
+
+  /// The exact value of a line, with its decimal beneath it.
+  private func value(_ line: AppModel.Solutions.Line, size: CGFloat? = nil, decimalSize: CGFloat? = nil) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: line.exact, size: size ?? 32 * k) }
       if let decimal = line.decimal {
         HStack(spacing: 6) {
           if !line.decimalIsLabelled { Text("≈").scaledFont(size: 20 * k).foregroundStyle(.secondary) }
-          ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: 22 * k) }
+          ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: decimal, size: decimalSize ?? 22 * k) }
         }
       }
     }

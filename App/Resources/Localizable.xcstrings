@@ -2663,6 +2663,226 @@
           }
         }
       }
+    },
+    "Count": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "個数"
+          }
+        }
+      }
+    },
+    "Mean": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均"
+          }
+        }
+      }
+    },
+    "Total": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計"
+          }
+        }
+      }
+    },
+    "Sum of squares": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二乗和"
+          }
+        }
+      }
+    },
+    "Sample standard deviation": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標本標準偏差"
+          }
+        }
+      }
+    },
+    "Population standard deviation": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "母標準偏差"
+          }
+        }
+      }
+    },
+    "Smallest value": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最小値"
+          }
+        }
+      }
+    },
+    "First quartile": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第1四分位数"
+          }
+        }
+      }
+    },
+    "Median": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中央値"
+          }
+        }
+      }
+    },
+    "Third quartile": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第3四分位数"
+          }
+        }
+      }
+    },
+    "Largest value": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大値"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最頻値"
+          }
+        }
+      }
+    },
+    "Line": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直線"
+          }
+        }
+      }
+    },
+    "Slope": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傾き"
+          }
+        }
+      }
+    },
+    "Intercept": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切片"
+          }
+        }
+      }
+    },
+    "Correlation r": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相関係数 r"
+          }
+        }
+      }
+    },
+    "r squared": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "決定係数 r²"
+          }
+        }
+      }
+    },
+    "This needs more values.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "値の数が足りないので計算できません．"
+          }
+        }
+      }
+    },
+    "Every value occurs equally often, so there is no mode.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "どの値も同じ回数だけ現れるので，最頻値はありません．"
+          }
+        }
+      }
+    },
+    "The values do not vary, so this has no answer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "値にばらつきがないので，答えは出ません．"
+          }
+        }
+      }
     }
   }
 }

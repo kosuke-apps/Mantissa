@@ -60,6 +60,12 @@ final class AppModel {
     /// A value that is undefined, such as `tan(π/2)` or `ln(0)`.
     case undefinedHere
     case doesNotExist
+    /// Fewer values than a statistic needs.
+    case needsMoreData
+    /// Data in which every value occurs equally often.
+    case noMode
+    /// Data that do not vary where the statistic divides by the spread.
+    case noSpread
   }
 
   enum Outcome: Equatable {
@@ -347,6 +353,7 @@ final class AppModel {
       switch try calculator.compute(text) {
       case .matrix(let matrix): return answer(for: matrix, text: text, digits: digits)
       case .lines(let lines): return worksheetAnswer(lines, text: text, digits: digits)
+      case .report(let report): return .solutions(SolutionsDisplay(report, digits: digits))
       case .number(let number): evaluation = number
       }
       var exact = Typesetter.nodes(for: evaluation.exact)
@@ -426,6 +433,9 @@ final class AppModel {
     case .singular: return .failure(.noInverse)
     case .unsupported: return .failure(.notSupportedYet)
     case .undefined: return .failure(.doesNotExist)
+    case .insufficientData: return .failure(.needsMoreData)
+    case .noMode: return .failure(.noMode)
+    case .degenerateData: return .failure(.noSpread)
     }
   }
 

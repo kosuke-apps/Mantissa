@@ -18,6 +18,8 @@ struct SolutionsDisplay: Equatable {
     /// Solutions that repeat, one line for each family (`x = π/6 + 2πn`); `integer` is the letter that stands for any whole
     /// number.
     case periodic(integer: String)
+    /// A block of labelled values, the answer of `stats` and `linreg`: each line has a caption.
+    case report
   }
 
   struct Line: Equatable {
@@ -26,6 +28,8 @@ struct SolutionsDisplay: Equatable {
     var decimal: [MathNode]?
     /// Whether `decimal` names its unknowns (`x ≈ 1.41, y ≈ 2.23`) and so needs no `≈` sign in front.
     var decimalIsLabelled = false
+    /// What the line is called, for a report (the words, already in the user's language).
+    var caption: String?
   }
 
   var kind: Kind
@@ -42,6 +46,10 @@ struct SolutionsDisplay: Equatable {
     case .values, .dependent, .periodic:
       return Array(lines.map(\.exact).joined(separator: [MathNode.symbol(","), .symbol(" ")]))
     case .intervals: return notation ?? []
+    case .report:
+      // The first three rows (n, mean and the deviation), which is what a one-line summary has room for.
+      let rows = lines.prefix(3).map { (Self.text(($0.caption ?? "") + " = ")) + $0.exact }
+      return Array(rows.joined(separator: Self.text(", ")))
     case .none: return Self.text(Localizer.string("No solution"))
     case .everything: return Self.text(Localizer.string("Every number"))
     case .truth(let value): return Self.text(Localizer.string(value ? "True" : "False"))
@@ -101,7 +109,7 @@ struct SolutionsDisplay: Equatable {
   /// decimals beneath a value that has some. A letter that was only given its value in numbers is not repeated: it is on the
   /// screen above.
   init(_ worked: [WorkedLine], digits: Int) {
-    let lines = worked.filter { !$0.isGiven }.map { line -> Line in
+    let lines = worked.filter { !$0.isGiven }.flatMap { line -> [Line] in
       var exact: [MathNode] = line.name.map { [MathNode.symbol($0), .symbol("=")] } ?? []
       var decimal: [MathNode]?
       switch line.quantity {
@@ -120,10 +128,40 @@ struct SolutionsDisplay: Equatable {
         {
           decimal = Typesetter.nodes(for: matrix, decimals: values, significantDigits: digits)
         }
+      case .report(let report):
+        // The rows of a report that a line of a worksheet came to, each with its caption.
+        return report.rows.map { Self.line(for: $0, digits: digits) }
       }
-      return Line(exact: exact, decimal: decimal)
+      return [Line(exact: exact, decimal: decimal)]
     }
     self.init(kind: .values, lines: lines)
+  }
+
+  // MARK: Reports
+
+  /// The rows of a report, each with its caption: the exact value, and the decimal beneath when it says something more.
+  init(_ report: Report, digits: Int) {
+    self.init(kind: .report, lines: report.rows.map { Self.line(for: $0, digits: digits) })
+  }
+
+  private static func line(for row: Report.Row, digits: Int) -> Line {
+    var exact: [MathNode] = row.label == .equation ? [.symbol("y"), .symbol("=")] : []
+    var decimal: [MathNode] = []
+    var needsDecimal = false
+    for (index, value) in row.values.enumerated() {
+      if index > 0 {
+        exact += [.symbol(","), .symbol(" ")]
+        decimal += [.symbol(","), .symbol(" ")]
+      }
+      exact += Typesetter.nodes(for: value)
+      if value.freeSymbols.isEmpty, let approximation = try? value.approximation(precision: digits) {
+        decimal += Typesetter.nodes(for: approximation, significantDigits: digits)
+        if value.rational?.isInteger != true { needsDecimal = true }
+      }
+    }
+    var line = Line(exact: exact, decimal: needsDecimal ? decimal : nil)
+    line.caption = row.label.title
+    return line
   }
 
   // MARK: Equations

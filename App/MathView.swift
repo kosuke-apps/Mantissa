@@ -363,14 +363,16 @@ private struct MathNodeView: View {
       calculus(kind, slots)
 
     case .matrix(let rows, let columns, let cells):
-      // The rows and columns line up in a grid, with a square bracket at each side as tall as the whole.
-      Grid(horizontalSpacing: size * 0.8, verticalSpacing: size * 0.3) {
+      // The rows and columns line up in a grid, with a square bracket at each side as tall as the whole. A matrix of many rows (a
+      // column of data) is set smaller, so that it leaves room for the answer.
+      let scale: CGFloat = rows > 12 ? 0.55 : rows > 6 ? 0.72 : 1
+      Grid(horizontalSpacing: size * 0.8 * scale, verticalSpacing: size * 0.3 * scale) {
         ForEach(0..<rows, id: \.self) { row in
           GridRow {
             ForEach(0..<columns, id: \.self) { column in
               // Every cell is as tall as a line of text, so that the rows do not change height with the cursor.
-              slot(cells[row * columns + column], row * columns + column)
-                .frame(minWidth: size * 0.6, minHeight: size * 1.2)
+              slot(cells[row * columns + column], row * columns + column, scale: scale)
+                .frame(minWidth: size * 0.6 * scale, minHeight: size * 1.2 * scale)
             }
           }
         }
