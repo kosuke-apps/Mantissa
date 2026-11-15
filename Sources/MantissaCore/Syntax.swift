@@ -139,6 +139,10 @@ enum FunctionName: String, CaseIterable, Sendable {
   /// The normal distribution, with a mean and a standard deviation that may be left out (0 and 1), and the functions it is written
   /// with: the error function, its complement, and the quantile of the standard normal distribution.
   case normalpdf, normalcdf, normalinv, erf, erfc, probit
+  /// Student's t, χ² and F distributions (the degrees of freedom may be any positive number), and the special functions they are
+  /// written with: Γ, the incomplete gamma and beta functions and their inverses, and the beta function.
+  case tpdf, tcdf, tinv, chisqpdf, chisqcdf, chisqinv, fpdf, fcdf, finv
+  case gamma, beta, gammainc, gammaincinv, betainc, betaincinv
 
   /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
   var isCalculus: Bool {
@@ -174,7 +178,7 @@ enum FunctionName: String, CaseIterable, Sendable {
     case .binompdf, .binomcdf, .binominv, .poissonpdf, .poissoncdf, .poissoninv, .geompdf, .geomcdf, .geominv,
       .hyperpdf,
       .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv, .normalpdf,
-      .normalcdf, .normalinv:
+      .normalcdf, .normalinv, .tpdf, .tcdf, .tinv, .chisqpdf, .chisqcdf, .chisqinv, .fpdf, .fcdf, .finv:
       return true
     default: return false
     }
@@ -219,7 +223,7 @@ enum FunctionName: String, CaseIterable, Sendable {
   var needsParenthesis: Bool {
     switch self {
     case .mod, .min, .max, .sign, .re, .im, .conj, .arg: return true
-    case .erf, .erfc, .probit: return true
+    case .erf, .erfc, .probit, .gamma, .beta, .gammainc, .gammaincinv, .betainc, .betaincinv: return true
     default: return isMatrixFunction || isStatisticsFunction || isDistribution
     }
   }
@@ -245,6 +249,8 @@ enum FunctionName: String, CaseIterable, Sendable {
       return 2...2
     case .hyperpdf, .hypercdf: return 4...4
     case .normalpdf, .normalcdf, .normalinv: return 1...3
+    case .tpdf, .tcdf, .tinv, .chisqpdf, .chisqcdf, .chisqinv, .beta, .gammainc, .gammaincinv: return 2...2
+    case .fpdf, .fcdf, .finv, .betainc, .betaincinv: return 3...3
     case .cov, .covp, .corr, .slope, .intercept, .linreg, .expreg, .powreg, .logreg: return 1...2
     case .polyreg: return 2...3
     default: return 1...1

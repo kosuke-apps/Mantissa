@@ -143,6 +143,22 @@ enum DoubleCompiler {
     case .erf: return { x, y in Foundation.erf(f(x, y)) }
     case .erfc: return { x, y in Foundation.erfc(f(x, y)) }
     case .probit: return { x, y in NormalDouble.quantile(f(x, y)) }
+    case .gamma: return { x, y in tgamma(f(x, y)) }
+    case .gammainc:
+      let argument = arguments[1]
+      return { x, y in SpecialDouble.gamma(f(x, y), argument(x, y)).p }
+    case .gammaincinv:
+      let probability = arguments[1]
+      return { x, y in SpecialDouble.inverseGamma(f(x, y), probability(x, y)) }
+    case .betainc:
+      let (a, b) = (arguments[1], arguments[2])
+      return { x, y in
+        let t = f(x, y)
+        return SpecialDouble.beta(t, 1 - t, a(x, y), b(x, y)).lower
+      }
+    case .betaincinv:
+      let (a, b) = (arguments[1], arguments[2])
+      return { x, y in SpecialDouble.inverseBeta(f(x, y), a(x, y), b(x, y)) }
     case .gcd, .lcm:
       let other = arguments[1]
       return { x, y in

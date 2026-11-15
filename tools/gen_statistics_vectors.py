@@ -504,7 +504,254 @@ for text_x, text_mu, text_sigma in [
             "inv": digits(mu + sigma * decimal_probit(pe)),
         }
     )
-special = {"erf": erf_points, "probit": probit_points, "normal": normal_points}
+# --- Gamma, incomplete gamma and beta, and the t, chi-squared and F distributions ------------------------------------------------
+
+
+_gamma_cache = {}
+
+
+def spouge_gamma(z: Decimal) -> Decimal:
+    key = (z, getcontext().prec)
+    if key not in _gamma_cache:
+        _gamma_cache[key] = _spouge_gamma(z)
+    return _gamma_cache[key]
+
+
+def _spouge_gamma(z: Decimal) -> Decimal:
+    """Γ(z) for z > 0 by Spouge's approximation, accurate to about the working digits (a method that shares nothing with Stirling's series)."""
+    digits_wanted = getcontext().prec
+    a = int(digits_wanted * 1.26) + 4
+    z = z - 1  # Γ(z + 1) = z Γ(z)
+    total = Decimal(2 * decimal_pi()).sqrt()
+    factorial = Decimal(1)
+    for k in range(1, a):
+        if k > 1:
+            factorial *= k - 1
+        c = ((-1) ** (k - 1)) / factorial * (Decimal(a - k) ** (Decimal(k) - Decimal(1) / 2)) * Decimal(a - k).exp()
+        total += c / (z + k)
+    return (z + a) ** (z + Decimal(1) / 2) * (-(z + a)).exp() * total
+
+
+def decimal_gamma_series(a: Decimal, x: Decimal) -> Decimal:
+    """P(a, x) by its power series, which has only positive terms and converges for every x."""
+    gamma_a1 = spouge_gamma(a + 1)
+    total = term = Decimal(1)
+    n = 0
+    while term > Decimal(10) ** (-getcontext().prec):
+        n += 1
+        term = term * x / (a + n)
+        total += term
+    return x**a * (-x).exp() / gamma_a1 * total
+
+
+def decimal_beta_series(x: Decimal, a: Decimal, b: Decimal) -> Decimal:
+    """I_x(a, b) = x^a / (a B(a, b)) · ₂F₁(a, 1 − b; a + 1; x), summed termwise (used for x ≤ 1/2, the other side by symmetry)."""
+    beta = spouge_gamma(a) * spouge_gamma(b) / spouge_gamma(a + b)
+    total = term = Decimal(1)
+    n = 0
+    while True:
+        # the term ratio of Σ (a)ₙ (1 − b)ₙ / ((a + 1)ₙ n!) xⁿ
+        ratio = (a + n) * (1 - b + n) / ((a + 1 + n) * (n + 1)) * x
+        term *= ratio
+        total += term
+        n += 1
+        if abs(term) < Decimal(10) ** (-getcontext().prec) and n > 5:
+            break
+    return x**a / (a * beta) * total
+
+
+def decimal_beta(x: Decimal, a: Decimal, b: Decimal):
+    """(I_x(a, b), 1 − I_x(a, b)), each computed on the side where the series is short and not a difference."""
+    if x <= Decimal(1) / 2:
+        lower = decimal_beta_series(x, a, b)
+        return lower, 1 - lower
+    upper = decimal_beta_series(1 - x, b, a)
+    return 1 - upper, upper
+
+
+def decimal_gamma_regularised(a: Decimal, x: Decimal):
+    lower = decimal_gamma_series(a, x)
+    return lower, 1 - lower
+
+
+def dec(text_value: str) -> Decimal:
+    f = Fraction(text_value)
+    return Decimal(f.numerator) / Decimal(f.denominator)
+
+
+getcontext().prec = 150
+gamma_points = []
+for text_x in ["0.1", "0.5", "1", "1.5", "2", "3.25", "7", "10.5", "25.75", "50", "100.5", "300"]:
+    x = dec(text_x)
+    gamma_points.append({"x": text_x, "gamma": digits(spouge_gamma(x)), "lgamma": digits(spouge_gamma(x).ln())})
+
+gammainc_points = []
+for text_a, text_x in [("0.5", "0.2"), ("0.5", "3"), ("1", "1"), ("2.5", "1"), ("2.5", "8"), ("5", "2"), ("5", "30"), ("10.25", "9"), ("10.25", "20"), ("50", "40"), ("50", "80"), ("0.1", "0.01"), ("3", "0.001"), ("200", "180")]:
+    lower, upper = decimal_gamma_regularised(dec(text_a), dec(text_x))
+    gammainc_points.append({"a": text_a, "x": text_x, "p": digits(lower), "q": digits(upper)})
+
+betainc_points = []
+for text_x, text_a, text_b in [("0.5", "1", "1"), ("0.3", "2", "3"), ("0.3", "0.5", "0.5"), ("0.9", "2.5", "1.5"), ("0.1", "5", "0.5"), ("0.7", "10", "20"), ("0.01", "3", "40"), ("0.99", "3", "40"), ("0.5", "30", "30"), ("0.25", "0.5", "7.5"), ("0.0001", "2", "2"), ("0.6", "15.5", "4.25")]:
+    lower, upper = decimal_beta(dec(text_x), dec(text_a), dec(text_b))
+    betainc_points.append({"x": text_x, "a": text_a, "b": text_b, "lower": digits(lower), "upper": digits(upper)})
+
+# The inverses, by Newton's method in decimals on the series of the cdfs.
+getcontext().prec = 120
+gamma_inverse = []
+for text_a, text_p in [("0.5", "0.1"), ("1", "0.5"), ("2.5", "0.95"), ("5", "0.01"), ("10.25", "0.999"), ("30", "0.5"), ("3", "1e-10")]:
+    a, p_target = dec(text_a), Decimal(text_p)
+    # Bisection to a few digits, then Newton, in decimals.
+    low, high = Decimal(0), a + 20 * a.sqrt() + 50
+    for _ in range(200):
+        mid = (low + high) / 2
+        if decimal_gamma_series(a, mid) < p_target:
+            low = mid
+        else:
+            high = mid
+    x = (low + high) / 2
+    for _ in range(10):
+        residual = decimal_gamma_series(a, x) - p_target
+        density = x ** (a - 1) * (-x).exp() / spouge_gamma(a)
+        x = x - residual / density
+    gamma_inverse.append({"a": text_a, "p": text_p, "x": digits(x)})
+
+beta_inverse = []
+for text_p, text_a, text_b in [("0.5", "1", "1"), ("0.1", "2", "3"), ("0.975", "5", "0.5"), ("0.001", "0.5", "0.5"), ("0.9", "10", "20"), ("0.5", "3", "40"), ("0.99", "2.5", "1.5")]:
+    p_target, a, b = Decimal(text_p), dec(text_a), dec(text_b)
+    low, high = Decimal(0), Decimal(1)
+    for _ in range(200):
+        mid = (low + high) / 2
+        if decimal_beta(mid, a, b)[0] < p_target:
+            low = mid
+        else:
+            high = mid
+    x = (low + high) / 2
+    beta_const = spouge_gamma(a) * spouge_gamma(b) / spouge_gamma(a + b)
+    for _ in range(10):
+        residual = decimal_beta(x, a, b)[0] - p_target
+        density = x ** (a - 1) * (1 - x) ** (b - 1) / beta_const
+        x = x - residual / density
+    beta_inverse.append({"p": text_p, "a": text_a, "b": text_b, "x": digits(x)})
+getcontext().prec = 100
+
+# --- Student's t, chi-squared and F -------------------------------------------------------------------------------------------
+
+
+def decimal_atan(x: Decimal) -> Decimal:
+    """arctan by halving the angle three times and summing the series."""
+    reductions = 3
+    for _ in range(reductions):
+        x = x / (1 + (1 + x * x).sqrt())
+    total = term = x
+    k = 0
+    while abs(term) > Decimal(10) ** (-getcontext().prec - 5):
+        k += 1
+        term = -term * x * x
+        total += term / (2 * k + 1)
+    return total * 2**reductions
+
+
+def student_cdf_closed_form(t: Decimal, nu: int) -> Decimal:
+    """Abramowitz and Stegun 26.7.3 and 26.7.4: the t distribution function for whole degrees of freedom."""
+    theta = decimal_atan(t / Decimal(nu).sqrt())
+    # sin θ and cos θ from tan θ, without a library: θ = arctan(u) gives sin = u/√(1+u²), cos = 1/√(1+u²)
+    u = t / Decimal(nu).sqrt()
+    c = 1 / (1 + u * u).sqrt()
+    sn = u * c
+    if nu % 2 == 0:
+        total = term = Decimal(1)
+        for j in range(1, (nu - 2) // 2 + 1):
+            term = term * Decimal(2 * j - 1) / Decimal(2 * j) * c * c
+            total += term
+        return Decimal(1) / 2 + sn * total / 2
+    if nu == 1:
+        return Decimal(1) / 2 + theta / decimal_pi()
+    total = term = c
+    for j in range(1, (nu - 3) // 2 + 1):
+        term = term * Decimal(2 * j) / Decimal(2 * j + 1) * c * c
+        total += term
+    return Decimal(1) / 2 + (theta + sn * total) / decimal_pi()
+
+
+def student_cdf(t: Decimal, nu: Decimal) -> Decimal:
+    lower, _ = decimal_beta(nu / (nu + t * t), nu / 2, Decimal(1) / 2)
+    return lower / 2 if t < 0 else 1 - lower / 2
+
+
+def newton_inverse(cdf, pdf, low: Decimal, high: Decimal, target: Decimal) -> Decimal:
+    for _ in range(160):
+        mid = (low + high) / 2
+        if cdf(mid) < target:
+            low = mid
+        else:
+            high = mid
+    x = (low + high) / 2
+    for _ in range(8):
+        x = x - (cdf(x) - target) / pdf(x)
+    return x
+
+
+getcontext().prec = 110
+t_cases = []
+for nu_text in ["1", "2", "3", "5", "7.5", "30"]:
+    nu = dec(nu_text)
+    for x_text in ["0", "-1.3", "2.7", "-6"]:
+        x = dec(x_text)
+        coefficient = spouge_gamma((nu + 1) / 2) / ((nu * decimal_pi()).sqrt() * spouge_gamma(nu / 2))
+        pdf = coefficient * (1 + x * x / nu) ** (-(nu + 1) / 2)
+        cdf = student_cdf(x, nu)
+        if nu == int(nu) and int(nu) <= 30:
+            assert abs(cdf - student_cdf_closed_form(x, int(nu))) < Decimal(10) ** -60, (nu_text, x_text)
+        t_cases.append({"nu": nu_text, "x": x_text, "pdf": digits(pdf), "cdf": digits(cdf)})
+    for p_text in ["0.5", "0.975", "0.01"]:
+        p = Decimal(p_text)
+        coefficient = lambda v: spouge_gamma((nu + 1) / 2) / ((nu * decimal_pi()).sqrt() * spouge_gamma(nu / 2)) * (1 + v * v / nu) ** (-(nu + 1) / 2)
+        q = newton_inverse(lambda v: student_cdf(v, nu), coefficient, Decimal(-5000), Decimal(5000), p) if p != Decimal("0.5") else Decimal(0)
+        t_cases.append({"nu": nu_text, "p": p_text, "inv": digits(q)})
+
+chisq_cases = []
+for k_text in ["1", "2", "4", "5", "10.5", "30"]:
+    k = dec(k_text)
+    for x_text in ["0.2", "3.84", "25"]:
+        x = dec(x_text)
+        pdf = x ** (k / 2 - 1) * (-x / 2).exp() / (2 ** (k / 2) * spouge_gamma(k / 2))
+        chisq_cases.append({"k": k_text, "x": x_text, "pdf": digits(pdf), "cdf": digits(decimal_gamma_series(k / 2, x / 2))})
+    for p_text in ["0.05", "0.95"]:
+        p = Decimal(p_text)
+        pdf_fn = lambda v: v ** (k / 2 - 1) * (-v / 2).exp() / (2 ** (k / 2) * spouge_gamma(k / 2))
+        q = newton_inverse(lambda v: decimal_gamma_series(k / 2, v / 2), pdf_fn, Decimal(0), 2 * k + 200, p)
+        chisq_cases.append({"k": k_text, "p": p_text, "inv": digits(q)})
+
+f_cases = []
+for d1_text, d2_text in [("2", "2"), ("3", "5"), ("4", "6"), ("10", "20"), ("7.5", "12")]:
+    d1, d2 = dec(d1_text), dec(d2_text)
+    a, b = d1 / 2, d2 / 2
+    beta = spouge_gamma(a) * spouge_gamma(b) / spouge_gamma(a + b)
+    for x_text in ["0.1", "1", "2.5"]:
+        x = dec(x_text)
+        pdf = ((d1 * x) ** d1 * d2**d2 / (d1 * x + d2) ** (d1 + d2)).sqrt() / (x * beta)
+        cdf = decimal_beta(d1 * x / (d1 * x + d2), a, b)[0]
+        f_cases.append({"d1": d1_text, "d2": d2_text, "x": x_text, "pdf": digits(pdf), "cdf": digits(cdf)})
+    for p_text in ["0.05", "0.95"]:
+        p = Decimal(p_text)
+        pdf_fn = lambda v: ((d1 * v) ** d1 * d2**d2 / (d1 * v + d2) ** (d1 + d2)).sqrt() / (v * beta)
+        q = newton_inverse(lambda v: decimal_beta(d1 * v / (d1 * v + d2), a, b)[0], pdf_fn, Decimal(0), Decimal(10000), p)
+        f_cases.append({"d1": d1_text, "d2": d2_text, "p": p_text, "inv": digits(q)})
+getcontext().prec = 100
+
+special = {
+    "t": t_cases,
+    "chisq": chisq_cases,
+    "f": f_cases,
+    "erf": erf_points,
+    "probit": probit_points,
+    "normal": normal_points,
+    "gamma": gamma_points,
+    "gammainc": gammainc_points,
+    "betainc": betainc_points,
+    "gammaInverse": gamma_inverse,
+    "betaInverse": beta_inverse,
+}
 
 (OUT / "statistics-vectors.json").write_text(
     json.dumps(

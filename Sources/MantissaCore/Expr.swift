@@ -36,6 +36,10 @@ public enum MathFunction: String, Hashable, Sendable, CaseIterable {
   /// The error function, its complement, and the quantile function of the standard normal distribution (`probit(p)` is the z with
   /// Φ(z) = p), which the normal distribution is written with.
   case erf, erfc, probit
+  /// The gamma function Γ; the regularised lower incomplete gamma function `gammainc(a, x)` = P(a, x) and its inverse in x
+  /// `gammaincinv(a, p)`; the regularised incomplete beta function `betainc(x, a, b)` = Iₓ(a, b) and its inverse in x
+  /// `betaincinv(p, a, b)`. The t, χ² and F distributions are written with them.
+  case gamma, gammainc, gammaincinv, betainc, betaincinv
 
   /// Whether an absolute error in the argument carries over to the result, so large arguments need extra digits.
   var magnifiesArgumentError: Bool {
@@ -48,7 +52,8 @@ public enum MathFunction: String, Hashable, Sendable, CaseIterable {
   /// How many arguments the function takes.
   public var arity: Int {
     switch self {
-    case .log, .combinations, .permutations, .gcd, .lcm: return 2
+    case .log, .combinations, .permutations, .gcd, .lcm, .gammainc, .gammaincinv: return 2
+    case .betainc, .betaincinv: return 3
     default: return 1
     }
   }

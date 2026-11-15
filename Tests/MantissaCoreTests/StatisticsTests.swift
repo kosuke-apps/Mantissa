@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import MantissaCore
@@ -141,9 +142,65 @@ struct StatisticsTests {
       var p: String
       var inv: String
     }
+    struct Gamma: Decodable {
+      var x: String
+      var gamma: String
+      var lgamma: String
+    }
+    struct GammaInc: Decodable {
+      var a: String
+      var x: String
+      var p: String
+      var q: String
+    }
+    struct BetaInc: Decodable {
+      var x: String
+      var a: String
+      var b: String
+      var lower: String
+      var upper: String
+    }
+    struct GammaInverse: Decodable {
+      var a: String
+      var p: String
+      var x: String
+    }
+    struct BetaInverse: Decodable {
+      var p: String
+      var a: String
+      var b: String
+      var x: String
+    }
+    /// A row of a t, χ² or F table: a value with its density and distribution function, or a probability with its quantile.
+    struct Row: Decodable {
+      var nu: String?
+      var k: String?
+      var d1: String?
+      var d2: String?
+      var x: String?
+      var pdf: String?
+      var cdf: String?
+      var p: String?
+      var inv: String?
+
+      /// The degrees of freedom as the arguments that follow the first.
+      var parameters: String {
+        if let nu { return nu }
+        if let k { return k }
+        return "\(d1 ?? ""), \(d2 ?? "")"
+      }
+    }
+    var t: [Row]
+    var chisq: [Row]
+    var f: [Row]
     var erf: [Erf]
     var probit: [Probit]
     var normal: [Normal]
+    var gamma: [Gamma]
+    var gammainc: [GammaInc]
+    var betainc: [BetaInc]
+    var gammaInverse: [GammaInverse]
+    var betaInverse: [BetaInverse]
   }
 
   private struct Vectors: Decodable {
@@ -367,8 +424,8 @@ struct StatisticsTests {
   }
 
   /// Whether two decimals agree to 45 significant digits (or absolutely, for a value that is zero).
-  private func agree(_ a: BigDecimal, _ b: BigDecimal) -> Bool {
-    let tolerance = BigDecimal(BigInt(1), exponent: -45)
+  private func agree(_ a: BigDecimal, _ b: BigDecimal, digits: Int = 45) -> Bool {
+    let tolerance = BigDecimal(BigInt(1), exponent: -digits)
     return (a - b).magnitude <= (b.isZero ? tolerance : b.magnitude * tolerance)
   }
 
@@ -681,6 +738,189 @@ struct StatisticsTests {
     // With a letter in it they are expressions to draw and to differentiate.
     #expect(failure("normalpdf(x)") == nil)
     #expect(try value("diff(normalcdf(x), x)") == (try value("normalpdf(x)")))
+  }
+
+  // MARK: Gamma, incomplete gamma and beta
+
+  private func big(_ text: String) throws -> BigDecimal {
+    try #require(Calculator().evaluate(text).approximation, "\(text)")
+  }
+
+  @Test("Γ and ln Γ agree to 45 digits with Spouge's approximation, from 0.1 to 300")
+  func gammaFunction() throws {
+    for item in try Self.load().special.gamma {
+      let x = try big(item.x)
+      #expect(agree(try x.gamma(precision: 50), try #require(BigDecimal(item.gamma))), "Γ(\(item.x))")
+      let want = try #require(BigDecimal(item.lgamma))
+      let got = try x.lgamma(precision: 50)
+      // ln Γ(1) = ln Γ(2) = 0, which the oracle's Spouge approximation has to about 10^-150.
+      if want.magnitude < BigDecimal(BigInt(1), exponent: -100) {
+        #expect(got.magnitude < BigDecimal(BigInt(1), exponent: -45), "ln Γ(\(item.x))")
+      } else {
+        #expect(agree(got, want), "ln Γ(\(item.x))")
+      }
+    }
+    // Reflection: Γ(−1.5) = 4√π/3, and the poles.
+    let negative = try BigDecimal("-1.5")!.gamma(precision: 50)
+    let expected = try (BigDecimal.pi(precision: 60).squareRoot(precision: 60) * BigDecimal(4)).divided(
+      by: BigDecimal(3), precision: 60)
+    #expect(agree(negative, expected))
+    #expect(throws: MathError.domain) { try BigDecimal(-2).gamma(precision: 20) }
+    #expect(throws: MathError.domain) { try BigDecimal(0).gamma(precision: 20) }
+  }
+
+  @Test("the regularised incomplete gamma function, both sides, agrees to 45 digits with the series in decimals")
+  func incompleteGamma() throws {
+    for item in try Self.load().special.gammainc {
+      let (a, x) = (try big(item.a), try big(item.x))
+      let p = try BigDecimal.gammaP(a, x, precision: 50)
+      let q = try BigDecimal.gammaQ(a, x, precision: 50)
+      #expect(agree(p, try #require(BigDecimal(item.p))), "P(\(item.a), \(item.x)) = \(p), expected \(item.p)")
+      #expect(agree(q, try #require(BigDecimal(item.q))), "Q(\(item.a), \(item.x)) = \(q), expected \(item.q)")
+    }
+  }
+
+  @Test("the regularised incomplete beta function, both sides, agrees to 45 digits with its hypergeometric series")
+  func incompleteBeta() throws {
+    for item in try Self.load().special.betainc {
+      let (x, a, b) = (try big(item.x), try big(item.a), try big(item.b))
+      let lower = try BigDecimal.betaI(x, a, b, precision: 50)
+      let upper = try BigDecimal.betaIComplement(x, a, b, precision: 50)
+      #expect(
+        agree(lower, try #require(BigDecimal(item.lower))),
+        "I_\(item.x)(\(item.a), \(item.b)) = \(lower), expected \(item.lower)")
+      #expect(
+        agree(upper, try #require(BigDecimal(item.upper))),
+        "1 − I_\(item.x)(\(item.a), \(item.b)) = \(upper), expected \(item.upper)")
+    }
+  }
+
+  @Test("the inverses of the incomplete functions agree to 45 digits with Newton's method in decimals")
+  func incompleteInverses() throws {
+    for item in try Self.load().special.gammaInverse {
+      let p = try big(item.p == "1e-10" ? "10^(-10)" : item.p)
+      let x = try BigDecimal.inverseGammaP(try big(item.a), p, precision: 50)
+      #expect(
+        agree(x, try #require(BigDecimal(item.x))), "gammaincinv(\(item.a), \(item.p)) = \(x), expected \(item.x)")
+    }
+    for item in try Self.load().special.betaInverse {
+      let x = try BigDecimal.inverseBetaI(try big(item.p), try big(item.a), try big(item.b), precision: 50)
+      #expect(
+        agree(x, try #require(BigDecimal(item.x))),
+        "betaincinv(\(item.p), \(item.a), \(item.b)) = \(x), expected \(item.x)")
+    }
+  }
+
+  @Test("the machine-number versions agree with the decimal ones to 11 digits")
+  func machineNumbers() throws {
+    for item in try Self.load().special.gammainc {
+      let (p, q) = SpecialDouble.gamma(try big(item.a).doubleValue, try big(item.x).doubleValue)
+      let (wantP, wantQ) = (try #require(BigDecimal(item.p)).doubleValue, try #require(BigDecimal(item.q)).doubleValue)
+      #expect(abs(p - wantP) <= 1e-11 * max(wantP, 1e-300), "P(\(item.a), \(item.x)) = \(p) against \(wantP)")
+      #expect(abs(q - wantQ) <= 1e-11 * max(wantQ, 1e-300), "Q(\(item.a), \(item.x)) = \(q) against \(wantQ)")
+    }
+    for item in try Self.load().special.betainc {
+      let x = try big(item.x).doubleValue
+      let (lower, upper) = SpecialDouble.beta(x, 1 - x, try big(item.a).doubleValue, try big(item.b).doubleValue)
+      let (wantLower, wantUpper) = (
+        try #require(BigDecimal(item.lower)).doubleValue, try #require(BigDecimal(item.upper)).doubleValue
+      )
+      #expect(abs(lower - wantLower) <= 1e-11 * max(wantLower, 1e-300), "I_\(item.x)(\(item.a), \(item.b))")
+      #expect(abs(upper - wantUpper) <= 1e-11 * max(wantUpper, 1e-300), "1 − I_\(item.x)(\(item.a), \(item.b))")
+    }
+  }
+
+  @Test(
+    "Student's t, χ² and F: density, distribution function and quantile agree to 40 digits with decimals computed another way"
+  )
+  func studentChiSquaredFisherOracle() throws {
+    let special = try Self.load().special
+    for (name, rows) in [("t", special.t), ("chisq", special.chisq), ("f", special.f)] {
+      for row in rows {
+        if let x = row.x, let pdf = row.pdf, let cdf = row.cdf {
+          let arguments = "\(x), \(row.parameters)"
+          for (kind, expected) in [("pdf", pdf), ("cdf", cdf)] {
+            let got = try decimal("\(name)\(kind)(\(arguments))")
+            let want = try #require(BigDecimal(expected))
+            if want.isZero {
+              #expect(got.isZero, "\(name)\(kind)(\(arguments))")
+            } else {
+              #expect(agree(got, want, digits: 40), "\(name)\(kind)(\(arguments)) = \(got), expected \(expected)")
+            }
+          }
+        } else if let p = row.p, let inv = row.inv {
+          let text = "\(name)inv(\(p), \(row.parameters))"
+          let got = try decimal(text)
+          let want = try #require(BigDecimal(inv))
+          if want.isZero {
+            #expect(got.magnitude < BigDecimal(BigInt(1), exponent: -40), "\(text)")
+          } else {
+            #expect(agree(got, want, digits: 40), "\(text) = \(got), expected \(inv)")
+          }
+        }
+      }
+    }
+  }
+
+  @Test(
+    "exact forms: the cdf of the t distribution with even degrees of freedom, the χ² cdf with even or odd, the F cdf with even"
+  )
+  func exactContinuous() throws {
+    // χ² with 2 degrees of freedom: 1 − e^(−x/2).
+    #expect(try value("chisqcdf(3, 2)") == (try value("1 - exp(-3/2)")))
+    // With a letter in it the call stays as written (it is worked out without the loss of digits that 1 − e^…  has in a tail), and is drawn.
+    #expect(Calculator().plotFunctions("chisqcdf(x, 2)").count == 1)
+    #expect(abs(Calculator().plotFunctions("chisqcdf(x, 2)")[0].evaluate(3) - (1 - exp(-1.5))) < 1e-14)
+    // In the tail, where 1 − e^…  would lose its digits, the value is still right to the last one.
+    let tail = try decimal("chisqcdf(0.001, 30)")
+    #expect(tail > BigDecimal("2.33e-62")! && tail < BigDecimal("2.34e-62")!)
+    // With 4: 1 − e^(−x/2)(1 + x/2).
+    #expect(try value("chisqcdf(2, 4)") == (try value("1 - exp(-1)*(1 + 1)")))
+    // With 1: erf(√(x/2)).
+    #expect(try value("chisqcdf(2, 1)") == (try value("erf(1)")))
+    // F with 2 and 2 degrees of freedom: x/(1 + x).
+    #expect(try value("fcdf(3, 2, 2)") == .fraction(3, 4))
+    #expect(try value("fcdf(1, 4, 4)") == .fraction(1, 2))
+    // t with 2 degrees of freedom: 1/2 + t/(2√(2 + t²)).
+    #expect(try value("tcdf(0, 2)") == .fraction(1, 2))
+    #expect(try value("tcdf(1, 2)") == (try value("1/2 + 1/(2*sqrt(3))")))
+    #expect(try value("tcdf(-1, 2)") == (try value("1/2 - 1/(2*sqrt(3))")))
+    #expect(try value("tinv(0.5, 7)") == 0)
+    #expect(try value("chisqpdf(-1, 3)") == 0)
+    #expect(try value("fpdf(-1, 3, 4)") == 0)
+    #expect(try value("chisqpdf(0, 3)") == 0)
+    #expect(try value("chisqpdf(0, 2)") == .fraction(1, 2))
+    #expect(try value("fpdf(0, 2, 5)") == 1)
+    #expect(try value("chisqinv(0, 4)") == 0)
+    #expect(try value("finv(0, 3, 4)") == 0)
+    // The density of t with 1 degree of freedom is the Cauchy density 1/(π(1 + x²)).
+    #expect(try value("tpdf(2, 1)") == (try value("1/(π*(1+4))")))
+    // Γ at whole and half-integers is exact.
+    #expect(try value("gamma(5)") == 24)
+    #expect(try value("gamma(1/2)") == (try value("√π")))
+    #expect(try value("gamma(5/2)") == (try value("3√π/4")))
+    #expect(try value("gamma(-1/2)") == (try value("-2√π")))
+    #expect(try value("gamma(1/3)").numericSign == 1)
+    // Both the cdf and its inverse go through the incomplete functions: the inverse of the cdf is the value.
+    for (cdf, inverse, value) in [("tcdf", "tinv", "1.7"), ("chisqcdf", "chisqinv", "5.5"), ("fcdf", "finv", "2.2")] {
+      let parameters = cdf == "fcdf" ? "5.5, 8.25" : "6.5"
+      let there = try decimal("\(inverse)(\(cdf)(\(value), \(parameters)), \(parameters))")
+      #expect(agree(there, try #require(BigDecimal(value)), digits: 40), "\(inverse)(\(cdf)(\(value)))")
+    }
+    // What is refused.
+    #expect(failure("tcdf(1, 0)") == .math(.domain))
+    #expect(failure("tcdf(1, -3)") == .math(.domain))
+    #expect(failure("chisqcdf(1, 0)") == .math(.domain))
+    #expect(failure("fcdf(1, 0, 3)") == .math(.domain))
+    #expect(failure("tinv(1, 5)") == .math(.domain))
+    #expect(failure("tinv(0, 5)") == .math(.domain))
+    #expect(failure("chisqinv(1, 5)") == .math(.domain))
+    #expect(failure("finv(-0.1, 2, 3)") == .math(.domain))
+    #expect(failure("chisqpdf(0, 1)") == .math(.noValue))
+    #expect(failure("gamma(0)") == .math(.domain))
+    #expect(failure("gamma(-3)") == .math(.domain))
+    #expect(failure("gammainc(0, 1)") == .math(.domain))
+    #expect(failure("betainc(1.5, 1, 1)") == .math(.domain))
   }
 
   @Test("the normal density and distribution function are drawn")

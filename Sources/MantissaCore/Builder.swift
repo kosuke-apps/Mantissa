@@ -127,7 +127,14 @@ struct Builder {
       .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv:
       return try Distributions.evaluate(function, x)
     case .normalpdf, .normalcdf, .normalinv: return try Distributions.normal(function, x)
-    case .erf, .erfc, .probit: return try Expr.apply(MathFunction(rawValue: function.rawValue)!, x)
+    case .tpdf, .tcdf, .tinv, .chisqpdf, .chisqcdf, .chisqinv, .fpdf, .fcdf, .finv:
+      return try Distributions.continuous(function, x)
+    case .erf, .erfc, .probit, .gamma, .gammainc, .gammaincinv, .betainc, .betaincinv:
+      return try Expr.apply(MathFunction(rawValue: function.rawValue)!, x)
+    case .beta:
+      // B(a, b) = Γ(a) Γ(b) / Γ(a + b)
+      return try (try Expr.apply(.gamma, [x[0]]) * Expr.apply(.gamma, [x[1]])).divided(
+        by: Expr.apply(.gamma, [x[0] + x[1]]))
     case .mode, .sort, .stats, .linreg, .polyreg, .expreg, .powreg, .logreg:
       throw .unsupported  // a column or a report, handled by `value`
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))

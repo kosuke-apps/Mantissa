@@ -212,7 +212,10 @@ enum KeyboardLayout {
           KeySpec("eˣ", [.symbol("e"), .power]), symbol("e"),
           KeySpec("abs", .absolute, [.absolute], alternates: ["re", "im", "conj", "arg"].map(functionAlternate)),
         ],
-        [function("nCr"), function("nPr"), symbol("!"), function("mod"), function("gcd"), function("lcm")],
+        [
+          function("nCr"), function("nPr"), symbol("!", alternates: ["gamma", "beta"].map(functionAlternate)),
+          function("mod"), function("gcd"), function("lcm"),
+        ],
         [function("floor"), function("ceil"), function("round"), function("sign"), function("min"), function("max")],
         [
           symbol(","), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol("π"), symbol("i"),
@@ -266,25 +269,31 @@ enum KeyboardLayout {
     case .probability where !withNumberPad:
       return [
         [
-          function("binompdf"), function("binomcdf"), function("binominv"), function("poissonpdf"),
-          function("poissoncdf"), function("poissoninv"),
-        ],
-        [
-          function("geompdf"), function("geomcdf"), function("geominv"), function("hyperpdf"), function("hypercdf"),
-          function("nCr"),
-        ],
-        [
-          function("uniformpdf"), function("uniformcdf"), function("uniforminv"), function("exponentialpdf"),
-          function("exponentialcdf"), function("exponentialinv"),
+          family("binom", "binompdf", ["binomcdf", "binominv"]),
+          family("poisson", "poissonpdf", ["poissoncdf", "poissoninv"]),
+          family("geom", "geompdf", ["geomcdf", "geominv"]), family("hyper", "hyperpdf", ["hypercdf"]),
+          family("uniform", "uniformpdf", ["uniformcdf", "uniforminv"]),
+          family("expo", "exponentialpdf", ["exponentialcdf", "exponentialinv"]),
         ],
         [
           function("normalpdf"), function("normalcdf"), function("normalinv"),
-          function("erf", alternates: ["erfc", "probit"]), function("nPr"), symbol(","),
+          function("erf", alternates: ["erfc", "probit"]),
+          function("gamma", alternates: ["beta", "gammainc", "betainc"]),
+          symbol(","),
+        ],
+        [
+          function("tpdf"), function("tcdf"), function("tinv"), function("fpdf"), function("fcdf"), function("finv"),
+        ],
+        [
+          function("chisqpdf"), function("chisqcdf"), function("chisqinv"), function("nCr"), function("nPr"),
+          symbol("."),
         ],
       ]
 
     case .probability:
-      // The number pad is where it is on the first page, so that the numbers can be typed in without changing page.
+      // The number pad is where it is on the first page, so that the numbers can be typed in without changing page. Each key is a
+      // family of functions: tapped it places the density (or, for the normal, t, χ² and F distributions, the cumulative
+      // probability that is asked for most), held it offers the others.
       return [
         [
           family("binom", "binompdf", ["binomcdf", "binominv"]),
@@ -292,19 +301,18 @@ enum KeyboardLayout {
           digit("7"), digit("8"), digit("9"), symbol("÷"),
         ],
         [
-          family("geom", "geompdf", ["geomcdf", "geominv"]), family("hyper", "hyperpdf", ["hypercdf"]),
+          family("geom", "geompdf", ["geomcdf", "geominv", "hyperpdf", "hypercdf"]),
+          family("normal", "normalcdf", ["normalpdf", "normalinv", "erf", "erfc", "probit"]),
           digit("4"), digit("5"), digit("6"), symbol("−"),
         ],
         [
-          family("uniform", "uniformpdf", ["uniformcdf", "uniforminv"]),
-          family("expo", "exponentialpdf", ["exponentialcdf", "exponentialinv"]),
+          family("t", "tcdf", ["tpdf", "tinv"]), family("chisq", "chisqcdf", ["chisqpdf", "chisqinv"]),
           digit("1"), digit("2"), digit("3"), symbol("+"),
         ],
         [
-          function("nCr", alternates: ["nPr"]),
-          KeySpec(
-            "normal", .text("normal"), [.function("normalcdf")],
-            alternates: ["normalcdf", "normalpdf", "normalinv", "erf", "erfc", "probit"].map(functionAlternate)),
+          family("F", "fcdf", ["fpdf", "finv"]),
+          family(
+            "uniform", "uniformpdf", ["uniformcdf", "uniforminv", "exponentialpdf", "exponentialcdf", "exponentialinv"]),
           digit("0"), symbol("."), symbol(","), symbol("="),
         ],
       ]

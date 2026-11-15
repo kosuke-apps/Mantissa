@@ -19,7 +19,149 @@ extension Expr {
     case .combinations, .permutations: return try counting(function, x, arguments[1])
     case .gcd, .lcm: return try gcdOrLcm(function, x, arguments[1])
     case .erf, .erfc, .probit: return try errorFunction(function, x)
+    case .gamma, .gammainc, .gammaincinv, .betainc, .betaincinv: return try gammaAndBeta(function, arguments)
     }
+  }
+
+  // MARK: Gamma and the incomplete gamma and beta functions
+
+  /// The most terms of a finite sum that an exact value of the incomplete functions is written with.
+  private static let incompleteTermLimit = 500
+
+  private static func gammaAndBeta(_ function: MathFunction, _ x: [Expr]) throws(MathError) -> Expr {
+    switch function {
+    case .gamma:
+      return try gammaFunction(x[0])
+    case .gammainc:
+      if x[0].numericSign.map({ $0 <= 0 }) == true || x[1].numericSign.map({ $0 < 0 }) == true { throw .domain }
+      if x[1].isZero { return .zero }
+      return try lowerIncompleteGamma(x[0], x[1])
+    case .gammaincinv:
+      if x[0].numericSign.map({ $0 <= 0 }) == true { throw .domain }
+      try requireOpenProbability(x[1])
+      return .function(.gammaincinv, x)
+    case .betainc:
+      if x[1].numericSign.map({ $0 <= 0 }) == true || x[2].numericSign.map({ $0 <= 0 }) == true { throw .domain }
+      if let side = x[0].numericSign {
+        if side < 0 || (x[0] - .one).numericSign.map({ $0 > 0 }) == true { throw .domain }
+        if side == 0 { return .zero }
+        if (x[0] - .one).numericSign == 0 { return .one }
+      }
+      return try incompleteBeta(x[0], x[1], x[2])
+    default:
+      if x[1].numericSign.map({ $0 <= 0 }) == true || x[2].numericSign.map({ $0 <= 0 }) == true { throw .domain }
+      try requireOpenProbability(x[0])
+      return .function(.betaincinv, x)
+    }
+  }
+
+  /// A number that is not strictly between 0 and 1 is outside the domain of the inverses.
+  private static func requireOpenProbability(_ value: Expr) throws(MathError) {
+    guard let sign = value.numericSign else { return }
+    guard sign > 0, let above = (Expr.one - value).numericSign, above > 0 else { throw .domain }
+  }
+
+  /// Γ(x): a factorial at a whole number, a rational multiple of √π at a half-integer, and otherwise the call as written.
+  private static func gammaFunction(_ x: Expr) throws(MathError) -> Expr {
+    guard let number = x.rational else { return .function(.gamma, [x]) }
+    if number.isInteger {
+      guard let n = number.numerator.asInt, n >= 1 else { throw .domain }  // poles at 0, −1, −2, …
+      guard let factorial = NumberTheory.factorial(n - 1) else { return .function(.gamma, [x]) }
+      return .number(Rational(factorial))
+    }
+    guard number.denominator == BigInt(2), let twice = number.numerator.asInt else { return .function(.gamma, [x]) }
+    let root = makePower(.pi, .fraction(1, 2))
+    let k = (twice - 1) / 2  // x = k + 1/2 (k may be negative: Swift rounds towards zero, and twice is odd)
+    if k >= 0 {
+      // Γ(k + 1/2) = (2k)! / (4^k k!) √π
+      guard let numerator = NumberTheory.factorial(2 * k), let denominator = NumberTheory.factorial(k) else {
+        return .function(.gamma, [x])
+      }
+      return makeProduct([.number(Rational(numerator, denominator * BigInt(4).power(k))), root])
+    }
+    // Γ(1/2 − n) = (−4)^n n! / (2n)! √π
+    let n = -k
+    guard let numerator = NumberTheory.factorial(n), let denominator = NumberTheory.factorial(2 * n) else {
+      return .function(.gamma, [x])
+    }
+    return makeProduct([.number(Rational(BigInt(-4).power(n) * numerator, denominator)), root])
+  }
+
+  /// P(a, x) = 1 − e^−x Σ_{j<a} xʲ/j! for a whole number a, erf(√x) − e^−x Σ_{j<a−1/2} x^(j+1/2)/Γ(j + 3/2) for a half-integer, and
+  /// otherwise the call as written.
+  private static func lowerIncompleteGamma(_ a: Expr, _ x: Expr) throws(MathError) -> Expr {
+    guard let order = a.rational else { return .function(.gammainc, [a, x]) }
+    // The finite sums are exact, but 1 − e^−x Σ… is a difference of nearly equal numbers where P is tiny, so that its decimal would
+    // lose as many digits as P has zeros. The call as written (which is worked out without that loss) is kept there, and for a
+    // letter, where it is not known.
+    guard let place = x.numericSign, place > 0, let probability = smallestLowerValue(gammaA: a, x: x),
+      probability > 1e-8
+    else {
+      return .function(.gammainc, [a, x])
+    }
+    let decay = try Expr.e.raised(to: -x)
+    if order.isInteger, let m = order.numerator.asInt, m <= incompleteTermLimit {
+      var terms: [Expr] = []
+      for j in 0..<m {
+        guard let factorial = NumberTheory.factorial(j) else { return .function(.gammainc, [a, x]) }
+        terms.append(makeProduct([.number(Rational(1, factorial)), try x.raised(to: .integer(j))]))
+      }
+      return .one - makeProduct([decay, makeSum(terms)])
+    }
+    if order.denominator == BigInt(2), let twice = order.numerator.asInt, twice >= 1, twice / 2 <= incompleteTermLimit {
+      let m = twice / 2  // a = m + 1/2
+      var terms: [Expr] = []
+      for j in 0..<m {
+        let gammaValue = try gammaFunction(.number(Rational(2 * j + 3, 2)))
+        terms.append(try (try x.raised(to: .number(Rational(2 * j + 1, 2)))).divided(by: gammaValue))
+      }
+      let root = try x.raised(to: .fraction(1, 2))
+      return try Expr.apply(.erf, [root]) - makeProduct([decay, makeSum(terms)])
+    }
+    return .function(.gammainc, [a, x])
+  }
+
+  /// P(a, x) as a machine number, or `nil` when the arguments are not numbers.
+  private static func smallestLowerValue(gammaA a: Expr, x: Expr) -> Double? {
+    guard let da = try? a.approximation(precision: 20).doubleValue,
+      let dx = try? x.approximation(precision: 20).doubleValue
+    else { return nil }
+    return SpecialDouble.gamma(da, dx).p
+  }
+
+  /// Iₓ(a, b) as a finite sum when b is a whole number (x^a Σ_{j<b} (a)ⱼ/j! (1 − x)ʲ) or a is (1 − (1 − x)^b Σ_{j<a} (b)ⱼ/j! xʲ), and
+  /// otherwise the call as written.
+  private static func incompleteBeta(_ x: Expr, _ a: Expr, _ b: Expr) throws(MathError) -> Expr {
+    let kept = Expr.function(.betainc, [x, a, b])
+    /// Σ_{j<count} (first)ⱼ/j! · yʲ, where (first)ⱼ is the rising factorial.
+    func series(first: Expr, y: Expr, count: Int) throws(MathError) -> Expr {
+      var terms: [Expr] = []
+      var rising = Expr.one
+      for j in 0..<count {
+        guard let factorial = NumberTheory.factorial(j) else { throw .overflow }
+        terms.append(makeProduct([.number(Rational(1, factorial)), rising, try y.raised(to: .integer(j))]))
+        rising = makeProduct([rising, first + .integer(j)])
+      }
+      return makeSum(terms)
+    }
+    do throws(MathError) {
+      // The sum with whole b has positive terms only, so it loses no digits.
+      if let m = b.rational, m.isInteger, let count = m.numerator.asInt, count >= 1, count <= incompleteTermLimit {
+        return makeProduct([try x.raised(to: a), try series(first: a, y: .one - x, count: count)])
+      }
+      // 1 − (1 − x)^b Σ… is a difference of nearly equal numbers where I is tiny: it is written out only where I is not.
+      if let n = a.rational, n.isInteger, let count = n.numerator.asInt, count >= 1, count <= incompleteTermLimit,
+        let dx = try? x.approximation(precision: 20).doubleValue,
+        let da = try? a.approximation(precision: 20).doubleValue,
+        let db = try? b.approximation(precision: 20).doubleValue, SpecialDouble.beta(dx, 1 - dx, da, db).lower > 1e-8
+      {
+        return .one - makeProduct([try (Expr.one - x).raised(to: b), try series(first: b, y: x, count: count)])
+      }
+    } catch {
+      if error == .overflow { return kept }
+      throw error
+    }
+    return kept
   }
 
   // MARK: Error function and normal quantile

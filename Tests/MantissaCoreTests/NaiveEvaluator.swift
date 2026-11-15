@@ -165,7 +165,9 @@ struct NaiveEvaluator {
       .hyperpdf,
       .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv, .normalpdf,
       .normalcdf,
-      .normalinv, .erf, .erfc, .probit:
+      .normalinv, .erf, .erfc, .probit, .tpdf, .tcdf, .tinv, .chisqpdf, .chisqcdf, .chisqinv, .fpdf, .fcdf, .finv,
+      .gamma, .beta,
+      .gammainc, .gammaincinv, .betainc, .betaincinv:
       throw .notNumeric
     case .nCr, .nPr:
       guard let n = x[0].asInt, let r = x[1].asInt, n >= 0, r >= 0, r <= n else { throw .domain }

@@ -229,6 +229,117 @@ enum Distributions {
     }
   }
 
+  // MARK: Student's t, χ² and F
+
+  /// The distributions that are written with the gamma function and the incomplete gamma and beta functions. Their degrees of
+  /// freedom are any positive numbers. Where the incomplete function has a finite exact form (whole or half-integer parameters for
+  /// the gamma, a whole parameter for the beta) so does the cdf; otherwise it is written with the function and has a decimal.
+  static func continuous(_ function: FunctionName, _ x: [Expr]) throws(MathError) -> Expr {
+    switch function {
+    case .tpdf, .tcdf, .tinv: return try student(function, x)
+    case .chisqpdf, .chisqcdf, .chisqinv: return try chiSquared(function, x)
+    default: return try fisher(function, x)
+    }
+  }
+
+  private static func positive(_ value: Expr) throws(MathError) {
+    guard try sign(value) > 0 else { throw .domain }
+  }
+
+  /// A probability that is strictly between 0 and 1.
+  private static func openProbability(_ value: Expr) throws(MathError) {
+    guard try sign(value) > 0, try sign(Expr.one - value) > 0 else { throw .domain }
+  }
+
+  private static func student(_ function: FunctionName, _ x: [Expr]) throws(MathError) -> Expr {
+    let (z, nu) = (x[0], x[1])
+    try positive(nu)
+    let half = Expr.fraction(1, 2)
+    switch function {
+    case .tpdf:
+      let top = try Expr.apply(.gamma, [(nu + .one) * half])
+      let bottom = try (nu * .pi).raised(to: half) * Expr.apply(.gamma, [nu * half])
+      let shape = try (Expr.one + (try (z * z).divided(by: nu))).raised(to: -((nu + .one) * half))
+      return try top.divided(by: bottom) * shape
+    case .tcdf:
+      // The tail beyond |t| is ½ Iᵥ/(ᵥ+t²)(ν/2, 1/2); the side is known when t is a number.
+      let tail = try Expr.apply(.betainc, [try nu.divided(by: nu + z * z), nu * half, half])
+      guard let side = z.numericSign else {
+        return half + (try z.divided(by: Expr.integer(2) * Expr.apply(.abs, [z]))) * (Expr.one - tail)
+      }
+      if side < 0 { return half * tail }
+      return side == 0 ? half : Expr.one - half * tail
+    default:
+      try openProbability(z)
+      let p = z
+      if (p - half).numericSign == 0 { return .zero }
+      let below = (p - half).numericSign! < 0
+      let twiceTail = below ? Expr.integer(2) * p : Expr.integer(2) * (Expr.one - p)
+      let y = try Expr.apply(.betaincinv, [twiceTail, nu * half, half])
+      let magnitude = try (nu * (Expr.one - y)).divided(by: y).raised(to: half)
+      return below ? -magnitude : magnitude
+    }
+  }
+
+  private static func chiSquared(_ function: FunctionName, _ x: [Expr]) throws(MathError) -> Expr {
+    let (z, k) = (x[0], x[1])
+    try positive(k)
+    let half = Expr.fraction(1, 2)
+    switch function {
+    case .chisqpdf:
+      if let side = z.numericSign {
+        if side < 0 { return .zero }
+        if side == 0 {
+          let order = try sign(k - .integer(2))
+          if order < 0 { throw .noValue }  // the density is unbounded at 0
+          return order == 0 ? half : .zero
+        }
+      }
+      let scale = try (Expr.integer(2).raised(to: k * half)) * Expr.apply(.gamma, [k * half])
+      return try (try z.raised(to: k * half - .one) * Expr.e.raised(to: -(z * half))).divided(by: scale)
+    case .chisqcdf:
+      if let side = z.numericSign, side <= 0 { return .zero }
+      return try Expr.apply(.gammainc, [k * half, z * half])
+    default:
+      let p = z
+      guard try sign(p) >= 0, try sign(Expr.one - p) > 0 else { throw .domain }
+      if p.isZero { return .zero }
+      return Expr.integer(2) * (try Expr.apply(.gammaincinv, [k * half, p]))
+    }
+  }
+
+  private static func fisher(_ function: FunctionName, _ x: [Expr]) throws(MathError) -> Expr {
+    let (z, d1, d2) = (x[0], x[1], x[2])
+    try positive(d1)
+    try positive(d2)
+    let half = Expr.fraction(1, 2)
+    let (a, b) = (d1 * half, d2 * half)
+    switch function {
+    case .fpdf:
+      if let side = z.numericSign {
+        if side < 0 { return .zero }
+        if side == 0 {
+          let order = try sign(d1 - .integer(2))
+          if order < 0 { throw .noValue }
+          return order == 0 ? .one : .zero
+        }
+      }
+      let beta = try (try Expr.apply(.gamma, [a]) * Expr.apply(.gamma, [b])).divided(by: Expr.apply(.gamma, [a + b]))
+      let numerator = try (d1 * z).raised(to: d1) * d2.raised(to: d2)
+      let root = try numerator.divided(by: (try (d1 * z + d2).raised(to: d1 + d2))).raised(to: half)
+      return try root.divided(by: z * beta)
+    case .fcdf:
+      if let side = z.numericSign, side <= 0 { return .zero }
+      return try Expr.apply(.betainc, [try (d1 * z).divided(by: d1 * z + d2), a, b])
+    default:
+      let p = z
+      guard try sign(p) >= 0, try sign(Expr.one - p) > 0 else { throw .domain }
+      if p.isZero { return .zero }
+      let y = try Expr.apply(.betaincinv, [p, a, b])
+      return try (d2 * y).divided(by: d1 * (Expr.one - y))
+    }
+  }
+
   // MARK: Uniform and exponential
 
   /// −1, 0 or 1 for a real number with no letter in it.

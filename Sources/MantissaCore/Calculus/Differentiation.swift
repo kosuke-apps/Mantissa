@@ -106,6 +106,29 @@ extension Expr {
         .integer(2), Expr.makePower(.pi, .fraction(-1, 2)), try Expr.e.raised(to: -square), slope,
       ])
       return function == .erf ? bell : -bell
+    case .gamma, .gammaincinv, .betaincinv:
+      // The derivative of Γ needs the digamma function, and the inverses depend on all their arguments.
+      throw .unsupported
+    case .gammainc:
+      // d/dx P(a, x) = x^(a−1) e^−x / Γ(a), when only x moves.
+      guard !arguments[0].contains(variable) else { throw .unsupported }
+      let x = arguments[1]
+      let density = try Expr.makeProduct([
+        x.raised(to: arguments[0] - .one), Expr.e.raised(to: -x),
+        Expr.makePower(try call(.gamma, arguments[0]), .minusOne),
+      ])
+      return Expr.makeProduct([density, try x.derivative(variable)])
+    case .betainc:
+      // d/dx Iₓ(a, b) = x^(a−1) (1 − x)^(b−1) / B(a, b), when only x moves.
+      guard !arguments[1].contains(variable), !arguments[2].contains(variable) else { throw .unsupported }
+      let (x, a, b) = (arguments[0], arguments[1], arguments[2])
+      let beta = try Expr.makeProduct([
+        call(.gamma, a), call(.gamma, b), Expr.makePower(try call(.gamma, a + b), .minusOne),
+      ])
+      let density = try Expr.makeProduct([
+        x.raised(to: a - .one), (Expr.one - x).raised(to: b - .one), Expr.makePower(beta, .minusOne),
+      ])
+      return Expr.makeProduct([density, try x.derivative(variable)])
     case .probit:
       // d/dp probit(p) = 1/φ(probit(p)) = √(2π) e^(probit(p)²/2).
       let z = try call(.probit, g)

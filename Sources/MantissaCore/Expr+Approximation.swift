@@ -150,6 +150,11 @@ extension Expr {
     case .erf: return try x[0].erf(precision: p)
     case .erfc: return try x[0].erfc(precision: p)
     case .probit: return try x[0].probit(precision: p)
+    case .gamma: return try x[0].gamma(precision: p)
+    case .gammainc: return try BigDecimal.gammaP(x[0], x[1], precision: p)
+    case .gammaincinv: return try BigDecimal.inverseGammaP(x[0], x[1], precision: p)
+    case .betainc: return try BigDecimal.betaI(x[0], x[1], x[2], precision: p)
+    case .betaincinv: return try BigDecimal.inverseBetaI(x[0], x[1], x[2], precision: p)
     }
   }
 }
