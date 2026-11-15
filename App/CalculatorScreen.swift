@@ -468,10 +468,11 @@ private struct SolutionsView: View {
           Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
             ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in
               GridRow {
-                Text(line.caption ?? "").scaledFont(size: 16 * k).foregroundStyle(.secondary).gridColumnAlignment(
-                  .leading
-                )
-                .padding(.top, 4 * k)
+                Text(line.caption ?? "").scaledFont(size: 16 * k).foregroundStyle(Self.captionColor)
+                  .gridColumnAlignment(
+                    .leading
+                  )
+                  .padding(.top, 4 * k)
                 value(line, size: 26 * k, decimalSize: 18 * k)
               }
             }
@@ -499,9 +500,12 @@ private struct SolutionsView: View {
     .answerCard()
   }
 
+  /// The colour of a row's caption: a little darker than the secondary colour, which on the answer card is just short of enough contrast.
+  private static let captionColor = Color.primary.opacity(0.68)
+
   private func row(_ line: AppModel.Solutions.Line) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      if let caption = line.caption { Text(caption).scaledFont(size: 17 * k).foregroundStyle(.secondary) }
+      if let caption = line.caption { Text(caption).scaledFont(size: 17 * k).foregroundStyle(Self.captionColor) }
       value(line)
     }
   }
