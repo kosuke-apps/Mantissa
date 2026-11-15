@@ -23,6 +23,31 @@ struct RandomInputTests {
   private static let matrices = [
     "[[1,2],[3,4]]", "[[x,1],[0,y]]", "[[1],[2],[3]]", "[[0,0],[0,0]]", "[[a,b,c]]", "[[2,0],[0,2]]",
   ]
+  /// Statistics (of numbers, vectors and tables) and distributions, with the number of arguments each takes.
+  private static let statistics: [(name: String, arguments: ClosedRange<Int>)] = [
+    ("mean", 1...4), ("median", 1...4), ("mode", 1...4), ("variance", 1...4), ("stdev", 1...4), ("varp", 1...3),
+    ("sort", 1...3), ("count", 1...3), ("total", 1...3), ("iqr", 1...4), ("range", 1...3), ("min", 1...3),
+    ("max", 1...3),
+    ("quartile", 2...2), ("percentile", 2...2), ("cov", 1...2), ("corr", 1...2), ("slope", 1...2), ("intercept", 1...2),
+    ("stats", 1...4), ("linreg", 1...2), ("polyreg", 2...3), ("expreg", 1...2), ("powreg", 1...2), ("logreg", 1...2),
+  ]
+  private static let distributions: [(name: String, arguments: Int)] = [
+    ("binompdf", 3), ("binomcdf", 3), ("binominv", 3), ("poissonpdf", 2), ("poissoncdf", 2), ("poissoninv", 2),
+    ("geompdf", 2), ("geomcdf", 2), ("geominv", 2), ("hyperpdf", 4), ("hypercdf", 4), ("uniformpdf", 3),
+    ("uniformcdf", 3),
+    ("uniforminv", 3), ("exponentialpdf", 2), ("exponentialcdf", 2), ("exponentialinv", 2), ("normalpdf", 3),
+    ("normalcdf", 3), ("normalinv", 3), ("erf", 1), ("erfc", 1), ("probit", 1), ("tpdf", 2), ("tcdf", 2), ("tinv", 2),
+    ("chisqpdf", 2), ("chisqcdf", 2), ("chisqinv", 2), ("fpdf", 3), ("fcdf", 3), ("finv", 3), ("gamma", 1), ("beta", 2),
+    ("gammainc", 2), ("gammaincinv", 2), ("betainc", 3), ("betaincinv", 3),
+  ]
+  /// Numbers for the arguments of a distribution: small, so that a random input does not ask for a sum of a million terms.
+  private static let distributionAtoms = [
+    "x", "2", "3", "0.5", "1/2", "10", "7", "0", "1", "-1", "0.9", "a", "√2", "5",
+  ]
+  private static let tables = [
+    "[[1],[2],[3],[4]]", "[[1,2],[2,3],[3,5]]", "[[1],[1],[1]]", "[[1,2],[1,3],[1,5]]", "[[0,1],[1,2],[2,4],[3,8]]",
+    "[[x],[2],[3]]", "[[1,0],[2,0],[3,0]]",
+  ]
   private static let operators = ["+", "-", "*", "/", "^"]
   private static let relations = ["=", "<", ">", "<=", ">=", "≠"]
 
@@ -45,9 +70,26 @@ struct RandomInputTests {
         case 2: return "lim(" + expression(depth - 1) + ",x," + pick(RandomInputTests.atoms) + ")"
         default: return "sum(" + expression(depth - 1) + ",k,1," + pick(["5", "n", "∞", "50"]) + ")"
         }
-      case 7: return pick(["dot", "cross"]) + "(" + expression(depth - 1) + "," + expression(depth - 1) + ")"
+      case 7:
+        if generator.next() % 3 == 0 { return statisticsCall() }
+        return pick(["dot", "cross"]) + "(" + expression(depth - 1) + "," + expression(depth - 1) + ")"
       default: return pick(["+", "-"]) + expression(depth - 1)
       }
+    }
+
+    /// A statistic of some numbers or a table, or a distribution of some numbers.
+    mutating func statisticsCall() -> String {
+      if generator.next() % 2 == 0 {
+        let item = pick(RandomInputTests.statistics)
+        let count = item.arguments.lowerBound + Int(generator.next() % UInt64(item.arguments.count))
+        let data = (0..<count).map { _ in
+          generator.next() % 2 == 0 ? pick(RandomInputTests.tables) : pick(RandomInputTests.atoms)
+        }
+        return item.name + "(" + data.joined(separator: ",") + ")"
+      }
+      let item = pick(RandomInputTests.distributions)
+      return item.name + "("
+        + (0..<item.arguments).map { _ in pick(RandomInputTests.distributionAtoms) }.joined(separator: ",") + ")"
     }
 
     mutating func statement() -> String {
@@ -60,6 +102,7 @@ struct RandomInputTests {
           + pick(["A", "B", "X", "a", "x"]) + pick(["", "*", "+", "-"]) + pick(["A", "B", "X", "(A+B)", "A^2", "A^T"])
           + "="
           + pick(["B", "A", "X", "A*B", "[[1,2],[3,4]]", "A^(-1)"])
+      case 4: return statisticsCall()
       default: return expression(4)
       }
     }

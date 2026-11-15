@@ -938,6 +938,16 @@ struct StatisticsTests {
     #expect(quantile[0].evaluate(1.5).isNaN)
   }
 
+  @Test("an exponential of a power tower is refused at once, as it was not before (it took over a minute to give up)")
+  func powerTower() throws {
+    let started = Date()
+    #expect(throws: (any Error).self) { try Calculator().solve("exp((e^7!))<=0.5") }
+    // The value itself is kept as written (it has no decimal), and was never the slow part.
+    let kept = try Calculator().evaluate("exp(e^7!)")
+    #expect(kept.approximation == nil)
+    #expect(Date().timeIntervalSince(started) < 20, "it should have given up long before this")
+  }
+
   // MARK: Reports
 
   @Test("stats reports the five-number summary and more")

@@ -95,6 +95,11 @@ extension Expr {
     // digits in both.
     if let order = y.decimalOrder, order > 0 {
       guard order <= Expr.maxExtraDigits else { throw .overflow }
+      // When y ln b is 10^9 or more, e^(y ln b) cannot be represented: say so before paying the thousands of digits that a huge y
+      // would need (the exponential of a power tower such as e^7! took more than a minute to give up).
+      if b.signum > 0, let rough = try? b.ln(precision: 10), let size = (y * rough).decimalOrder, size > 9 {
+        throw .overflow
+      }
       y = try exponent.evaluate(working: p + order + 3, values: values)
       b = try base.evaluate(working: p + order + 3, values: values)
     }
