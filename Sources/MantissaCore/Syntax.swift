@@ -132,6 +132,10 @@ enum FunctionName: String, CaseIterable, Sendable {
   /// Reports: blocks of labelled values, which are only ever the whole answer. The regressions: a line, a polynomial of a degree,
   /// an exponential `a bˣ`, a power `a xᵇ` and a logarithm `a + b ln x`.
   case stats, linreg, polyreg, expreg, powreg, logreg
+  /// Distributions whose probabilities are exact (`docs/statistics.md`): `pdf` is the probability of a value (the density, for a
+  /// continuous distribution), `cdf` the probability of at most a value, and `inv` the value that has a given cdf.
+  case binompdf, binomcdf, binominv, poissonpdf, poissoncdf, poissoninv, geompdf, geomcdf, geominv, hyperpdf, hypercdf
+  case uniformpdf, uniformcdf, uniforminv, exponentialpdf, exponentialcdf, exponentialinv
 
   /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
   var isCalculus: Bool {
@@ -156,6 +160,17 @@ enum FunctionName: String, CaseIterable, Sendable {
     case .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp, .stdevp, .iqr,
       .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg, .polyreg, .expreg, .powreg,
       .logreg:
+      return true
+    default: return false
+    }
+  }
+
+  /// The functions of a probability distribution, which take numbers.
+  var isDistribution: Bool {
+    switch self {
+    case .binompdf, .binomcdf, .binominv, .poissonpdf, .poissoncdf, .poissoninv, .geompdf, .geomcdf, .geominv,
+      .hyperpdf,
+      .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv:
       return true
     default: return false
     }
@@ -200,7 +215,7 @@ enum FunctionName: String, CaseIterable, Sendable {
   var needsParenthesis: Bool {
     switch self {
     case .mod, .min, .max, .sign, .re, .im, .conj, .arg: return true
-    default: return isMatrixFunction || isStatisticsFunction
+    default: return isMatrixFunction || isStatisticsFunction || isDistribution
     }
   }
 
@@ -219,6 +234,11 @@ enum FunctionName: String, CaseIterable, Sendable {
     case .root, .nCr, .nPr, .gcd, .lcm, .mod, .dot, .cross, .quartile, .percentile: return 2...2
     case .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp, .stdevp, .iqr, .stats:
       return 1...Self.maxArguments
+    case .binompdf, .binomcdf, .binominv, .uniformpdf, .uniformcdf, .uniforminv: return 3...3
+    case .poissonpdf, .poissoncdf, .poissoninv, .geompdf, .geomcdf, .geominv, .exponentialpdf, .exponentialcdf,
+      .exponentialinv:
+      return 2...2
+    case .hyperpdf, .hypercdf: return 4...4
     case .cov, .covp, .corr, .slope, .intercept, .linreg, .expreg, .powreg, .logreg: return 1...2
     case .polyreg: return 2...3
     default: return 1...1

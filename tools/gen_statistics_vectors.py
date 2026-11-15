@@ -9,6 +9,7 @@ The seed is fixed: running this again must reproduce the committed file byte for
 """
 
 import json
+import math
 import random
 import statistics
 from decimal import Decimal, getcontext
@@ -262,9 +263,173 @@ for kind in ["exponential", "power", "logarithmic"]:
     for size in [2, 3, 5, 8, 13]:
         transformed.append(transformed_case(kind, size))
 
+# --- Distributions -------------------------------------------------------------------------------------------------------------
+
+
+def probability_text() -> str:
+    """A probability as it would be typed: a decimal or a fraction."""
+    kind = rng.choice(["decimal", "fraction"])
+    if kind == "decimal":
+        return f"0.{rng.randint(1, 99):02d}".rstrip("0")
+    denominator = rng.choice([2, 3, 5, 6, 7, 10, 12])
+    return f"{rng.randint(1, denominator - 1)}/{denominator}"
+
+
+def inverse_discrete(cdf, start: int, stop: int, q):
+    """The smallest k whose cdf is at least q, found by looking at every k in turn."""
+    for k in range(start, stop + 1):
+        if cdf(k) >= q:
+            return k
+    return stop
+
+
+binomial = []
+for n in [1, 2, 5, 10, 17, 30, 60, 200]:
+    for _ in range(2):
+        p = probability_text()
+        pf = Fraction(p)
+        k = rng.randint(0, n)
+        pmf = lambda j: Fraction(math.comb(n, j)) * pf**j * (1 - pf) ** (n - j)
+        q_text = probability_text()
+        q = Fraction(q_text)
+        total = sum(pmf(j) for j in range(0, k + 1))
+        binomial.append(
+            {
+                "n": n,
+                "p": p,
+                "k": k,
+                "pdf": text(pmf(k)),
+                "cdf": text(total),
+                "q": q_text,
+                "inv": inverse_discrete(lambda m: sum(pmf(j) for j in range(0, m + 1)), 0, n, q),
+            }
+        )
+
+poisson = []
+for lam in ["0.5", "1", "2.5", "4", "7.25", "12", "30"]:
+    lf = Fraction(lam)
+    for _ in range(2):
+        k = rng.randint(0, int(lf * 3) + 3)
+        term = lambda j: lf**j / math.factorial(j)
+        s_pdf = term(k)
+        s_cdf = sum(term(j) for j in range(0, k + 1))
+        lam_decimal = Decimal(lf.numerator) / Decimal(lf.denominator)
+        decay = (-lam_decimal).exp()
+        q_text = f"0.{rng.randint(1, 999):03d}".rstrip("0")
+        q = Decimal(q_text)
+
+        def cdf_decimal(m):
+            return decay * sum(Decimal(term(j).numerator) / Decimal(term(j).denominator) for j in range(0, m + 1))
+
+        poisson.append(
+            {
+                "lambda": lam,
+                "k": k,
+                "pdfFactor": text(s_pdf),
+                "cdfFactor": text(s_cdf),
+                "pdf": digits(decay * Decimal(s_pdf.numerator) / Decimal(s_pdf.denominator)),
+                "cdf": digits(cdf_decimal(k)),
+                "q": q_text,
+                "inv": next(m for m in range(0, 10_000) if cdf_decimal(m) >= q),
+            }
+        )
+
+geometric = []
+for p in ["1", "1/2", "0.3", "0.1", "1/7", "0.65", "1/20"]:
+    pf = Fraction(p)
+    for _ in range(2):
+        k = rng.randint(1, 25)
+        q_text = rng.choice(["0.5", "0.9", "0.99", "0.25", "0.75", "0.999", "7/8", "0.63"])
+        q = Fraction(q_text)
+        cdf = lambda m: 1 - (1 - pf) ** m
+        geometric.append(
+            {
+                "p": p,
+                "k": k,
+                "pdf": text((1 - pf) ** (k - 1) * pf),
+                "cdf": text(cdf(k)),
+                "q": q_text,
+                "inv": next(m for m in range(1, 200_000) if cdf(m) >= q),
+            }
+        )
+geometric.append({"p": "1/2", "k": 3, "pdf": text(Fraction(1, 8)), "cdf": text(Fraction(7, 8)), "q": "7/8", "inv": 3})
+geometric.append({"p": "0.1", "k": 2, "pdf": text(Fraction(9, 100)), "cdf": text(Fraction(19, 100)), "q": "0.19", "inv": 2})
+
+hypergeometric = []
+for population, successes, drawn in [(10, 4, 3), (20, 7, 5), (52, 13, 5), (100, 30, 10), (49, 6, 6), (15, 15, 4), (12, 0, 5)]:
+    for _ in range(2):
+        low = max(0, drawn - (population - successes))
+        high = min(drawn, successes)
+        k = rng.randint(low, high)
+        mass = lambda j: Fraction(math.comb(successes, j) * math.comb(population - successes, drawn - j), math.comb(population, drawn)) if low <= j <= high else Fraction(0)
+        hypergeometric.append(
+            {
+                "population": population,
+                "successes": successes,
+                "drawn": drawn,
+                "k": k,
+                "pdf": text(mass(k)),
+                "cdf": text(sum(mass(j) for j in range(low, k + 1))),
+            }
+        )
+
+uniform = []
+for _ in range(14):
+    a = Fraction(rng.randint(-20, 20), rng.choice([1, 2, 4]))
+    b = a + Fraction(rng.randint(1, 30), rng.choice([1, 2, 3]))
+    x = a + (b - a) * Fraction(rng.randint(-20, 120), 100)
+    p = Fraction(rng.randint(0, 100), 100)
+    uniform.append(
+        {
+            "a": text(a),
+            "b": text(b),
+            "x": text(x),
+            "pdf": text(1 / (b - a) if a <= x <= b else Fraction(0)),
+            "cdf": text(Fraction(0) if x < a else Fraction(1) if x > b else (x - a) / (b - a)),
+            "p": text(p),
+            "inv": text(a + p * (b - a)),
+        }
+    )
+
+exponential = []
+for _ in range(14):
+    lam = Fraction(rng.randint(1, 30), rng.choice([1, 2, 5, 10]))
+    x = Fraction(rng.randint(0, 60), rng.choice([1, 2, 4, 10]))
+    p = Fraction(rng.randint(0, 99), 100)
+    dl = Decimal(lam.numerator) / Decimal(lam.denominator)
+    dx = Decimal(x.numerator) / Decimal(x.denominator)
+    dp = Decimal(p.numerator) / Decimal(p.denominator)
+    exponential.append(
+        {
+            "lambda": text(lam),
+            "x": text(x),
+            "pdf": digits(dl * (-dl * dx).exp()),
+            "cdf": digits(1 - (-dl * dx).exp()),
+            "p": text(p),
+            "inv": digits(-(1 - dp).ln() / dl),
+        }
+    )
+
+distributions = {
+    "binomial": binomial,
+    "poisson": poisson,
+    "geometric": geometric,
+    "hypergeometric": hypergeometric,
+    "uniform": uniform,
+    "exponential": exponential,
+}
+
 (OUT / "statistics-vectors.json").write_text(
     json.dumps(
-        {"one": one, "two": two, "polynomials": polynomials, "transformed": transformed}, indent=1, sort_keys=True
+        {
+            "one": one,
+            "two": two,
+            "polynomials": polynomials,
+            "transformed": transformed,
+            "distributions": distributions,
+        },
+        indent=1,
+        sort_keys=True,
     )
     + "\n",
     encoding="utf-8",

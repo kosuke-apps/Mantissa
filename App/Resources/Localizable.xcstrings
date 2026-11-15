@@ -2960,6 +2960,39 @@
           }
         }
       }
+    },
+    "Prob": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確率"
+          }
+        }
+      }
+    },
+    "Probability distributions": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確率分布"
+          }
+        }
+      }
+    },
+    "Calc": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "微積分"
+          }
+        }
+      }
     }
   }
 }

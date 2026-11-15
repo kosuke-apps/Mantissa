@@ -58,6 +58,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
   case calculus
   case matrix
   case statistics
+  case probability
 
   var id: Self { self }
 
@@ -70,6 +71,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
     case .calculus: return "Calculus"
     case .matrix: return "Matrices and vectors"
     case .statistics: return "Statistics"
+    case .probability: return "Probability distributions"
     }
   }
 
@@ -79,9 +81,10 @@ enum KeyboardPage: CaseIterable, Identifiable {
     case .basic: return "Basic"
     case .functions: return "f(x)"
     case .trigonometry: return "Trig"
-    case .calculus: return "Calculus"
+    case .calculus: return "Calc"
     case .matrix: return "Matrix"
     case .statistics: return "Stats"
+    case .probability: return "Prob"
     }
   }
 }
@@ -135,6 +138,13 @@ enum KeyboardLayout {
 
   private static func function(_ name: String, alternates: [String] = []) -> KeySpec {
     KeySpec(name, [.function(name)], alternates: alternates.map(functionAlternate))
+  }
+
+  /// A key for a family of functions, labelled with the family's name: tapped it places `name` (the density), held it offers the
+  /// others (the cumulative probability and the inverse).
+  private static func family(_ title: String, _ name: String, _ others: [String]) -> KeySpec {
+    KeySpec(
+      title, .text(title), [.function(name)], alternates: [functionAlternate(name)] + others.map(functionAlternate))
   }
 
   private static func functionAlternate(_ name: String) -> KeySpec.Alternate {
@@ -250,6 +260,49 @@ enum KeyboardLayout {
           // After the point of a limit: approaching it from above (x → a⁺) or from below (x → a⁻).
           KeySpec("above", .text("a⁺"), [.symbol("⁺")]), KeySpec("below", .text("a⁻"), [.symbol("⁻")]),
           digit("0"), digit("1"), digit("2"), KeySpec("power", .power, [.power]),
+        ],
+      ]
+
+    case .probability where !withNumberPad:
+      return [
+        [
+          function("binompdf"), function("binomcdf"), function("binominv"), function("poissonpdf"),
+          function("poissoncdf"), function("poissoninv"),
+        ],
+        [
+          function("geompdf"), function("geomcdf"), function("geominv"), function("hyperpdf"), function("hypercdf"),
+          function("nCr"),
+        ],
+        [
+          function("uniformpdf"), function("uniformcdf"), function("uniforminv"), function("exponentialpdf"),
+          function("exponentialcdf"), function("exponentialinv"),
+        ],
+        [
+          function("nPr"), symbol(","), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol("."),
+          symbol("="),
+        ],
+      ]
+
+    case .probability:
+      // The number pad is where it is on the first page, so that the numbers can be typed in without changing page.
+      return [
+        [
+          family("binom", "binompdf", ["binomcdf", "binominv"]),
+          family("poisson", "poissonpdf", ["poissoncdf", "poissoninv"]),
+          digit("7"), digit("8"), digit("9"), symbol("÷"),
+        ],
+        [
+          family("geom", "geompdf", ["geomcdf", "geominv"]), family("hyper", "hyperpdf", ["hypercdf"]),
+          digit("4"), digit("5"), digit("6"), symbol("−"),
+        ],
+        [
+          family("uniform", "uniformpdf", ["uniformcdf", "uniforminv"]),
+          family("expo", "exponentialpdf", ["exponentialcdf", "exponentialinv"]),
+          digit("1"), digit("2"), digit("3"), symbol("+"),
+        ],
+        [
+          function("nCr", alternates: ["nPr"]), KeySpec("(", [.symbol("(")], alternates: [alternate(")")]),
+          digit("0"), symbol("."), symbol(","), symbol("="),
         ],
       ]
 

@@ -61,11 +61,73 @@ struct StatisticsTests {
     var determination: String
   }
 
+  private struct Distributions: Decodable {
+    struct Binomial: Decodable {
+      var n: Int
+      var p: String
+      var k: Int
+      var pdf: String
+      var cdf: String
+      var q: String
+      var inv: Int
+    }
+    struct Poisson: Decodable {
+      var lambda: String
+      var k: Int
+      var pdfFactor: String
+      var cdfFactor: String
+      var pdf: String
+      var cdf: String
+      var q: String
+      var inv: Int
+    }
+    struct Geometric: Decodable {
+      var p: String
+      var k: Int
+      var pdf: String
+      var cdf: String
+      var q: String
+      var inv: Int
+    }
+    struct Hypergeometric: Decodable {
+      var population: Int
+      var successes: Int
+      var drawn: Int
+      var k: Int
+      var pdf: String
+      var cdf: String
+    }
+    struct Uniform: Decodable {
+      var a: String
+      var b: String
+      var x: String
+      var pdf: String
+      var cdf: String
+      var p: String
+      var inv: String
+    }
+    struct Exponential: Decodable {
+      var lambda: String
+      var x: String
+      var pdf: String
+      var cdf: String
+      var p: String
+      var inv: String
+    }
+    var binomial: [Binomial]
+    var poisson: [Poisson]
+    var geometric: [Geometric]
+    var hypergeometric: [Hypergeometric]
+    var uniform: [Uniform]
+    var exponential: [Exponential]
+  }
+
   private struct Vectors: Decodable {
     var one: [OneVariable]
     var two: [TwoVariables]
     var polynomials: [Polynomial]
     var transformed: [Transformed]
+    var distributions: Distributions
   }
 
   private static func load() throws -> Vectors { try loadVectors("statistics-vectors", as: Vectors.self) }
@@ -384,6 +446,140 @@ struct StatisticsTests {
     #expect(abs(curve.functions[0].evaluate(3) - 54) < 1e-9)
     #expect(Calculator().plotContent("expreg([[0,-2],[1,6]])").isEmpty)
     #expect(Calculator().plotContent("mean(1,2,3)").isEmpty)
+  }
+
+  // MARK: Distributions
+
+  /// The decimal value of an input to the settings' 50 digits.
+  private func decimal(_ text: String) throws -> BigDecimal {
+    try #require(Calculator().evaluate(text).approximation, "\(text) has no decimal")
+  }
+
+  @Test("binomial, geometric and hypergeometric probabilities are the exact fractions of 46 cases")
+  func discreteOracle() throws {
+    let all = try Self.load().distributions
+    for item in all.binomial {
+      let arguments = "\(item.n), \(item.p)"
+      #expect(
+        try value("binompdf(\(arguments), \(item.k))") == (try value(item.pdf)), "binompdf \(arguments), \(item.k)")
+      #expect(
+        try value("binomcdf(\(arguments), \(item.k))") == (try value(item.cdf)), "binomcdf \(arguments), \(item.k)")
+      #expect(try value("binominv(\(arguments), \(item.q))") == .integer(item.inv), "binominv \(arguments), \(item.q)")
+    }
+    for item in all.geometric {
+      #expect(try value("geompdf(\(item.p), \(item.k))") == (try value(item.pdf)), "geompdf \(item.p), \(item.k)")
+      #expect(try value("geomcdf(\(item.p), \(item.k))") == (try value(item.cdf)), "geomcdf \(item.p), \(item.k)")
+      #expect(try value("geominv(\(item.p), \(item.q))") == .integer(item.inv), "geominv \(item.p), \(item.q)")
+    }
+    for item in all.hypergeometric {
+      let arguments = "\(item.population), \(item.successes), \(item.drawn), \(item.k)"
+      #expect(try value("hyperpdf(\(arguments))") == (try value(item.pdf)), "hyperpdf \(arguments)")
+      #expect(try value("hypercdf(\(arguments))") == (try value(item.cdf)), "hypercdf \(arguments)")
+    }
+  }
+
+  @Test(
+    "Poisson probabilities are e^−λ times a fraction, and agree with decimals to 45 digits; the inverse is the smallest k"
+  )
+  func poissonOracle() throws {
+    for item in try Self.load().distributions.poisson {
+      let decay = "exp(-\(item.lambda))"
+      #expect(
+        try value("poissonpdf(\(item.lambda), \(item.k))") == (try value("\(decay)*(\(item.pdfFactor))")),
+        "poissonpdf \(item.lambda), \(item.k)")
+      #expect(
+        try value("poissoncdf(\(item.lambda), \(item.k))") == (try value("\(decay)*(\(item.cdfFactor))")),
+        "poissoncdf \(item.lambda), \(item.k)")
+      let pdf = try decimal("poissonpdf(\(item.lambda), \(item.k))")
+      let cdf = try decimal("poissoncdf(\(item.lambda), \(item.k))")
+      #expect(agree(pdf, try #require(BigDecimal(item.pdf))), "pdf digits, \(item.lambda), \(item.k)")
+      #expect(agree(cdf, try #require(BigDecimal(item.cdf))), "cdf digits, \(item.lambda), \(item.k)")
+      #expect(
+        try value("poissoninv(\(item.lambda), \(item.q))") == .integer(item.inv), "poissoninv \(item.lambda), \(item.q)"
+      )
+    }
+  }
+
+  @Test("uniform and exponential distributions: exact, and the exponential's decimals agree to 45 digits")
+  func continuousOracle() throws {
+    let all = try Self.load().distributions
+    for item in all.uniform {
+      let arguments = "\(item.x), \(item.a), \(item.b)"
+      #expect(try value("uniformpdf(\(arguments))") == (try value(item.pdf)), "uniformpdf \(arguments)")
+      #expect(try value("uniformcdf(\(arguments))") == (try value(item.cdf)), "uniformcdf \(arguments)")
+      #expect(try value("uniforminv(\(item.p), \(item.a), \(item.b))") == (try value(item.inv)), "uniforminv \(item.p)")
+    }
+    for item in all.exponential {
+      for (function, argument, expected) in [
+        ("exponentialpdf", item.x, item.pdf), ("exponentialcdf", item.x, item.cdf),
+        ("exponentialinv", item.p, item.inv),
+      ] {
+        let text = "\(function)(\(argument), \(item.lambda))"
+        let want = try #require(BigDecimal(expected))
+        if expected == "0" || want.isZero {
+          #expect((try decimal(text)).isZero, "\(text)")
+        } else {
+          #expect(agree(try decimal(text), want), "\(text) against \(expected)")
+        }
+      }
+    }
+  }
+
+  @Test("edges of the distributions: outside the support, whole numbers, and what is refused")
+  func distributionEdges() throws {
+    // Outside the values a distribution takes, a pdf is 0 and a cdf is 0 or 1.
+    #expect(try value("binompdf(5, 0.5, 2.5)") == 0)
+    #expect(try value("binompdf(5, 0.5, 6)") == 0)
+    #expect(try value("binompdf(5, 0.5, -1)") == 0)
+    #expect(try value("binomcdf(5, 0.5, -1)") == 0)
+    #expect(try value("binomcdf(5, 0.5, 5)") == 1)
+    #expect(try value("binomcdf(5, 0.5, 99)") == 1)
+    #expect(try value("binomcdf(5, 0.5, 2.9)") == (try value("binomcdf(5, 0.5, 2)")))
+    #expect(try value("binomcdf(4, 1/2, 2)") == .fraction(11, 16))
+    #expect(try value("binompdf(10, 0, 0)") == 1)
+    #expect(try value("binompdf(10, 1, 10)") == 1)
+    #expect(try value("binompdf(0, 0.3, 0)") == 1)
+    #expect(try value("binominv(10, 0.5, 0)") == 0)
+    #expect(try value("binominv(10, 0.5, 1)") == 10)
+    #expect(try value("poissonpdf(0, 0)") == 1)
+    #expect(try value("poissonpdf(0, 3)") == 0)
+    #expect(try value("poissoncdf(3, -1)") == 0)
+    #expect(try value("geompdf(0.5, 0)") == 0)
+    #expect(try value("geomcdf(0.5, 0)") == 0)
+    #expect(try value("geominv(0.5, 0)") == 1)
+    #expect(try value("hyperpdf(10, 4, 3, 5)") == 0)
+    #expect(try value("uniformpdf(5, 0, 4)") == 0)
+    #expect(try value("uniformcdf(-1, 0, 4)") == 0)
+    #expect(try value("uniformcdf(5, 0, 4)") == 1)
+    #expect(try value("uniformpdf(4, 0, 4)") == .fraction(1, 4))
+    #expect(try value("exponentialpdf(-1, 2)") == 0)
+    #expect(try value("exponentialcdf(0, 2)") == 0)
+    #expect(try value("exponentialinv(0, 2)") == 0)
+    // The values are exact expressions and still go inside formulas.
+    #expect(try value("1 - binomcdf(4, 1/2, 2)") == .fraction(5, 16))
+    #expect(try value("exponentialcdf(1, 1)") == (try value("1 - exp(-1)")))
+    #expect(try value("2 * binompdf(2, 1/2, 1)") == 1)
+
+    // What is refused.
+    #expect(failure("binompdf(5, 1.5, 2)") == .math(.domain))
+    #expect(failure("binompdf(5, -0.1, 2)") == .math(.domain))
+    #expect(failure("binompdf(-1, 0.5, 0)") == .math(.domain))
+    #expect(failure("binompdf(2.5, 0.5, 0)") == .math(.domain))
+    #expect(failure("binompdf(2001, 0.5, 0)") == .math(.overflow))
+    #expect(failure("binompdf(5, √2/2, 2)") == .math(.unsupported))
+    #expect(failure("binominv(5, 0.5, 1.1)") == .math(.domain))
+    #expect(failure("poissonpdf(-1, 2)") == .math(.domain))
+    #expect(failure("poissoninv(2, 1)") == .math(.domain))
+    #expect(failure("geompdf(0, 1)") == .math(.domain))
+    #expect(failure("geominv(0.5, 1)") == .math(.domain))
+    #expect(failure("hyperpdf(10, 11, 3, 1)") == .math(.domain))
+    #expect(failure("hyperpdf(10, 4, 11, 1)") == .math(.domain))
+    #expect(failure("uniformpdf(1, 2, 2)") == .math(.domain))
+    #expect(failure("uniforminv(1.5, 0, 1)") == .math(.domain))
+    #expect(failure("exponentialpdf(1, 0)") == .math(.domain))
+    #expect(failure("exponentialinv(1, 2)") == .math(.domain))
+    #expect(failure("binompdf(5, 0.5)") != nil)
+    #expect(failure("binompdf(5, 0.5, x)") == .math(.unsupported))
   }
 
   // MARK: Reports

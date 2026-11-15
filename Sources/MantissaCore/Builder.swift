@@ -122,6 +122,10 @@ struct Builder {
       .percentile,
       .cov, .covp, .corr, .slope, .intercept:
       return try statisticsCall(function, scalars: x)
+    case .binompdf, .binomcdf, .binominv, .poissonpdf, .poissoncdf, .poissoninv, .geompdf, .geomcdf, .geominv,
+      .hyperpdf,
+      .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv:
+      return try Distributions.evaluate(function, x)
     case .mode, .sort, .stats, .linreg, .polyreg, .expreg, .powreg, .logreg:
       throw .unsupported  // a column or a report, handled by `value`
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))
