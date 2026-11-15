@@ -223,3 +223,10 @@ no supported way to install that on a Mac, so no Mac download is promised; the M
 
 - More than one window; a keyboard that remembers its pages; undo; ↑ and ↓ movement; Apple Pencil input.
 - Anything that changes what the engine computes: this is layout and input only, so the engine tests are not touched.
+
+## Keyboard modes (1.1.0)
+
+The pages that the keyboard offers depend on a mode, chosen in Settings (`KeyboardMode`): Standard has Basic, Functions, Trig and Calculus; Matrices has Basic, Functions, Trig and Matrix; Statistics and
+probability has Basic, Functions, Statistics and Probability. At most four tabs, all words, so that nothing is abbreviated beyond "Trig". On the iPad the left block has the tabs of the mode other than Basic.
+The Matrix page (as above) is in the Matrices mode only. A chip beside RAD/DEG shows MATRIX or STAT and is a menu to change the mode; the standard mode shows no chip, so the first screen is the one it was.
+

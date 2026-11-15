@@ -24,9 +24,10 @@ What Mantissa does for VoiceOver, larger text, and people who cannot tap small t
 - **A statistics report** (`stats`, `linreg`, …) is a grid of captions and values; each value is a formula, spoken as above, and the captions are text ("Mean",
   "Sample standard deviation", a₂ for a coefficient). A regression's graph also says "It shows 5 data points."; the points are drawn as dots and the fit as a curve, so the
   Audio Graph is of the fit.
-- **The Stats and Prob keyboard pages** have the same labels as the others: a function key is read as its name; the keys that place a column or a table of data are "Column of data" and
-  "Table of data". The pages are tabs of the same control (f(x), Trig, Calc, Matrix, Stats, Prob).
-- The audit tests have the new screens (a report, a regression with its graph, the Stats keys); like the others they record what they find. VoiceOver speaking any of this
+- **The Statistics and Probability keyboard pages** have the same labels as the others: a function key is read as its name; the keys that place a column or a table of data are "Column of data" and
+  "Table of data". The pages are tabs of the same control, at most four at a time (the keyboard's mode in Settings picks which: Standard, Matrices, or
+  Statistics and probability); the chip beside the angle unit, shown when the mode is not the standard one, is a menu labelled "Keyboard mode".
+- The audit tests have the new screens (a report, a regression with its graph, the Statistics, Probability and Matrix keys); like the others they record what they find. VoiceOver speaking any of this
   has not been tried.
 
 ## How it is checked

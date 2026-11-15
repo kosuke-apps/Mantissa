@@ -46,6 +46,10 @@ struct KeyboardView: View {
         .padding(.bottom, 6)
       }
     }
+    // A page that the new mode does not have gives way to the basic one.
+    .onChange(of: model.keyboardMode) { _, mode in
+      if !mode.pages.contains(page) { page = .basic }
+    }
     // Keys are not stretched across a very wide window.
     .frame(maxWidth: window.kind == .compact ? .infinity : 900)
     .frame(maxWidth: .infinity)
@@ -121,7 +125,7 @@ struct KeyboardView: View {
         }
       } else {
         Picker("Keyboard page", selection: $page) {
-          ForEach(KeyboardPage.allCases) { candidate in Text(candidate.title).tag(candidate) }
+          ForEach(model.keyboardMode.pages) { candidate in Text(candidate.title).tag(candidate) }
         }
       }
     }
@@ -136,7 +140,7 @@ struct KeyboardView: View {
       "Keyboard page",
       selection: Binding(get: { leftPage }, set: { page = $0 })
     ) {
-      ForEach(KeyboardPage.allCases.filter { $0 != .basic }) { candidate in Text(candidate.title).tag(candidate) }
+      ForEach(model.keyboardMode.pages.filter { $0 != .basic }) { candidate in Text(candidate.title).tag(candidate) }
     }
     .pickerStyle(.segmented)
     .padding(.horizontal, 4)

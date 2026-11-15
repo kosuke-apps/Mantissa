@@ -106,6 +106,11 @@ final class AppModel {
     }
   }
 
+  /// Which pages the keyboard shows.
+  var keyboardMode: KeyboardMode {
+    didSet { storage.keyboardMode = keyboardMode }
+  }
+
   /// Radians or degrees, the unit of `sin(30)`.
   var angleUnit: AngleUnit {
     get { settings.angleUnit }
@@ -127,6 +132,7 @@ final class AppModel {
     self.storage = storage
     decimalDigits = storage.decimalDigits
     language = storage.language
+    keyboardMode = storage.keyboardMode
     var calculator = CalculatorSettings()
     calculator.angleUnit = storage.angleUnit
     settings = calculator

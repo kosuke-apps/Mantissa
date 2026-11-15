@@ -50,6 +50,7 @@ struct SettingsStorage {
     static let angleUnit = "angleUnit"
     static let digits = "decimalDigits"
     static let language = "language"
+    static let keyboardMode = "keyboardMode"
   }
 
   var angleUnit: AngleUnit {
@@ -68,5 +69,10 @@ struct SettingsStorage {
   var language: AppLanguage {
     get { AppLanguage(rawValue: defaults.string(forKey: Key.language) ?? "") ?? .system }
     nonmutating set { defaults.set(newValue.rawValue, forKey: Key.language) }
+  }
+
+  var keyboardMode: KeyboardMode {
+    get { KeyboardMode(rawValue: defaults.string(forKey: Key.keyboardMode) ?? "") ?? .standard }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: Key.keyboardMode) }
   }
 }

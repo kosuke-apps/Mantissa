@@ -551,6 +551,33 @@ final class AppModelTests: XCTestCase {
     XCTAssertEqual(model.editor.lines.count, 1)
   }
 
+  func testEveryModeShowsTheBasicPageFirstAndAtMostFourTabs() {
+    for mode in KeyboardMode.allCases {
+      XCTAssertEqual(mode.pages.first, .basic, "\(mode)")
+      XCTAssertLessThanOrEqual(mode.pages.count, 4, "\(mode)")
+      XCTAssertTrue(mode.pages.contains(.functions), "\(mode)")
+    }
+    // The three modes between them have every page.
+    XCTAssertEqual(Set(KeyboardMode.allCases.flatMap(\.pages)), Set(KeyboardPage.allCases))
+    XCTAssertNil(KeyboardMode.standard.chip)
+    XCTAssertNotNil(KeyboardMode.matrix.chip)
+    XCTAssertNotNil(KeyboardMode.statistics.chip)
+  }
+
+  func testTheKeyboardModeIsKeptAndStartsAsTheStandardOne() {
+    let defaults = UserDefaults(suiteName: "dev.kosuke.mantissa.tests.mode")!
+    defaults.removePersistentDomain(forName: "dev.kosuke.mantissa.tests.mode")
+    let model = AppModel(history: HistoryStore(fileURL: nil), defaults: defaults)
+    XCTAssertEqual(model.keyboardMode, .standard)
+    model.keyboardMode = .statistics
+    let again = AppModel(history: HistoryStore(fileURL: nil), defaults: defaults)
+    XCTAssertEqual(again.keyboardMode, .statistics)
+    // Something unreadable in the defaults is the standard mode.
+    defaults.set("nonsense", forKey: "keyboardMode")
+    XCTAssertEqual(AppModel(history: HistoryStore(fileURL: nil), defaults: defaults).keyboardMode, .standard)
+    defaults.removePersistentDomain(forName: "dev.kosuke.mantissa.tests.mode")
+  }
+
   func testEveryPageOfBothKeyboardsHasFourRowsSoTheKeyboardKeepsItsHeight() {
     for page in KeyboardPage.allCases { XCTAssertEqual(KeyboardLayout.rows(for: page).count, 4, "\(page)") }
     for page in TextPage.allCases {

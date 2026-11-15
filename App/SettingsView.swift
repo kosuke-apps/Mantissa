@@ -1,7 +1,7 @@
 import MantissaCore
 import SwiftUI
 
-/// Angle unit, number of digits, language, and what the app is.
+/// Angle unit, number of digits, the keyboard's mode, language, and what the app is.
 struct SettingsView: View {
   @Environment(AppModel.self) private var model
   @Environment(\.dismiss) private var dismiss
@@ -30,6 +30,20 @@ struct SettingsView: View {
           Picker("Significant digits", selection: $model.decimalDigits) {
             ForEach(digitChoices, id: \.self) { Text("\($0)").tag($0) }
           }
+        }
+
+        Section {
+          Picker("Keyboard", selection: $model.keyboardMode) {
+            ForEach(KeyboardMode.allCases) { Text($0.title).tag($0) }
+          }
+          .pickerStyle(.inline)
+          .labelsHidden()
+        } header: {
+          Text("Keyboard")
+        } footer: {
+          Text(
+            "Which pages of keys the keyboard shows, as the modes of a calculator do. Every function can still be typed, and answers do not depend on the mode."
+          )
         }
 
         Section("Language") {

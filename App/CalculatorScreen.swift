@@ -127,7 +127,31 @@ struct CalculatorScreen: View {
     #endif
   }
 
-  /// The title, the angle unit (tap to switch) and Settings.
+  /// The keyboard's mode, when it is not the standard one, with a menu to change it.
+  @ViewBuilder
+  private var modeChip: some View {
+    if let chip = model.keyboardMode.chip {
+      Menu {
+        Picker(
+          "Keyboard",
+          selection: Binding(get: { model.keyboardMode }, set: { model.keyboardMode = $0 })
+        ) {
+          ForEach(KeyboardMode.allCases) { Text($0.title).tag($0) }
+        }
+      } label: {
+        Text(chip)
+          .scaledFont(size: 13, weight: .semibold)
+          .padding(.horizontal, 10)
+          .padding(.vertical, 5)
+          .background(Color.primary.opacity(0.1), in: Capsule())
+          .foregroundStyle(Color.primary.opacity(0.75))
+      }
+      .accessibilityLabel("Keyboard mode")
+      .accessibilityValue(Text(model.keyboardMode.title))
+    }
+  }
+
+  /// The title, the angle unit (tap to switch), the keyboard's mode and Settings.
   private var topBar: some View {
     ZStack {
       HStack {
@@ -143,6 +167,7 @@ struct CalculatorScreen: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Angle unit")
+        modeChip
         Spacer()
         // Each icon has a 44 pt target; the icons are drawn where they were (their centres 44 pt apart, the last 31.3 pt from the edge).
         HStack(spacing: -0.4) {

@@ -79,12 +79,53 @@ enum KeyboardPage: CaseIterable, Identifiable {
   var title: LocalizedStringKey {
     switch self {
     case .basic: return "Basic"
-    case .functions: return "f(x)"
+    case .functions: return "Functions"
     case .trigonometry: return "Trig"
-    case .calculus: return "Calc"
+    case .calculus: return "Calculus"
     case .matrix: return "Matrix"
-    case .statistics: return "Stats"
-    case .probability: return "Prob"
+    case .statistics: return "Statistics"
+    case .probability: return "Probability"
+    }
+  }
+}
+
+/// Which pages of the maths keyboard are shown, as a calculator's modes show the keys for what it is being used for. A page is only
+/// shown or hidden: every function can be typed (with the letters keyboard, or pasted) in any mode, and an answer does not depend
+/// on the mode.
+enum KeyboardMode: String, CaseIterable, Identifiable {
+  /// Everyday calculation: functions, trigonometry and calculus.
+  case standard
+  /// Matrices and vectors.
+  case matrix
+  /// Statistics, regression and probability distributions.
+  case statistics
+
+  var id: Self { self }
+
+  /// The pages, in the order of the tabs; the basic page is always the first.
+  var pages: [KeyboardPage] {
+    switch self {
+    case .standard: return [.basic, .functions, .trigonometry, .calculus]
+    case .matrix: return [.basic, .functions, .trigonometry, .matrix]
+    case .statistics: return [.basic, .functions, .statistics, .probability]
+    }
+  }
+
+  /// The name in Settings.
+  var title: LocalizedStringKey {
+    switch self {
+    case .standard: return "Standard"
+    case .matrix: return "Matrices"
+    case .statistics: return "Statistics and probability"
+    }
+  }
+
+  /// The short word of the chip beside the angle unit, which says the mode when it is not the standard one.
+  var chip: LocalizedStringKey? {
+    switch self {
+    case .standard: return nil
+    case .matrix: return "MATRIX"
+    case .statistics: return "STAT"
     }
   }
 }

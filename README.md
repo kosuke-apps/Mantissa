@@ -42,7 +42,10 @@
   (with frequencies), correlation, and linear, polynomial, exponential, power and logarithmic regressions drawn with their data (`stats(…)`,
   `linreg(…)`); the binomial, Poisson, geometric, hypergeometric, uniform, exponential, normal, Student's t, χ² and F distributions
   (`binomcdf(10, 0.3, 4)`, `normalinv(0.975)`, `tcdf(2.1, 12)`), exact where they are exact, and `erf`, `Γ` and the incomplete gamma
-  and beta functions to any number of digits. On keyboard pages of their own (Stats, Prob); see [docs/statistics.md](docs/statistics.md).
+  and beta functions to any number of digits. On keyboard pages of their own (Statistics, Probability); see [docs/statistics.md](docs/statistics.md).
+- **Modes for the keyboard.** In Settings the keyboard can be set to Standard (Basic, Functions, Trig, Calculus), Matrices (Basic, Functions, Trig, Matrix) or
+  Statistics and probability (Basic, Functions, Statistics, Probability), as the modes of a calculator show the keys for what it is used for; a chip beside the
+  angle unit says the mode when it is not the standard one and changes it. Every function can be typed in any mode, and answers do not depend on it.
 - **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
 - **For everyone.** Formulas are given to VoiceOver as words (fractions, roots and matrices included, in English and Japanese), the graph
   is described and offered as an audio graph, and it can be moved and zoomed by actions; the controls are large enough to hit; larger
@@ -115,8 +118,8 @@ or from below.
   every line, and the parentheses key can put in a single `(` or `)`.
 - Matrices and vectors, worked out exactly: sums, products, powers (`[[1,2],[3,4]]^(-1)` is `[[−2, 1], [3/2, −1/2]]`), the
   determinant, inverse, transpose, trace, rank, reduced row echelon form, eigenvalues and eigenvectors, the dot and cross
-  products and the length of a vector, with numbers, roots, `i` or letters in the entries. A Matrix page of the keyboard
-  places a matrix of any size up to 10 × 10 with a cell for each entry (a comma moves to the next cell, return to the next row),
+  products and the length of a vector, with numbers, roots, `i` or letters in the entries. The Matrix page of the keyboard (in the
+  Matrices mode, set in Settings) places a matrix of any size up to 10 × 10 with a cell for each entry (a comma moves to the next cell, return to the next row),
   and adds or removes rows and columns. A matrix written as text, `[[1,2],[3,4]]`, is read too.
 - Letters for matrices: write `A = [[1,2],[3,4]]`, `B = …` and `C = A²B + A⁻¹` on separate lines and every letter that can be worked
   out is, whatever the order of the lines. An unknown matrix is found when it is only multiplied, added or turned over

@@ -2873,17 +2873,6 @@
         }
       }
     },
-    "Stats": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "統計"
-          }
-        }
-      }
-    },
     "Statistics": {
       "extractionState": "manual",
       "localizations": {
@@ -2913,17 +2902,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "データの表"
-          }
-        }
-      }
-    },
-    "f(x)": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "関数"
           }
         }
       }
@@ -2961,17 +2939,6 @@
         }
       }
     },
-    "Prob": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "確率"
-          }
-        }
-      }
-    },
     "Probability distributions": {
       "extractionState": "manual",
       "localizations": {
@@ -2983,13 +2950,112 @@
         }
       }
     },
-    "Calc": {
+    "Functions": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "微積分"
+            "value": "関数"
+          }
+        }
+      }
+    },
+    "Probability": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確率"
+          }
+        }
+      }
+    },
+    "Standard": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標準"
+          }
+        }
+      }
+    },
+    "Matrices": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行列"
+          }
+        }
+      }
+    },
+    "Statistics and probability": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "統計・確率"
+          }
+        }
+      }
+    },
+    "Keyboard": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーボード"
+          }
+        }
+      }
+    },
+    "Keyboard mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーボードのモード"
+          }
+        }
+      }
+    },
+    "MATRIX": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行列"
+          }
+        }
+      }
+    },
+    "STAT": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "統計"
+          }
+        }
+      }
+    },
+    "Which pages of keys the keyboard shows, as the modes of a calculator do. Every function can still be typed, and answers do not depend on the mode.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーボードにどのページを出すかを，関数電卓のモードのように切り替えます．どの関数も入力できますし，答えはモードによって変わりません．"
           }
         }
       }

@@ -8,10 +8,12 @@ final class AccessibilityAuditTests: XCTestCase {
     continueAfterFailure = true
   }
 
-  private func launch(_ input: String? = nil) -> XCUIApplication {
+  private func launch(_ input: String? = nil, keyboardMode: String? = nil) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
     if let input { app.launchArguments += ["-MantissaInput", input] }
+    // The keyboard's mode is a setting kept in the defaults, which a launch argument overrides for this run.
+    app.launchArguments += ["-keyboardMode", keyboardMode ?? "standard"]
     app.launch()
     return app
   }
@@ -46,10 +48,22 @@ final class AccessibilityAuditTests: XCTestCase {
     try audit(launch("linreg([[1,2],[2,4],[3,5],[4,4],[5,5]])"), "regression")
   }
 
-  func testTheStatsKeyboardPage() throws {
-    let app = launch()
-    app.buttons["Stats"].tap()
+  func testTheStatisticsKeyboardPage() throws {
+    let app = launch(keyboardMode: "statistics")
+    app.buttons["Statistics"].tap()
     try audit(app, "stats-keys")
+  }
+
+  func testTheProbabilityKeyboardPage() throws {
+    let app = launch(keyboardMode: "statistics")
+    app.buttons["Probability"].tap()
+    try audit(app, "prob-keys")
+  }
+
+  func testTheMatrixKeyboardPage() throws {
+    let app = launch(keyboardMode: "matrix")
+    app.buttons["Matrix"].tap()
+    try audit(app, "matrix-keys")
   }
 
   func testTheHistorySheet() throws {

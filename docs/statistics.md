@@ -15,7 +15,7 @@ ways, all of which already exist in the editor:
 1. **As arguments:** `mean(2, 4, 4, 4, 5, 5, 7, 9)`, up to 100 numbers. The quick way for a handful of values.
 2. **As a vector:** a matrix with one column (or one row), `mean([[2],[4],[4],[4],[5],[5],[7],[9]])`, or a letter that stands for one
    (`D = [[…]]` on a line of its own, then `mean(D)`). The matrix editor is the data editor: Return goes to the next row, Tab to the next
-   cell, and the Stats and Matrix pages have the keys that add and remove rows. In a column of data or a table of two columns Return after a
+   cell, and the Statistics and Matrix pages have the keys that add and remove rows. In a column of data or a table of two columns Return after a
    value starts a new row, as in a spreadsheet (a stray Return in the empty row adds none), up to 200 rows; a long column is set smaller.
 3. **As a table:** a matrix with two columns, `linreg([[1,2],[2,4],[3,5]])`, for two variables (x in the first column, y in the second), or
    two vectors, `linreg(X, Y)`.
@@ -146,7 +146,7 @@ sanitizers.
 |---|---|---|
 | Descriptive statistics, the data editor | every function of the table above except `scatter`; `stats`; data as numbers, a vector, a table, or values and frequencies; matrices of up to 200 rows; the report answer card; the **Stats** keyboard page | Python `fractions` (54 one-variable and 24 two-variable data sets, each written in every form), by hand |
 | Regression | `linreg`, `polyreg` (degree 1 to 6, exact), `expreg`, `powreg`, `logreg` (60 digits, decimals); the points and the fit drawn | `fractions` (the residual of a polynomial fit is exactly orthogonal to every power of x) and `decimal` at 100 digits |
-| Exact distributions | binomial, Poisson, geometric, hypergeometric, uniform, exponential: `pdf`, `cdf`, `inv`; the **Prob** keyboard page | `fractions`, and `decimal` for the Poisson and exponential values; the discrete inverses against a brute-force search |
+| Exact distributions | binomial, Poisson, geometric, hypergeometric, uniform, exponential: `pdf`, `cdf`, `inv`; the **Probability** keyboard page | `fractions`, and `decimal` for the Poisson and exponential values; the discrete inverses against a brute-force search |
 | Normal distribution | `erf`, `erfc`, `probit` as functions of the expression engine, to any number of digits, `normalpdf`, `normalcdf`, `normalinv`; they differentiate (d/dx `normalcdf(x)` is `normalpdf(x)`) and are drawn | an independent Taylor series in `decimal` (up to 800 digits), 45 digits, `erf` from 0.001 to 27.5, the quantile from 10⁻¹⁰⁰ to 1 − 10⁻¹² |
 | t, χ² and F | `tpdf`/`tcdf`/`tinv`, `chisqpdf`/`chisqcdf`/`chisqinv`, `fpdf`/`fcdf`/`finv` with any positive degrees of freedom, on `gamma`, `beta`, `gammainc`, `gammaincinv`, `betainc` and `betaincinv` (Stirling's series with exact Bernoulli numbers, series and continued fractions on the side where each keeps its digits, Newton's method for the inverses) | Spouge's approximation of Γ, the power series of the incomplete functions summed termwise in `decimal`, and for whole degrees of freedom Abramowitz and Stegun 26.7.3 and 26.7.4; 40 to 45 digits |
 

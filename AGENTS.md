@@ -49,7 +49,7 @@ Workspace rules are in `~/Developer/AGENTS.md`; this file adds what is specific 
     layout (iPhone layout under 640 pt, whatever the device; two key blocks and a workspace above; a history column from
     1180 × 600 pt); `HardwareKeys.swift` what the keys of a hardware keyboard do (`docs/ipad-design.md`); `SpokenMath.swift`, `GraphAccessibility.swift` and
     `GraphGestures.swift` what VoiceOver is told and the graph's touch state (`docs/accessibility.md`); `ReportLabels.swift` the captions of a report
-    (shown by `SolutionsDisplay`, which also draws the heading of a regression); the keyboard has seven pages, Basic, f(x), Trig, Calc, Matrix, Stats and Prob; `AppUITests/` the accessibility audit
+    (shown by `SolutionsDisplay`, which also draws the heading of a regression); the keyboard has seven pages (Basic, Functions, Trig, Calculus, Matrix, Statistics, Probability) of which `KeyboardMode` (a setting, `keyboardMode`; a launch argument `-keyboardMode statistics` overrides it) shows at most four: Standard, Matrices, Statistics and probability; `AppUITests/` the accessibility audit
     and label tests (the `MantissaUITests` scheme); strings in
     `Resources/Localizable.xcstrings` (English, Japanese).
   - `Sources/MantissaCore/BigInt.swift`: arbitrary-precision integer (sign and magnitude, 32-bit limbs, Knuth D
@@ -147,7 +147,7 @@ Order is chosen so that the app is usable early and the heavy symbolic work come
    accessibility (done for 1.0.0, `docs/accessibility.md`); running on the author's iPhone and iPad (done for 0.28.0).
 9. Beyond the first plan: `docs/roadmap.md` (statistics, graphs, differential equations, integers and units, definitions,
    geometry, 3D, linear algebra). Statistics and probability (1.1) is built on the branch `feat/statistics`: descriptive statistics, regressions, the
-   exact distributions, the normal, t, χ² and F distributions, the Stats and Prob keyboard pages (`docs/statistics.md`).
+   exact distributions, the normal, t, χ² and F distributions, the Statistics and Probability keyboard pages in a mode of their own (`docs/statistics.md`).
 
 ## Commands
 
