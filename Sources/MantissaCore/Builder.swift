@@ -126,6 +126,8 @@ struct Builder {
       .hyperpdf,
       .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv:
       return try Distributions.evaluate(function, x)
+    case .normalpdf, .normalcdf, .normalinv: return try Distributions.normal(function, x)
+    case .erf, .erfc, .probit: return try Expr.apply(MathFunction(rawValue: function.rawValue)!, x)
     case .mode, .sort, .stats, .linreg, .polyreg, .expreg, .powreg, .logreg:
       throw .unsupported  // a column or a report, handled by `value`
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))

@@ -18,6 +18,30 @@ extension Expr {
     case .factorial: return try factorial(x)
     case .combinations, .permutations: return try counting(function, x, arguments[1])
     case .gcd, .lcm: return try gcdOrLcm(function, x, arguments[1])
+    case .erf, .erfc, .probit: return try errorFunction(function, x)
+    }
+  }
+
+  // MARK: Error function and normal quantile
+
+  /// `erf`, `erfc` and `probit`: their exact values at 0 and 1/2, the oddness of erf, and the domain of probit. Elsewhere the call is
+  /// kept as written and has a decimal value.
+  private static func errorFunction(_ function: MathFunction, _ x: Expr) throws(MathError) -> Expr {
+    switch function {
+    case .erf:
+      if x.isZero { return .zero }
+      // erf(−x) = −erf(x)
+      if let positive = negatedIfNegative(x) { return -(Expr.function(.erf, [positive])) }
+      return .function(.erf, [x])
+    case .erfc:
+      if x.isZero { return .one }
+      return .function(.erfc, [x])
+    default:
+      if let number = x.rational {
+        guard number > Rational(0), number < Rational(1) else { throw .domain }
+        if number == Rational(1, 2) { return .zero }
+      }
+      return .function(.probit, [x])
     }
   }
 

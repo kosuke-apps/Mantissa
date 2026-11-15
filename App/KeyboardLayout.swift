@@ -278,8 +278,8 @@ enum KeyboardLayout {
           function("exponentialcdf"), function("exponentialinv"),
         ],
         [
-          function("nPr"), symbol(","), KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol("."),
-          symbol("="),
+          function("normalpdf"), function("normalcdf"), function("normalinv"),
+          function("erf", alternates: ["erfc", "probit"]), function("nPr"), symbol(","),
         ],
       ]
 
@@ -301,7 +301,10 @@ enum KeyboardLayout {
           digit("1"), digit("2"), digit("3"), symbol("+"),
         ],
         [
-          function("nCr", alternates: ["nPr"]), KeySpec("(", [.symbol("(")], alternates: [alternate(")")]),
+          function("nCr", alternates: ["nPr"]),
+          KeySpec(
+            "normal", .text("normal"), [.function("normalcdf")],
+            alternates: ["normalcdf", "normalpdf", "normalinv", "erf", "erfc", "probit"].map(functionAlternate)),
           digit("0"), symbol("."), symbol(","), symbol("="),
         ],
       ]

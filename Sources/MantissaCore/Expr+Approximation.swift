@@ -147,6 +147,9 @@ extension Expr {
       let divisor = BigInt.gcd(a, b)
       if function == .gcd { return BigDecimal(divisor) }
       return divisor.isZero ? BigDecimal(0) : BigDecimal((a * b).magnitude / divisor)
+    case .erf: return try x[0].erf(precision: p)
+    case .erfc: return try x[0].erfc(precision: p)
+    case .probit: return try x[0].probit(precision: p)
     }
   }
 }

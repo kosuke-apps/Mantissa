@@ -136,6 +136,9 @@ enum FunctionName: String, CaseIterable, Sendable {
   /// continuous distribution), `cdf` the probability of at most a value, and `inv` the value that has a given cdf.
   case binompdf, binomcdf, binominv, poissonpdf, poissoncdf, poissoninv, geompdf, geomcdf, geominv, hyperpdf, hypercdf
   case uniformpdf, uniformcdf, uniforminv, exponentialpdf, exponentialcdf, exponentialinv
+  /// The normal distribution, with a mean and a standard deviation that may be left out (0 and 1), and the functions it is written
+  /// with: the error function, its complement, and the quantile of the standard normal distribution.
+  case normalpdf, normalcdf, normalinv, erf, erfc, probit
 
   /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
   var isCalculus: Bool {
@@ -170,7 +173,8 @@ enum FunctionName: String, CaseIterable, Sendable {
     switch self {
     case .binompdf, .binomcdf, .binominv, .poissonpdf, .poissoncdf, .poissoninv, .geompdf, .geomcdf, .geominv,
       .hyperpdf,
-      .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv:
+      .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv, .normalpdf,
+      .normalcdf, .normalinv:
       return true
     default: return false
     }
@@ -215,6 +219,7 @@ enum FunctionName: String, CaseIterable, Sendable {
   var needsParenthesis: Bool {
     switch self {
     case .mod, .min, .max, .sign, .re, .im, .conj, .arg: return true
+    case .erf, .erfc, .probit: return true
     default: return isMatrixFunction || isStatisticsFunction || isDistribution
     }
   }
@@ -239,6 +244,7 @@ enum FunctionName: String, CaseIterable, Sendable {
       .exponentialinv:
       return 2...2
     case .hyperpdf, .hypercdf: return 4...4
+    case .normalpdf, .normalcdf, .normalinv: return 1...3
     case .cov, .covp, .corr, .slope, .intercept, .linreg, .expreg, .powreg, .logreg: return 1...2
     case .polyreg: return 2...3
     default: return 1...1

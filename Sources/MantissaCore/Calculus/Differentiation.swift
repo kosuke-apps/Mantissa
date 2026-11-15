@@ -100,6 +100,20 @@ extension Expr {
     case .abs: return Expr.makeProduct([g, Expr.makePower(try call(.abs, g), .minusOne), slope])
     case .floor, .ceil, .round: return .zero
     case .factorial, .combinations, .permutations, .gcd, .lcm: throw .unsupported
+    case .erf, .erfc:
+      // d/dx erf(g) = 2/√π e^(−g²) g′, and erfc is 1 − erf.
+      let bell = Expr.makeProduct([
+        .integer(2), Expr.makePower(.pi, .fraction(-1, 2)), try Expr.e.raised(to: -square), slope,
+      ])
+      return function == .erf ? bell : -bell
+    case .probit:
+      // d/dp probit(p) = 1/φ(probit(p)) = √(2π) e^(probit(p)²/2).
+      let z = try call(.probit, g)
+      let reciprocalDensity = Expr.makeProduct([
+        Expr.makePower(Expr.integer(2) * .pi, .fraction(1, 2)),
+        try Expr.e.raised(to: Expr.makePower(z, .integer(2)) * .fraction(1, 2)),
+      ])
+      return Expr.makeProduct([reciprocalDensity, slope])
     }
   }
 }

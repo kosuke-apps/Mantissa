@@ -33,6 +33,9 @@ public enum MathFunction: String, Hashable, Sendable, CaseIterable {
   case combinations = "nCr"
   case permutations = "nPr"
   case gcd, lcm
+  /// The error function, its complement, and the quantile function of the standard normal distribution (`probit(p)` is the z with
+  /// Φ(z) = p), which the normal distribution is written with.
+  case erf, erfc, probit
 
   /// Whether an absolute error in the argument carries over to the result, so large arguments need extra digits.
   var magnifiesArgumentError: Bool {

@@ -163,7 +163,9 @@ struct NaiveEvaluator {
       .iqr, .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg, .polyreg, .expreg, .powreg,
       .logreg, .binompdf, .binomcdf, .binominv, .poissonpdf, .poissoncdf, .poissoninv, .geompdf, .geomcdf, .geominv,
       .hyperpdf,
-      .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv:
+      .hypercdf, .uniformpdf, .uniformcdf, .uniforminv, .exponentialpdf, .exponentialcdf, .exponentialinv, .normalpdf,
+      .normalcdf,
+      .normalinv, .erf, .erfc, .probit:
       throw .notNumeric
     case .nCr, .nPr:
       guard let n = x[0].asInt, let r = x[1].asInt, n >= 0, r >= 0, r <= n else { throw .domain }

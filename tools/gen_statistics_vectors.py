@@ -419,6 +419,93 @@ distributions = {
     "exponential": exponential,
 }
 
+# --- The error function and the normal quantile -------------------------------------------------------------------------------
+
+
+def decimal_pi() -> Decimal:
+    """π by Machin's formula, 16 atan(1/5) − 4 atan(1/239), at the current precision."""
+
+    def arctan_inverse(n: int) -> Decimal:
+        x = Decimal(1) / n
+        total = term = x
+        k = 1
+        while abs(term) > Decimal(10) ** (-getcontext().prec - 5):
+            term = -term * x * x
+            k += 2
+            total += term / k
+        return total
+
+    return 16 * arctan_inverse(5) - 4 * arctan_inverse(239)
+
+
+def decimal_erf(x: Decimal) -> Decimal:
+    """erf(x) by its alternating Taylor series, with enough digits to survive the cancellation (wasteful, and independent of Swift's)."""
+    saved = getcontext().prec
+    getcontext().prec = saved + int(2 * float(x) ** 2 / 2.302585) + 40
+    total = term = x
+    n = 0
+    while abs(term) > Decimal(10) ** (-getcontext().prec):
+        n += 1
+        term = -term * x * x / n
+        total += term / (2 * n + 1)
+    result = 2 / decimal_pi().sqrt() * total
+    getcontext().prec = saved
+    return +result
+
+
+def decimal_erfc(x: Decimal) -> Decimal:
+    saved = getcontext().prec
+    getcontext().prec = saved + int(2 * float(x) ** 2 / 2.302585) + 40
+    result = 1 - decimal_erf(x)
+    getcontext().prec = saved
+    return +result
+
+
+def decimal_probit(p: Decimal) -> Decimal:
+    """The normal quantile by Newton's method in decimals, from the machine number's start."""
+    z = Decimal(statistics.NormalDist().inv_cdf(float(p)))
+    root2 = Decimal(2).sqrt()
+    tau = (2 * decimal_pi()).sqrt()
+    for _ in range(8):
+        cdf = decimal_erfc(-z / root2) / 2
+        density = (-z * z / 2).exp() / tau
+        z = z - (cdf - p) / density
+    return z
+
+
+getcontext().prec = 100
+erf_points = []
+for text_x in ["0.001", "0.1", "1/3", "0.5", "1", "1.5", "2", "2.9", "3", "3.1", "4", "5", "6.5", "8", "10", "20", "27.5", "-0.7", "-3", "-3.5", "-12"]:
+    x = Decimal(Fraction(text_x).numerator) / Decimal(Fraction(text_x).denominator)
+    erf_points.append({"x": text_x, "erf": digits(decimal_erf(x)), "erfc": digits(decimal_erfc(x))})
+probit_points = []
+for text_p in ["1e-100", "1e-30", "1e-12", "1e-5", "0.001", "0.01", "0.1", "0.3", "0.5", "0.6", "0.9", "0.975", "0.999", "0.99999", "0.999999999999"]:
+    p = Decimal(text_p)
+    probit_points.append({"p": text_p, "z": digits(decimal_probit(p))})
+normal_points = []
+root2 = Decimal(2).sqrt()
+tau = (2 * decimal_pi()).sqrt()
+for text_x, text_mu, text_sigma in [
+    ("0", "0", "1"), ("1", "0", "1"), ("-1.96", "0", "1"), ("1.96", "0", "1"), ("3.5", "0", "1"), ("-7", "0", "1"),
+    ("12", "10", "2"), ("85", "100", "15"), ("1.2", "1.5", "0.5"), ("-3", "-2", "0.25"), ("0.001", "0", "1"), ("40", "0", "1"),
+    ("101", "100", "15"), ("130", "100", "15"), ("-0.5", "0.5", "3"), ("6", "0", "1"),
+]:
+    x, mu, sigma = Decimal(text_x), Decimal(text_mu), Decimal(text_sigma)
+    z = (x - mu) / sigma
+    pe = Decimal(rng.randint(1, 999)) / 1000
+    normal_points.append(
+        {
+            "x": text_x,
+            "mu": text_mu,
+            "sigma": text_sigma,
+            "pdf": digits((-z * z / 2).exp() / (sigma * tau)),
+            "cdf": digits(decimal_erfc(-z / root2) / 2),
+            "p": str(pe),
+            "inv": digits(mu + sigma * decimal_probit(pe)),
+        }
+    )
+special = {"erf": erf_points, "probit": probit_points, "normal": normal_points}
+
 (OUT / "statistics-vectors.json").write_text(
     json.dumps(
         {
@@ -427,6 +514,7 @@ distributions = {
             "polynomials": polynomials,
             "transformed": transformed,
             "distributions": distributions,
+            "special": special,
         },
         indent=1,
         sort_keys=True,

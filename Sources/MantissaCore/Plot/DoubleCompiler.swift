@@ -140,6 +140,9 @@ enum DoubleCompiler {
         let permutations = tgamma(n + 1) / tgamma(n - k + 1)
         return function == .permutations ? permutations : permutations / tgamma(k + 1)
       }
+    case .erf: return { x, y in Foundation.erf(f(x, y)) }
+    case .erfc: return { x, y in Foundation.erfc(f(x, y)) }
+    case .probit: return { x, y in NormalDouble.quantile(f(x, y)) }
     case .gcd, .lcm:
       let other = arguments[1]
       return { x, y in

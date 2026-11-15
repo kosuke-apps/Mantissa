@@ -200,10 +200,39 @@ enum Distributions {
     }
   }
 
+  // MARK: Normal
+
+  /// The normal distribution with a mean and a standard deviation (0 and 1 when left out): the density is exact; the cumulative
+  /// probability is written with the complementary error function (its lower half as erfc, so that a tiny tail keeps all its digits)
+  /// and the quantile with `probit`.
+  static func normal(_ function: FunctionName, _ x: [Expr]) throws(MathError) -> Expr {
+    let mean = x.count >= 2 ? x[1] : Expr.zero
+    let deviation = x.count == 3 ? x[2] : Expr.one
+    guard try sign(deviation) > 0 else { throw .domain }
+    let root2 = try Expr.integer(2).raised(to: .fraction(1, 2))
+    switch function {
+    case .normalpdf:
+      let distance = (x[0] - mean).expanded()
+      let exponent = try (-(distance * distance)).divided(by: Expr.integer(2) * deviation * deviation)
+      let width = deviation * (try (Expr.integer(2) * .pi).raised(to: .fraction(1, 2)))
+      return try Expr.e.raised(to: exponent.expanded()).divided(by: width)
+    case .normalcdf:
+      let z = try (x[0] - mean).divided(by: deviation * root2).expanded()
+      let half = Expr.fraction(1, 2)
+      // With a letter in it (a graph of the cdf) the side is not known, and the error function does for both.
+      guard let side = z.numericSign else { return half + half * (try Expr.apply(.erf, [z])) }
+      if side < 0 { return half * (try Expr.apply(.erfc, [-z])) }
+      return Expr.one - half * (try Expr.apply(.erfc, [z]))
+    default:
+      let z = try Expr.apply(.probit, [x[0]])
+      return (mean + deviation * z).expanded()
+    }
+  }
+
   // MARK: Uniform and exponential
 
   /// −1, 0 or 1 for a real number with no letter in it.
-  private static func sign(_ value: Expr) throws(MathError) -> Int {
+  fileprivate static func sign(_ value: Expr) throws(MathError) -> Int {
     guard let sign = value.numericSign else { throw .unsupported }
     return sign
   }

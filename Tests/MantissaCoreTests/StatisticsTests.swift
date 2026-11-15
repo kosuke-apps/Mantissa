@@ -122,12 +122,37 @@ struct StatisticsTests {
     var exponential: [Exponential]
   }
 
+  private struct Special: Decodable {
+    struct Erf: Decodable {
+      var x: String
+      var erf: String
+      var erfc: String
+    }
+    struct Probit: Decodable {
+      var p: String
+      var z: String
+    }
+    struct Normal: Decodable {
+      var x: String
+      var mu: String
+      var sigma: String
+      var pdf: String
+      var cdf: String
+      var p: String
+      var inv: String
+    }
+    var erf: [Erf]
+    var probit: [Probit]
+    var normal: [Normal]
+  }
+
   private struct Vectors: Decodable {
     var one: [OneVariable]
     var two: [TwoVariables]
     var polynomials: [Polynomial]
     var transformed: [Transformed]
     var distributions: Distributions
+    var special: Special
   }
 
   private static func load() throws -> Vectors { try loadVectors("statistics-vectors", as: Vectors.self) }
@@ -580,6 +605,97 @@ struct StatisticsTests {
     #expect(failure("exponentialinv(1, 2)") == .math(.domain))
     #expect(failure("binompdf(5, 0.5)") != nil)
     #expect(failure("binompdf(5, 0.5, x)") == .math(.unsupported))
+  }
+
+  // MARK: Error function and the normal distribution
+
+  @Test("erf and erfc agree to 45 digits with an independent Taylor series, from 0.001 to 27.5 and below zero")
+  func errorFunction() throws {
+    for item in try Self.load().special.erf {
+      let erf = try decimal("erf(\(item.x))")
+      let erfc = try decimal("erfc(\(item.x))")
+      #expect(agree(erf, try #require(BigDecimal(item.erf))), "erf(\(item.x)) = \(erf), expected \(item.erf)")
+      #expect(agree(erfc, try #require(BigDecimal(item.erfc))), "erfc(\(item.x)) = \(erfc), expected \(item.erfc)")
+    }
+  }
+
+  @Test("the normal quantile agrees to 45 digits, from 10^-100 to 1 - 10^-12, and inverts the normal cdf")
+  func quantile() throws {
+    for item in try Self.load().special.probit {
+      // `1e-100` would be read as 1·e − 100.
+      let typed = item.p.contains("e-") ? "10^(-\(item.p.split(separator: "-")[1]))" : item.p
+      let z = try decimal("probit(\(typed))")
+      #expect(agree(z, try #require(BigDecimal(item.z))), "probit(\(item.p)) = \(z), expected \(item.z)")
+    }
+    for (typed, p) in [("0.2", "0.2"), ("0.0001", "0.0001"), ("0.9", "0.9"), ("10^(-40)", "1e-40")] {
+      let there = try decimal("normalcdf(normalinv(\(typed)))")
+      #expect(agree(there, try #require(BigDecimal(p))), "Φ(Φ⁻¹(\(typed)))")
+    }
+  }
+
+  @Test("normalpdf, normalcdf and normalinv with a mean and a standard deviation, against 16 decimal computations")
+  func normalOracle() throws {
+    for item in try Self.load().special.normal {
+      let arguments = "\(item.x), \(item.mu), \(item.sigma)"
+      #expect(
+        agree(try decimal("normalpdf(\(arguments))"), try #require(BigDecimal(item.pdf))), "normalpdf(\(arguments))")
+      #expect(
+        agree(try decimal("normalcdf(\(arguments))"), try #require(BigDecimal(item.cdf))), "normalcdf(\(arguments))")
+      #expect(
+        agree(try decimal("normalinv(\(item.p), \(item.mu), \(item.sigma))"), try #require(BigDecimal(item.inv))),
+        "normalinv(\(item.p), \(item.mu), \(item.sigma))")
+    }
+  }
+
+  @Test("exact values of the error function and the normal distribution, and their derivatives")
+  func errorFunctionExact() throws {
+    #expect(try value("erf(0)") == 0)
+    #expect(try value("erfc(0)") == 1)
+    #expect(try value("erf(-x)") == (try value("-erf(x)")))
+    #expect(try value("probit(1/2)") == 0)
+    #expect(try value("normalcdf(0)") == .fraction(1, 2))
+    #expect(try value("normalcdf(5, 5, 3)") == .fraction(1, 2))
+    #expect(try value("normalinv(0.5, 3, 2)") == 3)
+    #expect(try value("normalpdf(0)") == (try value("1/√(2π)")))
+    #expect(try value("normalpdf(2, 2, 3)") == (try value("1/(3√(2π))")))
+    // The derivative of erf is the bell curve; of erfc, minus it; of probit, 1/ the density there.
+    #expect(try value("diff(erf(x), x)") == (try value("2/√π * e^(-x^2)")))
+    #expect(try value("diff(erfc(x), x)") == (try value("-2/√π * e^(-x^2)")))
+    #expect(try value("diff(erf(2x), x)") == (try value("4/√π * e^(-4x^2)")))
+    // Ordinary arithmetic with them.
+    #expect(try value("erf(1) + erfc(1)").numericSign == 1)
+    let one = try decimal("erf(1) + erfc(1)")
+    #expect(agree(one, BigDecimal(1)))
+    // The cdf above and below the mean add to one.
+    #expect(agree(try decimal("normalcdf(1.3) + normalcdf(-1.3)"), BigDecimal(1)))
+    // The tails keep their digits: Φ(−30) is about 4.9e-198.
+    let tail = try decimal("normalcdf(-30)")
+    #expect(tail < BigDecimal("4.91e-198")! && tail > BigDecimal("4.90e-198")!)
+
+    #expect(failure("probit(0)") == .math(.domain))
+    #expect(failure("probit(1)") == .math(.domain))
+    #expect(failure("probit(1.5)") == .math(.domain))
+    #expect(failure("normalcdf(1, 0, 0)") == .math(.domain))
+    #expect(failure("normalcdf(1, 0, -2)") == .math(.domain))
+    #expect(failure("normalinv(0, 0, 1)") == .math(.domain))
+    // With a letter in it they are expressions to draw and to differentiate.
+    #expect(failure("normalpdf(x)") == nil)
+    #expect(try value("diff(normalcdf(x), x)") == (try value("normalpdf(x)")))
+  }
+
+  @Test("the normal density and distribution function are drawn")
+  func normalPlots() throws {
+    let bell = Calculator().plotFunctions("normalpdf(x, 1, 2)")
+    #expect(bell.count == 1)
+    #expect(abs(bell[0].evaluate(1) - 1 / (2 * (2 * Double.pi).squareRoot())) < 1e-15)
+    let cdf = Calculator().plotFunctions("normalcdf(x)")
+    #expect(cdf.count == 1)
+    #expect(abs(cdf[0].evaluate(0) - 0.5) < 1e-15)
+    #expect(abs(cdf[0].evaluate(1.96) - 0.9750021048517795) < 1e-14)
+    let quantile = Calculator().plotFunctions("normalinv(x)")
+    #expect(quantile.count == 1)
+    #expect(abs(quantile[0].evaluate(0.975) - 1.959963984540054) < 1e-12)
+    #expect(quantile[0].evaluate(1.5).isNaN)
   }
 
   // MARK: Reports
