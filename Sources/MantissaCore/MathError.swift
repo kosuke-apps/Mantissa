@@ -19,4 +19,10 @@ public enum MathError: Error, Equatable, Sendable {
   case dimensionMismatch
   /// A matrix with no inverse: its determinant is zero.
   case singular
+  /// Fewer values than a statistic needs: the sample standard deviation of one value, a line through one point.
+  case insufficientData
+  /// Data in which every value occurs equally often, which has no mode.
+  case noMode
+  /// Data with no spread where the statistic divides by it: a regression line or a correlation of values that are all equal.
+  case degenerateData
 }

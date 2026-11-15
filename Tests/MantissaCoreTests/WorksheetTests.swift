@@ -17,6 +17,7 @@ struct WorksheetTests {
       switch line.quantity {
       case .scalar(let number): value = Typesetter.nodes(for: number).plainText
       case .matrix(let matrix): value = Typesetter.nodes(for: matrix).plainText
+      case .report: value = "report"
       }
       return line.name.map { "\($0) = \(value)" } ?? value
     }

@@ -7,6 +7,8 @@
 public enum Quantity: Sendable, Equatable {
   case scalar(Expr)
   case matrix(Matrix)
+  /// A block of labelled values (`stats(…)`, `linreg(…)`), which only ever is a whole answer: nothing can be done with it.
+  case report(Report)
 
   /// A 1×1 matrix is the number in it.
   static func collapsing(_ matrix: Matrix) -> Quantity {
@@ -15,7 +17,7 @@ public enum Quantity: Sendable, Equatable {
 
   /// The value as a matrix; a number is a 1×1 matrix.
   var asMatrix: Matrix {
-    if case .matrix(let matrix) = self { return matrix } else { return Matrix(scalar: asScalar!) }
+    if case .matrix(let matrix) = self { return matrix } else { return Matrix(scalar: asScalar ?? .zero) }
   }
 
   var asScalar: Expr? { if case .scalar(let value) = self { return value } else { return nil } }
@@ -27,6 +29,7 @@ extension Quantity {
     switch self {
     case .scalar(let number): return .scalar(try Expr.one.divided(by: number))
     case .matrix(let matrix): return .collapsing(try matrix.inverse())
+    case .report: throw .unsupported
     }
   }
 
@@ -35,6 +38,7 @@ extension Quantity {
     switch self {
     case .scalar(let number): return .scalar(transform(number))
     case .matrix(let matrix): return .matrix(matrix.mapped(transform))
+    case .report(let report): return .report(report.mapped(transform))
     }
   }
 }
@@ -71,6 +75,7 @@ extension Builder {
       switch try value(operand) {
       case .scalar(let number): return .scalar(-number)
       case .matrix(let matrix): return .matrix(matrix.negated())
+      case .report: throw .unsupported
       }
 
     case .binary(let op, let left, let right):
@@ -129,6 +134,8 @@ extension Builder {
       case .add, .subtract: throw .dimensionMismatch
       case .power: return try power(a, b)
       }
+    case (.report, _), (_, .report):
+      throw .unsupported
     }
   }
 
@@ -146,6 +153,17 @@ extension Builder {
     if function.isCalculus {
       // The calculus of matrices is not here: a matrix inside `build` is reported as unsupported.
       return .scalar(try build(.call(function, arguments)))
+    }
+    // Which arguments were written as matrices (a 1×1 matrix is a number, and this tells it from one).
+    let written = arguments.map { argument -> Bool in
+      switch argument {
+      case .matrix: return true
+      case .symbol(let name): if case .matrix? = environment[name] { return true } else { return false }
+      default: return false
+      }
+    }
+    if function.isStatisticsFunction || ((function == .min || function == .max) && written.contains(true)) {
+      return try statisticsCall(function, values, vectors: written)
     }
     if function.isMatrixFunction { return try matrixCall(function, values) }
     // An ordinary function of numbers; a matrix is not a number, except that |A| is the length of a vector or the

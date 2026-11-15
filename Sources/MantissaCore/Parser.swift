@@ -217,8 +217,8 @@ struct Parser {
       guard consume(.rightParen) else { return fail() }
       rows.append(cells)
     } while consume(.comma)
-    guard consume(.rightParen), rows.count <= Matrix.maxDimension, rows.allSatisfy({ $0.count == rows[0].count }),
-      rows[0].count <= Matrix.maxDimension
+    guard consume(.rightParen), rows.count <= Matrix.maxRows, rows.allSatisfy({ $0.count == rows[0].count }),
+      rows[0].count <= Matrix.maxColumns
     else { return fail() }
     return .matrix(rows)
   }

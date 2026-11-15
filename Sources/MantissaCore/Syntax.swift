@@ -123,6 +123,14 @@ enum FunctionName: String, CaseIterable, Sendable {
   case det, inverse, transpose, trace, rank, rref, dot, cross, norm, identity
   /// The eigenvalues of a matrix, as a column, and a matrix whose columns are its eigenvectors.
   case eigvals, eigvecs
+  /// Statistics of one variable (`docs/statistics.md`): the data as numbers, a vector, or values and their frequencies.
+  case count, total, sumsq, mean, median, mode, range, sort, variance, stdev, varp, stdevp, iqr
+  /// The k-th quartile and the p-th percentile of data given as a vector.
+  case quartile, percentile
+  /// Statistics of two variables, given as a table with two columns or as two vectors.
+  case cov, covp, corr, slope, intercept
+  /// Reports: blocks of labelled values, which are only ever the whole answer.
+  case stats, linreg
 
   /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
   var isCalculus: Bool {
@@ -137,9 +145,30 @@ enum FunctionName: String, CaseIterable, Sendable {
     switch self {
     case .det, .inverse, .transpose, .trace, .rank, .rref, .dot, .cross, .norm, .identity, .eigvals, .eigvecs:
       return true
+    default: return isStatisticsFunction && !isScalarStatistic
+    }
+  }
+
+  /// The functions of `docs/statistics.md`, which take data (numbers, vectors, a table).
+  var isStatisticsFunction: Bool {
+    switch self {
+    case .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp, .stdevp, .iqr,
+      .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg:
+      return true
     default: return false
     }
   }
+
+  /// A statistic that is one number, which can be used inside any formula; the others make a column or a report.
+  var isScalarStatistic: Bool {
+    switch self {
+    case .mode, .sort, .stats, .linreg: return false
+    default: return isStatisticsFunction
+    }
+  }
+
+  /// A block of labelled values, which is the whole answer and cannot be used in a formula.
+  var isReport: Bool { self == .stats || self == .linreg }
 
   /// Alternative spellings the parser accepts.
   static let aliases: [String: FunctionName] = [
@@ -161,9 +190,12 @@ enum FunctionName: String, CaseIterable, Sendable {
   var needsParenthesis: Bool {
     switch self {
     case .mod, .min, .max, .sign, .re, .im, .conj, .arg: return true
-    default: return isMatrixFunction
+    default: return isMatrixFunction || isStatisticsFunction
     }
   }
+
+  /// The most numbers a function of data is given one by one.
+  static let maxArguments = 100
 
   /// The numbers of arguments the function accepts.
   var arities: ClosedRange<Int> {
@@ -173,8 +205,11 @@ enum FunctionName: String, CaseIterable, Sendable {
     case .int: return 1...4
     case .lim: return 3...4
     case .sum: return 4...4
-    case .min, .max: return 2...8
-    case .root, .nCr, .nPr, .gcd, .lcm, .mod, .dot, .cross: return 2...2
+    case .min, .max: return 1...Self.maxArguments
+    case .root, .nCr, .nPr, .gcd, .lcm, .mod, .dot, .cross, .quartile, .percentile: return 2...2
+    case .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp, .stdevp, .iqr, .stats:
+      return 1...Self.maxArguments
+    case .cov, .covp, .corr, .slope, .intercept, .linreg: return 1...2
     default: return 1...1
     }
   }

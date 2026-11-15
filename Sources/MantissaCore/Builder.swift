@@ -118,6 +118,11 @@ struct Builder {
     case .diff, .int, .lim, .sum: throw .unsupported  // handled before the arguments are built
     case .det, .inverse, .transpose, .trace, .rank, .rref, .dot, .cross, .norm, .identity, .eigvals, .eigvecs:
       throw .unsupported  // handled by `value`, which knows about matrices
+    case .count, .total, .sumsq, .mean, .median, .range, .variance, .stdev, .varp, .stdevp, .iqr, .quartile,
+      .percentile,
+      .cov, .covp, .corr, .slope, .intercept:
+      return try statisticsCall(function, scalars: x)
+    case .mode, .sort, .stats, .linreg: throw .unsupported  // a column or a report, handled by `value`
     case .sqrt: return try x[0].raised(to: .fraction(1, 2))
     case .cbrt: return try x[0].raised(to: .fraction(1, 3))
     case .root: return try root(x[0], index: x[1])

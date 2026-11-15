@@ -56,6 +56,8 @@ public enum Computation: Sendable, Equatable {
   case matrix(Matrix)
   /// Several lines that give letters their values (`A = …`, `A X = B`), each line's answer in the order written.
   case lines([WorkedLine])
+  /// A block of labelled values: the statistics of data, the line fitted to points.
+  case report(Report)
 }
 
 /// The entry point: text in, exact and decimal answer out.
@@ -71,7 +73,7 @@ public struct Calculator: Sendable {
   public func evaluate(_ text: String) throws(CalculatorError) -> Evaluation {
     switch try compute(text) {
     case .number(let evaluation): return evaluation
-    case .matrix, .lines: throw .unsupported(.matrix)
+    case .matrix, .lines, .report: throw .unsupported(.matrix)
     }
   }
 
@@ -94,6 +96,7 @@ public struct Calculator: Sendable {
       let exact: Expr
       switch value {
       case .matrix(let matrix): return .matrix(matrix.mapped { $0.trigonometricallyTidied() })
+      case .report(let report): return .report(report)
       case .scalar(let number): exact = number
       }
       // sin²x + cos²x is 1: an identity that makes the answer smaller is applied to it.

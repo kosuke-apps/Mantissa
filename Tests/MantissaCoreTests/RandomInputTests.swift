@@ -94,8 +94,12 @@ struct RandomInputTests {
             switch line.quantity {
             case .scalar(let number): _ = Typesetter.nodes(for: number).plainText
             case .matrix(let matrix): _ = Typesetter.nodes(for: matrix).plainText
+            case .report(let report):
+              for row in report.rows { for value in row.values { _ = Typesetter.nodes(for: value).plainText } }
             }
           }
+        case .report(let report):
+          for row in report.rows { for value in row.values { _ = Typesetter.nodes(for: value).plainText } }
         }
       } catch {
         if case .unsupported = error { _ = try? calculator.solve(text) }

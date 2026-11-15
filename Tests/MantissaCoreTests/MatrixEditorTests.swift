@@ -181,12 +181,13 @@ struct MatrixEditorTests {
   @Test("A matrix can have no more than the largest size")
   func limits() {
     var editor = MathEditor()
-    editor.insertMatrix(rows: 99, columns: 99)
+    editor.insertMatrix(rows: 999, columns: 99)
     guard case .matrix(let rows, let columns, _)? = editor.lines[0].first else {
       Issue.record("no matrix")
       return
     }
-    #expect(rows == Matrix.maxDimension && columns == Matrix.maxDimension)
+    // Up to 200 rows (a column of data) and 10 columns.
+    #expect(rows == Matrix.maxRows && columns == Matrix.maxColumns)
     let did8 = editor.change(matrix: .addRow)
     #expect(did8 == false)
     let did9 = editor.change(matrix: .addColumn)

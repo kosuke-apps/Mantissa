@@ -38,6 +38,7 @@ extension Matrix {
   /// The matrix product: an m×n times an n×p is an m×p.
   public func multiplied(by other: Matrix) throws(MathError) -> Matrix {
     guard columnCount == other.rowCount else { throw .dimensionMismatch }
+    guard rowCount * other.columnCount <= Matrix.maxProductEntries else { throw .overflow }
     let result = try Matrix.generated(rows: rowCount, columns: other.columnCount) { row, column throws(MathError) in
       var terms: [Expr] = []
       terms.reserveCapacity(columnCount)

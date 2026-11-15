@@ -158,7 +158,9 @@ struct NaiveEvaluator {
     case .ceil: return -BigDecimal((-x[0]).floor)
     case .round: return x[0].rounded(toPlaces: 0)
     case .diff, .int, .lim, .sum, .det, .inverse, .transpose, .trace, .rank, .rref, .dot, .cross, .norm, .identity,
-      .eigvals, .eigvecs:
+      .eigvals, .eigvecs, .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp,
+      .stdevp,
+      .iqr, .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg:
       throw .notNumeric
     case .nCr, .nPr:
       guard let n = x[0].asInt, let r = x[1].asInt, n >= 0, r >= 0, r <= n else { throw .domain }

@@ -161,7 +161,7 @@ struct MoreFunctionTests {
 
   @Test("A function with the wrong number of arguments is refused")
   func argumentCounts() {
-    for text in ["mod(1)", "mod(1,2,3)", "max(1)", "sign(1,2)", "re(1,2)", "atan(1,2,3)", "coth(1,2)"] {
+    for text in ["mod(1)", "mod(1,2,3)", "max()", "sign(1,2)", "re(1,2)", "atan(1,2,3)", "coth(1,2)", "quartile(1)"] {
       #expect(throws: CalculatorError.self, "\(text)") { try Calculator().evaluate(text) }
     }
   }

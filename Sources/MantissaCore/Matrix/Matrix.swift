@@ -3,20 +3,27 @@
 /// The entries are `Expr`s kept expanded, so that equal matrices are `==`. Everything here is exact: a matrix of fractions has
 /// an inverse of fractions, one with `√2` in it an inverse with `√2` in it, and one with letters keeps them.
 public struct Matrix: Hashable, Sendable {
-  /// The most rows or columns a matrix can have. A larger one is not something to read on a phone, and the work grows with
-  /// the cube of the size.
+  /// The most rows or columns a matrix that is used as a square one can have. A larger one is not something to read on a phone,
+  /// and the work grows with the cube of the size.
   public static let maxDimension = 10
+  /// The most columns any matrix has.
+  public static let maxColumns = 10
+  /// The most rows any matrix has. A tall matrix is a column or two of data (`docs/statistics.md`); the algebra that needs a square
+  /// matrix keeps `maxDimension`, and a product that would have more than `maxProductEntries` entries is not worked out.
+  public static let maxRows = 200
+  /// The most entries a product of two matrices can have.
+  public static let maxProductEntries = 10_000
 
   public let rowCount: Int
   public let columnCount: Int
   /// The entries, row by row.
   public let entries: [Expr]
 
-  /// A matrix of these rows, or `nil` when there are none, they have different lengths, or the matrix is larger than
-  /// `maxDimension`.
+  /// A matrix of these rows, or `nil` when there are none, they have different lengths, or the matrix has more than `maxRows` rows
+  /// or `maxColumns` columns.
   public init?(rows: [[Expr]]) {
-    guard let first = rows.first, !first.isEmpty, rows.count <= Matrix.maxDimension,
-      first.count <= Matrix.maxDimension, rows.allSatisfy({ $0.count == first.count })
+    guard let first = rows.first, !first.isEmpty, rows.count <= Matrix.maxRows,
+      first.count <= Matrix.maxColumns, rows.allSatisfy({ $0.count == first.count })
     else { return nil }
     self.init(rowCount: rows.count, columnCount: first.count, entries: rows.flatMap { $0 })
   }

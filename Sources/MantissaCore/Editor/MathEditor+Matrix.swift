@@ -15,8 +15,8 @@ extension MathEditor {
 
   /// A matrix with empty cells, with the cursor in the first. A vector is a matrix with one column.
   public mutating func insertMatrix(rows: Int, columns: Int) {
-    let rows = min(max(rows, 1), Matrix.maxDimension)
-    let columns = min(max(columns, 1), Matrix.maxDimension)
+    let rows = min(max(rows, 1), Matrix.maxRows)
+    let columns = min(max(columns, 1), Matrix.maxColumns)
     insertStructure(.matrix(rows: rows, columns: columns, cells: Array(repeating: [], count: rows * columns)))
   }
 
@@ -54,11 +54,11 @@ extension MathEditor {
     var leavesCell = false
     switch change {
     case .addRow:
-      guard rows < Matrix.maxDimension else { return false }
+      guard rows < Matrix.maxRows else { return false }
       cells.insert(contentsOf: Array(repeating: [], count: columns), at: (row + 1) * columns)
       newRows += 1
     case .addColumn:
-      guard columns < Matrix.maxDimension else { return false }
+      guard columns < Matrix.maxColumns else { return false }
       for line in (0..<rows).reversed() { cells.insert([], at: line * columns + column + 1) }
       newColumns += 1
       slot = row * newColumns + column
