@@ -31,5 +31,6 @@ What Mantissa does for VoiceOver, larger text, and people who cannot tap small t
 
 ## Not covered
 
-VoiceOver itself has to be tried by a person; the tests read the same tree VoiceOver reads but do not speak it. Switch Control, Voice Control
-and Full Keyboard Access have not been tried.
+VoiceOver speaking the result has not been tried on a device: the tests read the same tree VoiceOver reads but do not speak it, so the
+wording (the Japanese in particular) is unheard, and a report from someone who uses VoiceOver is welcome. Switch Control, Voice Control and
+Full Keyboard Access have not been tried.

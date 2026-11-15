@@ -39,9 +39,11 @@
 - **Matrices and vectors.** Sums, products, powers, the inverse, determinant, rank, eigenvalues, and the dot and cross products,
   all exact, on a keyboard page of their own.
 - **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
-- **For everyone.** VoiceOver reads formulas as words (fractions, roots and matrices included, in English and Japanese), describes the graph and
-  plays it as an audio graph, and can move and zoom it; the controls are large enough to hit; larger text and the setting that tells curves
-  apart without colour are followed. See [docs/accessibility.md](docs/accessibility.md).
+- **For everyone.** Formulas are given to VoiceOver as words (fractions, roots and matrices included, in English and Japanese), the graph
+  is described and offered as an audio graph, and it can be moved and zoomed by actions; the controls are large enough to hit; larger
+  text and the setting that tells curves apart without colour are followed. This is checked by tests that read the accessibility tree and
+  by Xcode's accessibility audit; it has not been listened to with VoiceOver on a device, and reports from people who use it are
+  welcome. See [docs/accessibility.md](docs/accessibility.md).
 - **On the iPad.** The layout follows the width of the window, so it works full screen, in a resized window and in narrow ones
   (under 640 pt wide it is the iPhone layout): two pages of keys at once, the answer beside the graph, and a column of earlier
   problems. A hardware keyboard types formulas (Tab goes from cell to cell of a matrix; ⌘C, ⌘V, ⌘Y and ⌘, are in the menus).
@@ -164,8 +166,10 @@ Checked by the author on the iOS 27.0 simulator (Xcode 27.2, macOS 26.6), which 
 (starting, portrait and landscape, history and settings, the two blocks of keys, Split View and Slide Over, the graph; a hardware
 keyboard was not tried on it). The iPad layouts were also looked at on the iPad Pro 13-inch and iPad mini simulators (portrait and
 landscape, windows resized down to 375 pt wide, the largest text sizes). The app has been built for a Mac as "Designed for iPad" but
-not run there. Nothing else has been tried: other devices and iOS versions should work (the deployment target is iOS 17) but are not
-verified. The iPhone is used in portrait, the iPad in any orientation.
+not run there. The accessibility work of 1.0.0 was checked on the simulators with Xcode's accessibility audit and tests that read the
+accessibility tree; VoiceOver speaking it, Switch Control, Voice Control and Full Keyboard Access were not tried. Nothing else has been
+tried: other devices and iOS versions should work (the deployment target is iOS 17) but are not verified. The iPhone is used in portrait,
+the iPad in any orientation.
 
 ## Accuracy
 
