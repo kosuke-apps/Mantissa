@@ -26,6 +26,13 @@ extension GraphModel {
       String(
         format: Localizer.string("The graph shows x from %1$@ to %2$@ and y from %3$@ to %4$@."),
         Self.number(viewport.xMin), Self.number(viewport.xMax), Self.number(viewport.yMin), Self.number(viewport.yMax)))
+    let data = content.points.count
+    if data > 0 {
+      sentences.append(
+        data == 1
+          ? Localizer.string("It shows one data point.")
+          : String(format: Localizer.string("It shows %@ data points."), String(data)))
+    }
     for marked in points.prefix(8) {
       let key: String
       switch marked.kind {

@@ -44,6 +44,7 @@ public struct PlotViewport: Equatable, Sendable {
   /// A window on everything an input draws: `fit` for the functions, and for the other curves and regions a square window
   /// that takes in where they meet the axes (or −10 to 10 when they do not), with room around. Both, when there are both.
   public static func fit(_ content: PlotContent) -> PlotViewport {
+    if !content.points.isEmpty { return fit(points: content.points) }
     guard !content.relations.isEmpty else { return fit(content.functions) }
     var extent = 0.0
     for (index, relation) in content.relations.enumerated() {
@@ -62,6 +63,26 @@ public struct PlotViewport: Equatable, Sendable {
     return PlotViewport(
       xMin: min(functions.xMin, relations.xMin), xMax: max(functions.xMax, relations.xMax),
       yMin: min(functions.yMin, relations.yMin), yMax: max(functions.yMax, relations.yMax))
+  }
+
+  /// A window on points of data, with a tenth of room round them (and a few units where they are all at one value).
+  public static func fit(points: [PlotDataPoint]) -> PlotViewport {
+    guard let first = points.first else { return PlotViewport(xMin: -10, xMax: 10, yMin: -10, yMax: 10) }
+    var (xMin, xMax, yMin, yMax) = (first.x, first.x, first.y, first.y)
+    for point in points {
+      xMin = min(xMin, point.x)
+      xMax = max(xMax, point.x)
+      yMin = min(yMin, point.y)
+      yMax = max(yMax, point.y)
+    }
+    func padded(_ low: Double, _ high: Double) -> (Double, Double) {
+      let span = high - low
+      if span < 1e-9 { return (low - 1, high + 1) }
+      return (low - span * 0.1, high + span * 0.1)
+    }
+    let (x0, x1) = padded(xMin, xMax)
+    let (y0, y1) = padded(yMin, yMax)
+    return PlotViewport(xMin: x0, xMax: x1, yMin: y0, yMax: y1)
   }
 
   /// A window on the interesting part of `functions`: wide enough for the points nearest the origin that are worth marking

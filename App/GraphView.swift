@@ -252,8 +252,20 @@ struct GraphCard: View {
     for (index, relation) in graph.content.relations.enumerated() {
       drawBoundary(of: relation, color: curveColors[(first + index) % curveColors.count], in: &context, size: size)
     }
+    drawData(in: &context, size: size)
     drawPoints(in: &context, size: size)
     drawTrace(in: &context, size: size)
+  }
+
+  /// The points of data (what a regression was fitted to) as dots.
+  private func drawData(in context: inout GraphicsContext, size: CGSize) {
+    for datum in graph.content.points {
+      let spot = screen(datum.x, datum.y, in: size)
+      guard spot.x > -8, spot.x < size.width + 8, spot.y > -8, spot.y < size.height + 8 else { continue }
+      let dot = Path(ellipseIn: CGRect(x: spot.x - 5, y: spot.y - 5, width: 10, height: 10))
+      context.fill(dot, with: .color(.primary.opacity(0.8)))
+      context.stroke(dot, with: .color(Color(.systemBackground)), lineWidth: 1.5)
+    }
   }
 
   /// The point a held finger follows: a vertical line, a dot on the curve and the coordinates.

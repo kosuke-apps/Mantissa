@@ -39,6 +39,24 @@ final class StatisticsDisplayTests: XCTestCase {
     XCTAssertEqual(report.summary.plainText.hasPrefix("Line = y = "), true)
   }
 
+  func testAPolynomialFitHasItsCoefficientsAndAHeading() throws {
+    let report = try XCTUnwrap(solutions("polyreg([[0,3],[1,2],[2,3],[3,6]], 2)"))
+    XCTAssertEqual(report.heading?.plainText, "y = a₂x^2 + a₁x + a₀")
+    XCTAssertEqual(report.lines.map { $0.caption ?? "" }.prefix(4), ["Curve", "a₂", "a₁", "a₀"])
+    XCTAssertEqual(report.lines[1].exact.plainText, "1")
+    XCTAssertEqual(report.lines[2].exact.plainText, "−2")
+  }
+
+  func testAnExponentialFitIsDecimalsOnly() throws {
+    let report = try XCTUnwrap(solutions("expreg([[0,2],[1,6],[2,18],[3,54]])"))
+    XCTAssertEqual(report.heading?.plainText, "y = ab^x")
+    let a = try XCTUnwrap(report.lines.first { $0.caption == "a" })
+    XCTAssertEqual(a.exact.plainText, "≈2")
+    XCTAssertNil(a.decimal)
+    let b = try XCTUnwrap(report.lines.first { $0.caption == "b" })
+    XCTAssertEqual(b.exact.plainText, "≈3")
+  }
+
   func testAColumnOfModesIsOneRow() throws {
     let report = try XCTUnwrap(solutions("stats(3,1,3,1,2)"))
     XCTAssertEqual(report.lines.last?.caption, "Mode")

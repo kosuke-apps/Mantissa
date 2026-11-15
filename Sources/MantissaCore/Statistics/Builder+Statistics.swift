@@ -48,6 +48,22 @@ extension Builder {
     return try PairedData(xs: xs, ys: ys)
   }
 
+  /// The values of a call's arguments, and which of them were written as matrices.
+  func quantities(_ arguments: [Syntax]) throws(MathError) -> (values: [Quantity], written: [Bool]) {
+    var values: [Quantity] = []
+    var written: [Bool] = []
+    for argument in arguments {
+      values.append(try value(argument))
+      switch argument {
+      case .matrix: written.append(true)
+      case .symbol(let name):
+        if case .matrix? = environment[name] { written.append(true) } else { written.append(false) }
+      default: written.append(false)
+      }
+    }
+    return (values, written)
+  }
+
   // MARK: Calls
 
   /// The value of a statistics function of values that have been worked out. The functions that make several numbers give a column;
@@ -74,8 +90,8 @@ extension Builder {
       default: return .scalar(try pairs.intercept())
       }
 
-    case .linreg:
-      return .report(try linearRegression(try pairedData(values)))
+    case .linreg, .polyreg, .expreg, .powreg, .logreg:
+      return .report(try regression(function, values, vectors: vectors).report)
 
     case .stats:
       return .report(try summary(try dataSet(values, vectors: vectors)))
@@ -141,20 +157,5 @@ extension Builder {
     ]
     if let modes = data.modes { rows.append(.init(.mode, modes)) }
     return Report(rows: rows)
-  }
-
-  /// The least-squares line through the points: its equation, slope, intercept, correlation and the square of it.
-  private func linearRegression(_ pairs: PairedData) throws(MathError) -> Report {
-    let slope = try pairs.slope()
-    let intercept = try pairs.intercept()
-    let line = (slope * .symbol("x") + intercept).expanded()
-    return Report(rows: [
-      .init(.equation, [line]),
-      .init(.slope, [slope]),
-      .init(.intercept, [intercept]),
-      .init(.correlation, [try pairs.correlation()]),
-      .init(.determination, [try pairs.determination()]),
-      .init(.count, [.integer(pairs.count)]),
-    ])
   }
 }

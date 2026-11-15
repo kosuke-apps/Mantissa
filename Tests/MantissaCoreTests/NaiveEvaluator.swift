@@ -160,7 +160,8 @@ struct NaiveEvaluator {
     case .diff, .int, .lim, .sum, .det, .inverse, .transpose, .trace, .rank, .rref, .dot, .cross, .norm, .identity,
       .eigvals, .eigvecs, .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp,
       .stdevp,
-      .iqr, .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg:
+      .iqr, .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg, .polyreg, .expreg, .powreg,
+      .logreg:
       throw .notNumeric
     case .nCr, .nPr:
       guard let n = x[0].asInt, let r = x[1].asInt, n >= 0, r >= 0, r <= n else { throw .domain }

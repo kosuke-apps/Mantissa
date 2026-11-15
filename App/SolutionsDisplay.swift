@@ -39,6 +39,8 @@ struct SolutionsDisplay: Equatable {
   var chosen: String?
   /// For an inequality, the solution set as `(−∞, −1) ∪ (2, ∞)`.
   var notation: [MathNode]?
+  /// For a regression, the curve it fitted in general form, `y = a bˣ`, above the rows.
+  var heading: [MathNode]?
 
   /// The answer on one line, for the history.
   var summary: [MathNode] {
@@ -130,7 +132,7 @@ struct SolutionsDisplay: Equatable {
         }
       case .report(let report):
         // The rows of a report that a line of a worksheet came to, each with its caption.
-        return report.rows.map { Self.line(for: $0, digits: digits) }
+        return report.rows.map { Self.line(for: $0, digits: digits, model: report.model) }
       }
       return [Line(exact: exact, decimal: decimal)]
     }
@@ -141,13 +143,57 @@ struct SolutionsDisplay: Equatable {
 
   /// The rows of a report, each with its caption: the exact value, and the decimal beneath when it says something more.
   init(_ report: Report, digits: Int) {
-    self.init(kind: .report, lines: report.rows.map { Self.line(for: $0, digits: digits) })
+    self.init(kind: .report, lines: report.rows.map { Self.line(for: $0, digits: digits, model: report.model) })
+    heading = report.model.map(Self.heading)
   }
 
-  private static func line(for row: Report.Row, digits: Int) -> Line {
+  /// The curve of a regression in general form: `y = a bˣ`, `y = a₂x² + a₁x + a₀`.
+  private static func heading(for model: Report.Model) -> [MathNode] {
+    func symbols(_ text: String) -> [MathNode] { text.map { .symbol(String($0)) } }
+    let y: [MathNode] = [.symbol("y"), .symbol("=")]
+    switch model {
+    case .linear:
+      return y + [.symbol("a"), .symbol("x"), .symbol("+"), .symbol("b")]
+    case .polynomial(let degree):
+      var nodes = y
+      for power in stride(from: degree, through: 0, by: -1) {
+        if power < degree { nodes.append(.symbol("+")) }
+        nodes.append(.symbol("a" + subscriptDigits(power)))
+        if power >= 1 { nodes.append(.symbol("x")) }
+        if power >= 2 { nodes.append(.superscript(symbols(String(power)))) }
+      }
+      return nodes
+    case .exponential:
+      return y + [.symbol("a"), .symbol("b"), .superscript([.symbol("x")])]
+    case .power:
+      return y + [.symbol("a"), .symbol("x"), .superscript([.symbol("b")])]
+    case .logarithmic:
+      return y + [.symbol("a"), .symbol("+"), .symbol("b"), .function(name: "ln", argument: [.symbol("x")])]
+    }
+  }
+
+  static func subscriptDigits(_ number: Int) -> String {
+    let digits: [Character: Character] = [
+      "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
+    ]
+    return String(String(number).map { digits[$0] ?? $0 })
+  }
+
+  private static func line(for row: Report.Row, digits: Int, model: Report.Model? = nil) -> Line {
     var exact: [MathNode] = row.label == .equation ? [.symbol("y"), .symbol("=")] : []
     var decimal: [MathNode] = []
     var needsDecimal = false
+    // A value with no exact form is its decimal.
+    if row.values.isEmpty {
+      exact = [.symbol("≈")]
+      for (index, value) in row.approximations.enumerated() {
+        if index > 0 { exact += [.symbol(","), .symbol(" ")] }
+        exact += Typesetter.nodes(for: value, significantDigits: digits)
+      }
+      var line = Line(exact: exact)
+      line.caption = row.label.title(model: model)
+      return line
+    }
     for (index, value) in row.values.enumerated() {
       if index > 0 {
         exact += [.symbol(","), .symbol(" ")]
@@ -160,7 +206,7 @@ struct SolutionsDisplay: Equatable {
       }
     }
     var line = Line(exact: exact, decimal: needsDecimal ? decimal : nil)
-    line.caption = row.label.title
+    line.caption = row.label.title(model: model)
     return line
   }
 

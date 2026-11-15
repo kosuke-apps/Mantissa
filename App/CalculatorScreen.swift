@@ -460,6 +460,10 @@ private struct SolutionsView: View {
             .scaledFont(size: 20 * k)
           ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in row(line) }
         case .report:
+          if let heading = solutions.heading {
+            ScrollView(.horizontal, showsIndicators: false) { MathLine(nodes: heading, size: 24 * k) }
+              .foregroundStyle(.secondary)
+          }
           // A report has many rows, so the values are set smaller than a single answer is.
           Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
             ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in

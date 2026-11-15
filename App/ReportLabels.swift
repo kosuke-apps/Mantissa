@@ -1,8 +1,8 @@
 import MantissaCore
 
 extension Report.Label {
-  /// What a row of a report is called, in the user's language.
-  var title: String {
+  /// What a row of a report is called, in the user's language. The fitted curve is a line or, for the other models, a curve.
+  func title(model: Report.Model? = nil) -> String {
     switch self {
     case .count: return Localizer.string("Count")
     case .mean: return Localizer.string("Mean")
@@ -16,7 +16,12 @@ extension Report.Label {
     case .thirdQuartile: return Localizer.string("Third quartile")
     case .maximum: return Localizer.string("Largest value")
     case .mode: return Localizer.string("Mode")
-    case .equation: return Localizer.string("Line")
+    case .equation:
+      if let model, model != .linear { return Localizer.string("Curve") }
+      return Localizer.string("Line")
+    case .coefficient(let power): return "a" + SolutionsDisplay.subscriptDigits(power)
+    case .parameterA: return "a"
+    case .parameterB: return "b"
     case .slope: return Localizer.string("Slope")
     case .intercept: return Localizer.string("Intercept")
     case .correlation: return Localizer.string("Correlation r")

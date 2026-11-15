@@ -129,8 +129,9 @@ enum FunctionName: String, CaseIterable, Sendable {
   case quartile, percentile
   /// Statistics of two variables, given as a table with two columns or as two vectors.
   case cov, covp, corr, slope, intercept
-  /// Reports: blocks of labelled values, which are only ever the whole answer.
-  case stats, linreg
+  /// Reports: blocks of labelled values, which are only ever the whole answer. The regressions: a line, a polynomial of a degree,
+  /// an exponential `a bˣ`, a power `a xᵇ` and a logarithm `a + b ln x`.
+  case stats, linreg, polyreg, expreg, powreg, logreg
 
   /// Whether the function takes an unknown (a letter) as an argument and works on the expression, not on a number.
   var isCalculus: Bool {
@@ -153,7 +154,8 @@ enum FunctionName: String, CaseIterable, Sendable {
   var isStatisticsFunction: Bool {
     switch self {
     case .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp, .stdevp, .iqr,
-      .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg:
+      .quartile, .percentile, .cov, .covp, .corr, .slope, .intercept, .stats, .linreg, .polyreg, .expreg, .powreg,
+      .logreg:
       return true
     default: return false
     }
@@ -162,13 +164,21 @@ enum FunctionName: String, CaseIterable, Sendable {
   /// A statistic that is one number, which can be used inside any formula; the others make a column or a report.
   var isScalarStatistic: Bool {
     switch self {
-    case .mode, .sort, .stats, .linreg: return false
+    case .mode, .sort, .stats, .linreg, .polyreg, .expreg, .powreg, .logreg: return false
     default: return isStatisticsFunction
     }
   }
 
   /// A block of labelled values, which is the whole answer and cannot be used in a formula.
-  var isReport: Bool { self == .stats || self == .linreg }
+  var isReport: Bool {
+    switch self {
+    case .stats, .linreg, .polyreg, .expreg, .powreg, .logreg: return true
+    default: return false
+    }
+  }
+
+  /// A report on the fit of a curve to points, which is also drawn.
+  var isRegression: Bool { isReport && self != .stats }
 
   /// Alternative spellings the parser accepts.
   static let aliases: [String: FunctionName] = [
@@ -209,7 +219,8 @@ enum FunctionName: String, CaseIterable, Sendable {
     case .root, .nCr, .nPr, .gcd, .lcm, .mod, .dot, .cross, .quartile, .percentile: return 2...2
     case .count, .total, .sumsq, .mean, .median, .mode, .range, .sort, .variance, .stdev, .varp, .stdevp, .iqr, .stats:
       return 1...Self.maxArguments
-    case .cov, .covp, .corr, .slope, .intercept, .linreg: return 1...2
+    case .cov, .covp, .corr, .slope, .intercept, .linreg, .expreg, .powreg, .logreg: return 1...2
+    case .polyreg: return 2...3
     default: return 1...1
     }
   }

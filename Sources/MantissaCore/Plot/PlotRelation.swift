@@ -34,24 +34,38 @@ public struct PlotRelation: Sendable {
   }
 }
 
-/// Everything an input asks to be drawn: graphs of functions of `x`, and the other curves and regions.
+/// A point of data, drawn as a dot.
+public struct PlotDataPoint: Sendable, Equatable {
+  public var x: Double
+  public var y: Double
+
+  public init(x: Double, y: Double) {
+    self.x = x
+    self.y = y
+  }
+}
+
+/// Everything an input asks to be drawn: graphs of functions of `x`, the other curves and regions, and points of data.
 public struct PlotContent: Sendable {
   public var functions: [PlotFunction]
   public var relations: [PlotRelation]
+  /// Points of data, with the curve fitted to them among the `functions`.
+  public var points: [PlotDataPoint]
 
-  public init(functions: [PlotFunction] = [], relations: [PlotRelation] = []) {
+  public init(functions: [PlotFunction] = [], relations: [PlotRelation] = [], points: [PlotDataPoint] = []) {
     self.functions = functions
     self.relations = relations
+    self.points = points
   }
 
-  public var isEmpty: Bool { functions.isEmpty && relations.isEmpty }
+  public var isEmpty: Bool { functions.isEmpty && relations.isEmpty && points.isEmpty }
 
   /// Whether `other` draws the same thing: the same expressions in the same order, with the same kinds of relation. A graph
   /// the user has moved is kept while the input changes into something that draws the same.
   public func draws(sameAs other: PlotContent) -> Bool {
     functions.map(\.expression) == other.functions.map(\.expression)
       && relations.map(\.expression) == other.relations.map(\.expression)
-      && relations.map(\.kind) == other.relations.map(\.kind)
+      && relations.map(\.kind) == other.relations.map(\.kind) && points == other.points
   }
 }
 
@@ -60,6 +74,7 @@ extension Calculator {
   /// and `y`. A system is drawn when every line of it is one or the other: a line and a circle, or the inequalities whose
   /// common part is the answer.
   public func plotContent(_ text: String) -> PlotContent {
+    if let regression = regressionContent(text) { return regression }
     let functions = plotFunctions(text)
     if !functions.isEmpty { return PlotContent(functions: functions) }
     guard let statement = try? Parser.parse(text) else { return PlotContent() }

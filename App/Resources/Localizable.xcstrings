@@ -2927,6 +2927,39 @@
           }
         }
       }
+    },
+    "It shows one data point.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データ点が 1 個あります．"
+          }
+        }
+      }
+    },
+    "It shows %@ data points.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データ点が %@ 個あります．"
+          }
+        }
+      }
+    },
+    "Curve": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曲線"
+          }
+        }
+      }
     }
   }
 }

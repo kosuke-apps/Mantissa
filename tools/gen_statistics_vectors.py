@@ -11,6 +11,7 @@ The seed is fixed: running this again must reproduce the committed file byte for
 import json
 import random
 import statistics
+from decimal import Decimal, getcontext
 from fractions import Fraction
 from pathlib import Path
 
@@ -160,7 +161,114 @@ for kind in ["int", "decimal"]:
         two.append(two_variable_case(kind, size))
         two.append(two_variable_case(kind, size))
 
+def solve(matrix, vector):
+    """Gaussian elimination in fractions, written here and not shared with the Swift code (which inverts the matrix)."""
+    n = len(vector)
+    rows = [list(matrix[i]) + [vector[i]] for i in range(n)]
+    for column in range(n):
+        pivot = next(r for r in range(column, n) if rows[r][column] != 0)
+        rows[column], rows[pivot] = rows[pivot], rows[column]
+        rows[column] = [v / rows[column][column] for v in rows[column]]
+        for r in range(n):
+            if r != column and rows[r][column] != 0:
+                factor = rows[r][column]
+                rows[r] = [a - factor * b for a, b in zip(rows[r], rows[column])]
+    return [rows[i][n] for i in range(n)]
+
+
+def polynomial_case(degree: int, size: int, kind: str):
+    while True:
+        xs = [random_value(kind) for _ in range(size)]
+        ys = [random_value(kind) for _ in range(size)]
+        fx = [Fraction(t) for t in xs]
+        fy = [Fraction(t) for t in ys]
+        if len(set(fx)) > degree:
+            break
+    m = degree + 1
+    normal = [[sum(x ** (i + j) for x in fx) for j in range(m)] for i in range(m)]
+    rhs = [sum(x**i * y for x, y in zip(fx, fy)) for i in range(m)]
+    coefficients = solve(normal, rhs)
+    # The residual is orthogonal to every power of x: the defining property of the least-squares fit, checked exactly.
+    residual = [y - sum(c * x**k for k, c in enumerate(coefficients)) for x, y in zip(fx, fy)]
+    for i in range(m):
+        assert sum(r * x**i for r, x in zip(residual, fx)) == 0
+    my = sum(fy) / len(fy)
+    ss_tot = sum((y - my) ** 2 for y in fy)
+    determination = None if ss_tot == 0 else 1 - sum(r * r for r in residual) / ss_tot
+    return {
+        "x": xs,
+        "y": ys,
+        "degree": degree,
+        "coefficients": [text(c) for c in coefficients],
+        "determination": None if determination is None else text(determination),
+    }
+
+
+getcontext().prec = 100
+
+
+def decimal_line(us, vs):
+    """The least-squares line in decimals at 100 digits, with its correlation."""
+    n = len(us)
+    mu = sum(us) / n
+    mv = sum(vs) / n
+    suu = sum((u - mu) ** 2 for u in us)
+    svv = sum((v - mv) ** 2 for v in vs)
+    suv = sum((u - mu) * (v - mv) for u, v in zip(us, vs))
+    slope = suv / suu
+    intercept = mv - slope * mu
+    r = suv / (suu * svv).sqrt()
+    return slope, intercept, r
+
+
+def digits(value: Decimal) -> str:
+    return format(+value, ".60g")
+
+
+def transformed_case(kind: str, size: int):
+    while True:
+        xs = [Fraction(rng.randint(1, 40), rng.choice([1, 2, 4])) for _ in range(size)]
+        ys = [Fraction(rng.randint(1, 90), rng.choice([1, 2, 5])) for _ in range(size)]
+        if len(set(xs)) >= 2:
+            break
+    dx = [Decimal(x.numerator) / Decimal(x.denominator) for x in xs]
+    dy = [Decimal(y.numerator) / Decimal(y.denominator) for y in ys]
+    if kind == "exponential":
+        slope, intercept, r = decimal_line(dx, [y.ln() for y in dy])
+        a, b = intercept.exp(), slope.exp()
+    elif kind == "power":
+        slope, intercept, r = decimal_line([x.ln() for x in dx], [y.ln() for y in dy])
+        a, b = intercept.exp(), slope
+    else:
+        slope, intercept, r = decimal_line([x.ln() for x in dx], dy)
+        a, b = intercept, slope
+    return {
+        "kind": kind,
+        "x": [text(x) for x in xs],
+        "y": [text(y) for y in ys],
+        "a": digits(a),
+        "b": digits(b),
+        "r": digits(r),
+        "determination": digits(r * r),
+    }
+
+
+polynomials = []
+for degree, size, kind in [(1, 4, "int"), (1, 9, "decimal"), (2, 3, "int"), (2, 6, "int"), (2, 10, "decimal"), (3, 4, "int"),
+                           (3, 8, "decimal"), (4, 5, "int"), (4, 9, "int"), (5, 7, "int"), (6, 7, "int"), (6, 12, "decimal")]:
+    polynomials.append(polynomial_case(degree, size, kind))
+transformed = []
+for kind in ["exponential", "power", "logarithmic"]:
+    for size in [2, 3, 5, 8, 13]:
+        transformed.append(transformed_case(kind, size))
+
 (OUT / "statistics-vectors.json").write_text(
-    json.dumps({"one": one, "two": two}, indent=1, sort_keys=True) + "\n", encoding="utf-8"
+    json.dumps(
+        {"one": one, "two": two, "polynomials": polynomials, "transformed": transformed}, indent=1, sort_keys=True
+    )
+    + "\n",
+    encoding="utf-8",
 )
-print(f"{len(one)} one-variable and {len(two)} two-variable cases")
+print(
+    f"{len(one)} one-variable, {len(two)} two-variable, {len(polynomials)} polynomial and {len(transformed)} transformed cases"
+)
