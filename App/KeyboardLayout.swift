@@ -320,8 +320,8 @@ enum KeyboardLayout {
     case .statistics where !withNumberPad:
       return [
         [
-          dataKey("column", rows: 5, columns: 1, others: [(8, 1), (10, 1), (20, 1)]),
-          dataKey("table", rows: 5, columns: 2, others: [(8, 2), (10, 2), (20, 2)]),
+          dataKey("column", rows: 3, columns: 1, others: [(5, 1), (8, 1), (10, 1), (20, 1)]),
+          dataKey("table", rows: 3, columns: 2, others: [(5, 2), (8, 2), (10, 2), (20, 2)]),
           KeySpec(
             "addRow", .word("+ row"), [.matrixChange(.addRow)],
             alternates: [.init(title: "− row", actions: [.matrixChange(.removeRow)])]),
@@ -346,7 +346,7 @@ enum KeyboardLayout {
       // The number pad is where it is on the first page, so that data can be typed in without changing page.
       return [
         [
-          dataKey("column", rows: 5, columns: 1, others: [(8, 1), (10, 1), (20, 1), (5, 2), (8, 2)]),
+          dataKey("column", rows: 3, columns: 1, others: [(5, 1), (8, 1), (10, 1), (20, 1), (3, 2), (5, 2), (8, 2)]),
           KeySpec(
             "addRow", .word("+ row"), [.matrixChange(.addRow)],
             alternates: [.init(title: "− row", actions: [.matrixChange(.removeRow)])]),
