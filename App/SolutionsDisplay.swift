@@ -42,6 +42,16 @@ struct SolutionsDisplay: Equatable {
   /// For a regression, the curve it fitted in general form, `y = a bˣ`, above the rows.
   var heading: [MathNode]?
 
+  /// A report as text, a line for each row (`Mean = 5`), with the decimal after the exact value; for copying.
+  var reportText: String? {
+    guard kind == .report else { return nil }
+    return lines.map { line in
+      var text = (line.caption ?? "") + " = " + line.exact.plainText
+      if let decimal = line.decimal { text += " ≈ " + decimal.plainText }
+      return text
+    }.joined(separator: "\n")
+  }
+
   /// The answer on one line, for the history.
   var summary: [MathNode] {
     switch kind {

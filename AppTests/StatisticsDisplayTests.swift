@@ -57,6 +57,15 @@ final class StatisticsDisplayTests: XCTestCase {
     XCTAssertEqual(b.exact.plainText, "≈3")
   }
 
+  func testAReportIsCopiedWholeAsLines() throws {
+    let report = try XCTUnwrap(solutions("linreg([[1,2],[2,4],[3,5],[4,4],[5,5]])"))
+    let lines = try XCTUnwrap(report.reportText).split(separator: "\n").map(String.init)
+    XCTAssertEqual(lines[0], "Line = y = 3x/5 + 11/5")
+    XCTAssertEqual(lines[1], "Slope = 3/5 ≈ 0.6")
+    XCTAssertEqual(lines.last, "Count = 5")
+    XCTAssertNil(solutions("x^2-4=0")?.reportText)
+  }
+
   func testAColumnOfModesIsOneRow() throws {
     let report = try XCTUnwrap(solutions("stats(3,1,3,1,2)"))
     XCTAssertEqual(report.lines.last?.caption, "Mode")

@@ -63,18 +63,55 @@ struct MatrixEditorTests {
   @Test("A comma and return only move inside a matrix, and stop at the last cell")
   func commaAndReturn() {
     var editor = MathEditor()
-    editor.insertMatrix(rows: 1, columns: 2)
+    editor.insertMatrix(rows: 1, columns: 3)
+    editor.insert(",")
     editor.insert(",")
     editor.insert(",")  // already at the last cell: nothing happens
     editor.insert("5")
     editor.newLine()  // already in the last row
     #expect(editor.lines.count == 1)
-    #expect(editor.text == "[[,5]]")
+    #expect(editor.text == "[[,,5]]")
     // Outside a matrix they are what they always were.
     editor.moveRight()
     editor.insert(",")
     editor.newLine()
     #expect(editor.lines.count == 2)
+  }
+
+  @Test("In a column of data or a table of two columns, return after a value starts a new row")
+  func returnInData() {
+    var editor = MathEditor()
+    editor.insertMatrix(rows: 1, columns: 1)
+    for value in ["3", "5", "7"] {
+      for character in value { editor.insert(String(character)) }
+      editor.newLine()
+    }
+    // After the last value the new row is empty; one more return does nothing, so a stray one adds no row.
+    editor.newLine()
+    #expect(editor.text == "[[3],[5],[7],[]]")
+    #expect(editor.lines.count == 1)
+    // A table of two columns: comma between the two, return after the second.
+    editor = MathEditor()
+    editor.insertMatrix(rows: 1, columns: 2)
+    for (x, y) in [("1", "2"), ("3", "4")] {
+      editor.insert(x)
+      editor.insert(",")
+      editor.insert(y)
+      editor.newLine()
+    }
+    #expect(editor.text == "[[1,2],[3,4],[,]]")
+    // The size has a limit.
+    editor = MathEditor()
+    editor.insertMatrix(rows: Matrix.maxRows, columns: 1)
+    editor.insert("1")
+    for _ in 0..<Matrix.maxRows { editor.moveRight() }
+    // (a stray cursor move is not the point: the last cell is reached by going to it)
+    var rows = Matrix.maxRows
+    for _ in 0..<rows { _ = editor.moveToNextCell() }
+    editor.insert("9")
+    editor.newLine()
+    rows = editor.lines[0].compactMap { if case .matrix(let r, _, _) = $0 { return r } else { return nil } }.first ?? 0
+    #expect(rows == Matrix.maxRows, "no more than the largest number of rows")
   }
 
   @Test("Tab and Shift-Tab go to the next and the previous cell, from inside a fraction too, and stop at the ends")

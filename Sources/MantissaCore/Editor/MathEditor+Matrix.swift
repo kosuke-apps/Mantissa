@@ -124,12 +124,17 @@ extension MathEditor {
     return true
   }
 
-  /// In a cell of a matrix, moves to the start of the first cell of the next row; in the last row it stays. Returns whether the
-  /// cursor was in a cell.
+  /// In a cell of a matrix, moves to the start of the first cell of the next row. In the last row it stays, except in a column of data
+  /// or a table of two columns, where a cell with something in it is followed by a new row, as in a spreadsheet (`docs/statistics.md`).
+  /// Returns whether the cursor was in a cell.
   mutating func goToNextRow() -> Bool {
     guard let (rows, columns, slot) = cellOfMatrix else { return false }
     let row = slot / columns
     if row + 1 < rows {
+      cursor.path[cursor.path.count - 1].slot = (row + 1) * columns
+      cursor.offset = 0
+    } else if columns <= 2, !currentSequence.isEmpty, change(matrix: .addRow) {
+      // The new row is after this one: its first cell.
       cursor.path[cursor.path.count - 1].slot = (row + 1) * columns
       cursor.offset = 0
     }

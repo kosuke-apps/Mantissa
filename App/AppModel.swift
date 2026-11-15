@@ -217,7 +217,7 @@ final class AppModel {
         exact: nodes.isEmpty ? inputText : nodes.plainText, decimal: answer.decimal?.plainText,
         canBeInput: !nodes.isEmpty)
     case .solutions(let solutions):
-      return Copyable(exact: solutions.summary.plainText)
+      return Copyable(exact: solutions.reportText ?? solutions.summary.plainText)
     default:
       return nil
     }
