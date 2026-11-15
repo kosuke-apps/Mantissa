@@ -57,6 +57,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
   case trigonometry
   case calculus
   case matrix
+  case statistics
 
   var id: Self { self }
 
@@ -68,6 +69,7 @@ enum KeyboardPage: CaseIterable, Identifiable {
     case .trigonometry: return "Trigonometry"
     case .calculus: return "Calculus"
     case .matrix: return "Matrices and vectors"
+    case .statistics: return "Statistics"
     }
   }
 
@@ -75,10 +77,11 @@ enum KeyboardPage: CaseIterable, Identifiable {
   var title: LocalizedStringKey {
     switch self {
     case .basic: return "Basic"
-    case .functions: return "Functions"
+    case .functions: return "f(x)"
     case .trigonometry: return "Trig"
     case .calculus: return "Calculus"
     case .matrix: return "Matrix"
+    case .statistics: return "Stats"
     }
   }
 }
@@ -139,6 +142,14 @@ enum KeyboardLayout {
   }
 
   private static func alternate(_ text: String) -> KeySpec.Alternate { .init(title: text, actions: [.symbol(text)]) }
+
+  /// A key that places a matrix of empty cells to type data into: `rows` of `columns` (a column is one variable, a table of two
+  /// columns is x and y), and the other sizes under a long press.
+  private static func dataKey(_ id: String, rows: Int, columns: Int, others: [(Int, Int)]) -> KeySpec {
+    KeySpec(
+      id, .matrix(rows: min(rows, 3), columns: columns), [.matrix(rows: rows, columns: columns)],
+      alternates: others.map { .init(title: "\($0.0)×\($0.1)", actions: [.matrix(rows: $0.0, columns: $0.1)]) })
+  }
 
   /// The keys of a page. A window with room shows the basic keys beside the other pages, so the Matrix page then leaves its number
   /// pad out (`withNumberPad: false`) and has the operations as keys of their own, where the iPhone's has them under a long press.
@@ -239,6 +250,57 @@ enum KeyboardLayout {
           // After the point of a limit: approaching it from above (x → a⁺) or from below (x → a⁻).
           KeySpec("above", .text("a⁺"), [.symbol("⁺")]), KeySpec("below", .text("a⁻"), [.symbol("⁻")]),
           digit("0"), digit("1"), digit("2"), KeySpec("power", .power, [.power]),
+        ],
+      ]
+
+    case .statistics where !withNumberPad:
+      return [
+        [
+          dataKey("column", rows: 5, columns: 1, others: [(8, 1), (10, 1), (20, 1)]),
+          dataKey("table", rows: 5, columns: 2, others: [(8, 2), (10, 2), (20, 2)]),
+          KeySpec(
+            "addRow", .word("+ row"), [.matrixChange(.addRow)],
+            alternates: [.init(title: "− row", actions: [.matrixChange(.removeRow)])]),
+          function("stats"), function("linreg"), function("sort", alternates: ["mode"]),
+        ],
+        [
+          function("mean", alternates: ["count"]), function("median"), function("total", alternates: ["sumsq"]),
+          function("min"), function("max"), function("range"),
+        ],
+        [
+          function("variance", alternates: ["varp"]), function("stdev", alternates: ["stdevp"]),
+          function("quartile", alternates: ["iqr"]), function("percentile"), function("cov", alternates: ["covp"]),
+          function("corr"),
+        ],
+        [
+          function("slope", alternates: ["intercept"]), function("mode"), symbol(","),
+          KeySpec("(", [.symbol("(")]), KeySpec(")", [.symbol(")")]), symbol("="),
+        ],
+      ]
+
+    case .statistics:
+      // The number pad is where it is on the first page, so that data can be typed in without changing page.
+      return [
+        [
+          dataKey("column", rows: 5, columns: 1, others: [(8, 1), (10, 1), (20, 1), (5, 2), (8, 2)]),
+          KeySpec(
+            "addRow", .word("+ row"), [.matrixChange(.addRow)],
+            alternates: [.init(title: "− row", actions: [.matrixChange(.removeRow)])]),
+          digit("7"), digit("8"), digit("9"), symbol("×"),
+        ],
+        [
+          function("mean", alternates: ["median", "mode", "total", "count", "sumsq"]),
+          function("stdev", alternates: ["variance", "stdevp", "varp", "range", "iqr"]),
+          digit("4"), digit("5"), digit("6"), symbol("−"),
+        ],
+        [
+          function("quartile", alternates: ["percentile", "sort", "min", "max"]),
+          function("stats", alternates: ["linreg"]), digit("1"), digit("2"), digit("3"), symbol("+"),
+        ],
+        [
+          function("corr", alternates: ["cov", "covp", "slope", "intercept"]),
+          KeySpec("(", [.symbol("(")], alternates: [alternate(")")]),
+          digit("0"), symbol("."), symbol(","), symbol("="),
         ],
       ]
 
@@ -401,6 +463,8 @@ enum KeyboardLayout {
     case "d/dx": return "Derivative"
     case "∫": return "Integral"
     case "Σ": return "Sum"
+    case "column": return "Column of data"
+    case "table": return "Table of data"
     case "matrix": return "Matrix"
     case "vector": return "Vector"
     case "addRow": return "Add a row"

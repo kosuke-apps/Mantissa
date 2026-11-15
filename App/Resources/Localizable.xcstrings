@@ -1223,17 +1223,6 @@
         }
       }
     },
-    "Functions": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "関数"
-          }
-        }
-      }
-    },
     "Trig": {
       "extractionState": "manual",
       "localizations": {
@@ -2880,6 +2869,61 @@
           "stringUnit": {
             "state": "translated",
             "value": "値にばらつきがないので，答えは出ません．"
+          }
+        }
+      }
+    },
+    "Stats": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "統計"
+          }
+        }
+      }
+    },
+    "Statistics": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "統計"
+          }
+        }
+      }
+    },
+    "Column of data": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データの列"
+          }
+        }
+      }
+    },
+    "Table of data": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データの表"
+          }
+        }
+      }
+    },
+    "f(x)": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "関数"
           }
         }
       }

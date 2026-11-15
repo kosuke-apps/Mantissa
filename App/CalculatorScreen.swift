@@ -464,8 +464,10 @@ private struct SolutionsView: View {
           Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
             ForEach(Array(solutions.lines.enumerated()), id: \.offset) { _, line in
               GridRow {
-                Text(line.caption ?? "").scaledFont(size: 16 * k).foregroundStyle(.secondary).gridColumnAlignment(.leading)
-                  .padding(.top, 4 * k)
+                Text(line.caption ?? "").scaledFont(size: 16 * k).foregroundStyle(.secondary).gridColumnAlignment(
+                  .leading
+                )
+                .padding(.top, 4 * k)
                 value(line, size: 26 * k, decimalSize: 18 * k)
               }
             }
