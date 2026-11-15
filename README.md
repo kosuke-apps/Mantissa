@@ -25,7 +25,7 @@
   <img src="docs/screenshots/ipad-02-matrix.png" width="29%" alt="On an iPad in portrait: the inverse of a 2 by 2 matrix, and the matrix page of keys beside the number pad">
 </p>
 
-> **Status: 1.0.** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
+> **Status: 1.1.** The calculator, graphs, equations, systems, inequalities, calculus and history work. It
 > is not on the App Store: install it as described under [Installing](#installing). Expect rough edges and answers the
 > solver cannot give yet (it says so rather than guessing).
 

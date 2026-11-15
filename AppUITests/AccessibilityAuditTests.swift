@@ -40,6 +40,18 @@ final class AccessibilityAuditTests: XCTestCase {
 
   func testAnIntegral() throws { try audit(launch("int(x^2,x)"), "integral") }
 
+  func testAStatisticsReport() throws { try audit(launch("stats(2,4,4,4,5,5,7,9)"), "statistics") }
+
+  func testARegressionWithItsGraph() throws {
+    try audit(launch("linreg([[1,2],[2,4],[3,5],[4,4],[5,5]])"), "regression")
+  }
+
+  func testTheStatsKeyboardPage() throws {
+    let app = launch()
+    app.buttons["Stats"].tap()
+    try audit(app, "stats-keys")
+  }
+
   func testTheHistorySheet() throws {
     let app = launch("x^2-5x+6=0")
     app.buttons["History"].tap()

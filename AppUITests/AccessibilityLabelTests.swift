@@ -32,4 +32,18 @@ final class AccessibilityLabelTests: XCTestCase {
     let predicate = NSPredicate(format: "label BEGINSWITH 'matrix with 2 rows and 2 columns.'")
     XCTAssertTrue(app.staticTexts.matching(predicate).firstMatch.waitForExistence(timeout: 10))
   }
+  func testAReportIsReadWithItsCaptions() {
+    let app = launch("stats(2,4,4,4,5,5,7,9)")
+    XCTAssertTrue(app.staticTexts["Mean"].waitForExistence(timeout: 10), "a caption")
+    XCTAssertTrue(app.staticTexts["Sample standard deviation"].exists)
+    XCTAssertTrue(app.staticTexts["Largest value"].exists)
+  }
+
+  func testARegressionGraphSaysHowManyDataPointsItShows() {
+    let app = launch("linreg([[1,2],[2,4],[3,5]])")
+    let graph = app.otherElements["Graph"].firstMatch
+    XCTAssertTrue(graph.waitForExistence(timeout: 10))
+    let value = graph.value as? String ?? ""
+    XCTAssertTrue(value.contains("It shows 3 data points."), value)
+  }
 }
