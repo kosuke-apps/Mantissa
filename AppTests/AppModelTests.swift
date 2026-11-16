@@ -559,9 +559,6 @@ final class AppModelTests: XCTestCase {
     }
     // The three modes between them have every page.
     XCTAssertEqual(Set(KeyboardMode.allCases.flatMap(\.pages)), Set(KeyboardPage.allCases))
-    XCTAssertNil(KeyboardMode.standard.chip)
-    XCTAssertNotNil(KeyboardMode.matrix.chip)
-    XCTAssertNotNil(KeyboardMode.statistics.chip)
   }
 
   func testTheKeyboardModeIsKeptAndStartsAsTheStandardOne() {

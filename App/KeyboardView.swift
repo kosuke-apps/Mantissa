@@ -271,6 +271,8 @@ private struct HeldKey: View {
     /// 1 when the row runs to the right of the key, −1 when it runs to the left (a key near the right edge).
     var direction: CGFloat
     var highlighted: Int?
+    /// Whether the options are stacked in a column (they would not fit in a row).
+    var isColumn = false
   }
 
   @State private var frame = CGRect.zero
@@ -283,8 +285,14 @@ private struct HeldKey: View {
   private let selection = UISelectionFeedbackGenerator()
 
   private var options: [Option] {
-    [Option(glyph: spec.glyph, title: nil, actions: spec.actions)]
-      + spec.alternates.map { Option(glyph: nil, title: $0.title, actions: $0.actions) }
+    // The key's own option says what it does when it is a function (the key `normal` places `normalcdf`), and an alternative that does the
+    // same is not listed twice.
+    var own = Option(glyph: spec.glyph, title: nil, actions: spec.actions)
+    if spec.actions.count == 1, case .function(let name) = spec.actions[0] { own.title = name }
+    return [own]
+      + spec.alternates.filter { $0.actions != spec.actions }.map {
+        Option(glyph: nil, title: $0.title, actions: $0.actions)
+      }
   }
 
   /// The first cell is as wide as the key, so that it sits right above it; the others fit what they say.
@@ -292,6 +300,21 @@ private struct HeldKey: View {
     options.enumerated().map { index, option in
       index == 0 ? max(frame.width, 44) : max(48, CGFloat(option.title?.count ?? 1) * 11 + 24)
     }
+  }
+
+  /// The room between the key and the window's edge on either side.
+  private var roomToRight: CGFloat { window.width - frame.minX - 6 }
+  private var roomToLeft: CGFloat { frame.maxX - 6 }
+
+  /// When the options do not fit in a row beside each other in the room there is, they are stacked in a column above the key, one to a
+  /// line, with the key's own at the bottom: that is as wide as the longest name and as tall as the number of options.
+  private let columnCellHeight: CGFloat = 44
+  private var columnWidth: CGFloat {
+    let longest = options.dropFirst().map { CGFloat($0.title?.count ?? 1) }.max() ?? 1
+    return min(max(longest * 11 + 32, max(frame.width, 88)), window.width - 12)
+  }
+  private var columnHeight: CGFloat {
+    CGFloat(options.count) * columnCellHeight + CGFloat(options.count - 1) * 2 + 8
   }
 
   var body: some View {
@@ -302,7 +325,9 @@ private struct HeldKey: View {
         frame = $0
       }
       .overlay(alignment: (popup?.direction ?? 1) >= 0 ? .topLeading : .topTrailing) {
-        if let popup { row(popup).offset(x: popup.direction >= 0 ? -4 : 4, y: -(cellHeight + 14)) }
+        if let popup {
+          row(popup).offset(x: popup.direction >= 0 ? -4 : 4, y: -((popup.isColumn ? columnHeight : cellHeight) + 14))
+        }
       }
       .zIndex(popup == nil ? 0 : 1)
       .gesture(
@@ -334,11 +359,15 @@ private struct HeldKey: View {
   // MARK: The gesture
 
   private func show() {
-    let total = widths.reduce(0, +)
-    let screen = window.width
-    // The row runs towards the side with room for it.
-    let direction: CGFloat = frame.minX + total <= screen - 6 ? 1 : -1
-    popup = Popup(direction: direction, highlighted: 0)
+    let rowFits = widths.reduce(0, +) + 8 <= max(roomToRight, roomToLeft)
+    let direction: CGFloat
+    if rowFits {
+      // The row runs towards the side with room for it.
+      direction = frame.minX + widths.reduce(0, +) + 8 <= window.width - 6 ? 1 : -1
+    } else {
+      direction = roomToRight >= columnWidth ? 1 : -1
+    }
+    popup = Popup(direction: direction, highlighted: 0, isColumn: !rowFits)
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
   }
 
@@ -346,8 +375,14 @@ private struct HeldKey: View {
   private func slide(to location: CGPoint) {
     guard let current = popup else { return }
     var index: Int? = nil
-    // Let go below the key and nothing is chosen.
-    if location.y <= frame.maxY + 36 {
+    if current.isColumn {
+      // In a column the option is found by how far above the key's top the finger is; below the key nothing is chosen.
+      if location.y <= frame.maxY + 36 {
+        let rise = max(frame.minY - location.y, 0)
+        index = min(Int(rise / (columnCellHeight + 2)), options.count - 1)
+      }
+    } else if location.y <= frame.maxY + 36 {
+      // Let go below the key and nothing is chosen.
       let distance = current.direction >= 0 ? location.x - frame.minX : frame.maxX - location.x
       var start: CGFloat = 0
       index = widths.count - 1
@@ -382,22 +417,22 @@ private struct HeldKey: View {
   // MARK: The row
 
   private func row(_ popup: Popup) -> some View {
-    HStack(spacing: 2) {
-      // A row that runs to the left has the key's own cell at its right end, nearest the key.
-      let order = popup.direction >= 0 ? Array(options.indices) : Array(options.indices.reversed())
-      ForEach(order, id: \.self) { index in
-        let option = options[index]
-        let selected = popup.highlighted == index
-        Group {
-          if let glyph = option.glyph {
-            GlyphView(glyph: glyph)
-          } else {
-            Text(LocalizedStringKey(option.title ?? "")).font(.system(size: 21)).lineLimit(1).minimumScaleFactor(0.7)
+    Group {
+      if popup.isColumn {
+        // The key's own option at the bottom, nearest the key, and the others above it.
+        VStack(alignment: popup.direction >= 0 ? .leading : .trailing, spacing: 2) {
+          ForEach(Array(options.indices.reversed()), id: \.self) { index in
+            cell(index, highlighted: popup.highlighted, width: columnWidth, height: columnCellHeight, size: 19)
           }
         }
-        .foregroundStyle(selected ? Color.white : Color.primary)
-        .frame(width: widths[index], height: cellHeight)
-        .background(selected ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 9))
+      } else {
+        HStack(spacing: 2) {
+          // A row that runs to the left has the key's own cell at its right end, nearest the key.
+          let order = popup.direction >= 0 ? Array(options.indices) : Array(options.indices.reversed())
+          ForEach(order, id: \.self) { index in
+            cell(index, highlighted: popup.highlighted, width: widths[index], height: cellHeight, size: 21)
+          }
+        }
       }
     }
     .padding(4)
@@ -408,6 +443,22 @@ private struct HeldKey: View {
     )
     .fixedSize()
     .allowsHitTesting(false)
+  }
+
+  /// One option of the popup, highlighted when the finger is over it.
+  private func cell(_ index: Int, highlighted: Int?, width: CGFloat, height: CGFloat, size: CGFloat) -> some View {
+    let option = options[index]
+    let selected = highlighted == index
+    return Group {
+      if let title = option.title {
+        Text(LocalizedStringKey(title)).font(.system(size: size)).lineLimit(1).minimumScaleFactor(0.45)
+      } else if let glyph = option.glyph {
+        GlyphView(glyph: glyph)
+      }
+    }
+    .foregroundStyle(selected ? Color.white : Color.primary)
+    .frame(width: width, height: height)
+    .background(selected ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 9))
   }
 }
 
@@ -423,7 +474,9 @@ private struct GlyphView: View {
   var body: some View {
     switch glyph {
     case .text(let text):
-      Text(text).font(.system(size: text.count > 2 ? 19 : 24)).minimumScaleFactor(0.6).lineLimit(1)
+      // A long name is set smaller to begin with, and shrinks further to fit its key (with a little room at each side).
+      let size: CGFloat = text.count > 7 ? 15 : text.count > 5 ? 17 : text.count > 2 ? 19 : 24
+      Text(text).font(.system(size: size)).minimumScaleFactor(0.55).lineLimit(1).padding(.horizontal, 4)
     case .fraction:
       VStack(spacing: 2) {
         box

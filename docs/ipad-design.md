@@ -228,5 +228,6 @@ no supported way to install that on a Mac, so no Mac download is promised; the M
 
 The pages that the keyboard offers depend on a mode, chosen in Settings (`KeyboardMode`): Standard has Basic, Functions, Trig and Calculus; Matrices has Basic, Functions, Trig and Matrix; Statistics and
 probability has Basic, Functions, Statistics and Probability. At most four tabs, all words, so that nothing is abbreviated beyond "Trig". On the iPad the left block has the tabs of the mode other than Basic.
-The Matrix page (as above) is in the Matrices mode only. A chip beside RAD/DEG shows MATRIX or STAT and is a menu to change the mode; the standard mode shows no chip, so the first screen is the one it was.
+The Matrix page (as above) is in the Matrices mode only. A chip beside RAD/DEG always shows the mode (STANDARD, MATRIX or STAT) and is a menu to change it.
+A long press on a key with alternatives shows them in a row above the key, or, when they would not fit between the key and the edge of the window, in a column.
 

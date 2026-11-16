@@ -45,7 +45,7 @@
   and beta functions to any number of digits. On keyboard pages of their own (Statistics, Probability); see [docs/statistics.md](docs/statistics.md).
 - **Modes for the keyboard.** In Settings the keyboard can be set to Standard (Basic, Functions, Trig, Calculus), Matrices (Basic, Functions, Trig, Matrix) or
   Statistics and probability (Basic, Functions, Statistics, Probability), as the modes of a calculator show the keys for what it is used for; a chip beside the
-  angle unit says the mode when it is not the standard one and changes it. Every function can be typed in any mode, and answers do not depend on it.
+  angle unit always says the mode (STANDARD, MATRIX or STAT) and changes it. Every function can be typed in any mode, and answers do not depend on it.
 - **A maths keyboard.** Stacked fractions, roots and powers as you type; hold a key with a dot to slide to its alternatives.
 - **For everyone.** Formulas are given to VoiceOver as words (fractions, roots and matrices included, in English and Japanese), the graph
   is described and offered as an audio graph, and it can be moved and zoomed by actions; the controls are large enough to hit; larger

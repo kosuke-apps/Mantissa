@@ -26,7 +26,7 @@ What Mantissa does for VoiceOver, larger text, and people who cannot tap small t
   Audio Graph is of the fit.
 - **The Statistics and Probability keyboard pages** have the same labels as the others: a function key is read as its name; the keys that place a column or a table of data are "Column of data" and
   "Table of data". The pages are tabs of the same control, at most four at a time (the keyboard's mode in Settings picks which: Standard, Matrices, or
-  Statistics and probability); the chip beside the angle unit, shown when the mode is not the standard one, is a menu labelled "Keyboard mode".
+  Statistics and probability); the chip beside the angle unit, which always shows the mode, is a menu labelled "Keyboard mode".
 - The audit tests have the new screens (a report, a regression with its graph, the Statistics, Probability and Matrix keys); like the others they record what they find. VoiceOver speaking any of this
   has not been tried.
 

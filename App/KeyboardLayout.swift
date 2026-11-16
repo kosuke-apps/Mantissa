@@ -120,10 +120,10 @@ enum KeyboardMode: String, CaseIterable, Identifiable {
     }
   }
 
-  /// The short word of the chip beside the angle unit, which says the mode when it is not the standard one.
-  var chip: LocalizedStringKey? {
+  /// The short word of the chip beside the angle unit, which always says the mode.
+  var chip: LocalizedStringKey {
     switch self {
-    case .standard: return nil
+    case .standard: return "STANDARD"
     case .matrix: return "MATRIX"
     case .statistics: return "STAT"
     }

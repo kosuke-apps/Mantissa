@@ -127,31 +127,28 @@ struct CalculatorScreen: View {
     #endif
   }
 
-  /// The keyboard's mode, when it is not the standard one, with a menu to change it.
-  @ViewBuilder
+  /// The keyboard's mode, always shown, with a menu to change it.
   private var modeChip: some View {
-    if let chip = model.keyboardMode.chip {
-      Menu {
-        Picker(
-          "Keyboard",
-          selection: Binding(get: { model.keyboardMode }, set: { model.keyboardMode = $0 })
-        ) {
-          ForEach(KeyboardMode.allCases) { Text($0.title).tag($0) }
-        }
-      } label: {
-        Text(chip)
-          .scaledFont(size: 13, weight: .semibold)
-          .padding(.horizontal, 10)
-          .padding(.vertical, 5)
-          .background(Color.primary.opacity(0.1), in: Capsule())
-          .foregroundStyle(Color.primary.opacity(0.75))
+    Menu {
+      Picker(
+        "Keyboard",
+        selection: Binding(get: { model.keyboardMode }, set: { model.keyboardMode = $0 })
+      ) {
+        ForEach(KeyboardMode.allCases) { Text($0.title).tag($0) }
       }
-      .accessibilityLabel("Keyboard mode")
-      .accessibilityValue(Text(model.keyboardMode.title))
+    } label: {
+      Text(model.keyboardMode.chip)
+        .scaledFont(size: 13, weight: .semibold)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.primary.opacity(0.1), in: Capsule())
+        .foregroundStyle(Color.primary.opacity(0.75))
     }
+    .accessibilityLabel("Keyboard mode")
+    .accessibilityValue(Text(model.keyboardMode.title))
   }
 
-  /// The title, the angle unit (tap to switch), the keyboard's mode and Settings.
+  /// The angle unit (tap to switch), the keyboard's mode (a menu) and Settings.
   private var topBar: some View {
     ZStack {
       HStack {
